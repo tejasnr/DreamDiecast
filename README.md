@@ -18,3 +18,4 @@ View your app in AI Studio: https://ai.studio/apps/6b655ee4-43da-416e-b629-0fdd9
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+# DreamDiecast
