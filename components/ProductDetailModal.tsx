@@ -1,0 +1,251 @@
+'use client';
+
+import { useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Star, Package, ShieldCheck, Truck, ArrowRight, ShoppingCart } from 'lucide-react';
+import Image from 'next/image';
+import { Product } from '@/lib/data';
+import { useCart } from '@/context/CartContext';
+import { trackEvent } from '@/lib/posthog';
+
+interface ProductDetailModalProps {
+  product: Product | null;
+  onClose: () => void;
+}
+
+export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
+  const { addToCart } = useCart();
+
+  useEffect(() => {
+    if (product) {
+      trackEvent('product_viewed', { productId: product.id, name: product.name, category: product.category });
+    }
+  }, [product?.id]);
+
+  if (!product) return null;
+
+  const isOutOfStock = product.stock !== undefined && product.stock <= 0 && product.category !== 'Pre-Order';
+
+  const handleAddToCart = () => {
+    if (isOutOfStock) return;
+    addToCart(product);
+    // Optional: Show some feedback or close modal
+    // onClose(); 
+  };
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/90 backdrop-blur-xl"
+        />
+
+        {/* Modal Content */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className={`relative w-full max-w-6xl max-h-[90vh] bg-[#0A0A0A] border border-white/10 rounded-sm overflow-y-auto md:overflow-hidden flex flex-col md:flex-row shadow-2xl custom-scrollbar ${isOutOfStock ? 'grayscale-[0.3]' : ''}`}
+        >
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 md:top-6 md:right-6 z-50 w-10 h-10 bg-black/50 text-white flex items-center justify-center rounded-full border border-white/10 hover:bg-accent transition-colors backdrop-blur-md"
+          >
+            <X size={20} />
+          </button>
+
+          {/* Left: Image Section */}
+          <div className="w-full md:w-1/2 relative aspect-[4/3] md:aspect-auto bg-surface flex-shrink-0">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden" />
+            
+            {isOutOfStock && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                <span className="bg-red-600 text-white px-8 py-3 text-xl font-display font-bold uppercase tracking-[0.3em] shadow-2xl">
+                  Out of Stock
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Info Section */}
+          <div className="w-full md:w-1/2 p-6 md:p-12 md:overflow-y-auto custom-scrollbar">
+            <div className="space-y-8">
+              {/* Header Info */}
+              <div>
+                <div className="flex items-center space-x-3 mb-4">
+                  <span className="text-accent font-mono text-[10px] font-bold uppercase tracking-[0.3em]">
+                    {product.brand}
+                  </span>
+                  <span className="w-8 h-[1px] bg-white/20" />
+                  <span className="text-white/40 font-mono text-[10px] uppercase tracking-[0.3em]">
+                    Scale {product.scale}
+                  </span>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-display font-bold uppercase tracking-tighter leading-none mb-4">
+                  {product.name}
+                </h2>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center text-accent">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        fill={i < Math.floor(product.rating || 0) ? "currentColor" : "none"}
+                        className={i < Math.floor(product.rating || 0) ? "" : "opacity-30"}
+                      />
+                    ))}
+                    <span className="ml-2 text-sm font-mono font-bold text-white">
+                      {product.rating || 'N/A'}
+                    </span>
+                  </div>
+                  <span className="text-white/20 text-xs uppercase tracking-widest">
+                    {product.reviews?.length || 0} Reviews
+                  </span>
+                  {product.stock !== undefined && product.category !== 'Pre-Order' && (
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm ${
+                      product.stock > 5 ? 'text-white/40 border border-white/10' : 'text-orange-500 border border-orange-500/20 bg-orange-500/5'
+                    }`}>
+                      {product.stock > 0 ? `${product.stock} Units In Stock` : 'Out of Stock'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Price & Action */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-6 border-y border-white/5 gap-6">
+                <div>
+                  <span className="text-white/40 text-[10px] uppercase tracking-widest block mb-1">
+                    {product.category === 'Pre-Order' ? 'Booking Price' : 'Price'}
+                  </span>
+                  <span className="text-3xl font-display font-bold text-white">
+                    ₹{product.category === 'Pre-Order' ? '100' : product.price.toLocaleString()}
+                  </span>
+                  {product.category === 'Pre-Order' && (
+                    <span className="text-[10px] text-white/20 uppercase tracking-widest block mt-1">
+                      Full Price: ₹{product.price.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+                <button 
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                  className={`w-full sm:w-auto px-10 py-4 font-display font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                    isOutOfStock 
+                      ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10' 
+                      : 'bg-accent text-white hover:bg-white hover:text-black glow-orange'
+                  }`}
+                >
+                  {isOutOfStock ? (
+                    <>
+                      <X size={18} />
+                      Out of Stock
+                    </>
+                  ) : product.category === 'Pre-Order' ? (
+                    <>
+                      <Package size={18} />
+                      Pre-order Now
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart size={18} />
+                      Add to Cart
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">Description</h4>
+                <p className="text-white/60 text-sm leading-relaxed font-light">
+                  {product.description || "No description available for this premium collectible."}
+                </p>
+              </div>
+
+              {/* Specifications */}
+              {product.details && (
+                <div className="grid grid-cols-2 gap-8 py-8 border-t border-white/5">
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Material</h4>
+                    <p className="text-sm text-white font-medium">{product.details.material}</p>
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Features</h4>
+                    <ul className="space-y-2">
+                      {product.details.features.map((feature, i) => (
+                        <li key={i} className="text-xs text-white/60 flex items-center">
+                          <ArrowRight size={10} className="mr-2 text-accent" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Trust Badges */}
+              <div className="grid grid-cols-3 gap-4 py-6 bg-white/[0.02] rounded-sm px-4">
+                <div className="flex flex-col items-center text-center space-y-2">
+                  <Package size={18} className="text-accent" />
+                  <span className="text-[8px] uppercase tracking-widest text-white/40">Secure Packing</span>
+                </div>
+                <div className="flex flex-col items-center text-center space-y-2">
+                  <ShieldCheck size={18} className="text-accent" />
+                  <span className="text-[8px] uppercase tracking-widest text-white/40">Authentic Model</span>
+                </div>
+                <div className="flex flex-col items-center text-center space-y-2">
+                  <Truck size={18} className="text-accent" />
+                  <span className="text-[8px] uppercase tracking-widest text-white/40">Global Shipping</span>
+                </div>
+              </div>
+
+              {/* Reviews Section */}
+              <div className="space-y-6 pt-8 border-t border-white/5">
+                <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">Customer Reviews</h4>
+                {product.reviews && product.reviews.length > 0 ? (
+                  <div className="space-y-6">
+                    {product.reviews.map((review, i) => (
+                      <div key={i} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white uppercase tracking-wider">{review.user}</span>
+                          <div className="flex items-center text-accent">
+                            {[...Array(5)].map((_, starIdx) => (
+                              <Star
+                                key={starIdx}
+                                size={10}
+                                fill={starIdx < review.rating ? "currentColor" : "none"}
+                                className={starIdx < review.rating ? "" : "opacity-30"}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs text-white/40 leading-relaxed italic">&quot;{review.comment}&quot;</p>
+                        <span className="text-[8px] text-white/20 uppercase tracking-widest block">{review.date}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-white/20 italic">No reviews yet. Be the first to review!</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+}

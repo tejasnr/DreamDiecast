@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse":[
+      {
+        "if": "Bash(find specs/ -type f -name '*.md' -mmin -1 | grep -q .)",
+        "hooks":[
+          {
+            "type": "command",
+            "command": "NEW_SPEC=$(find specs/ -type f -name '*.md' -mmin -1 | head -n 1); codeax \"Implement the specifications found in $NEW_SPEC. Do not deviate from the architecture.\" &"
+          }
+        ]
+      }
+    ]
+  }
+}
