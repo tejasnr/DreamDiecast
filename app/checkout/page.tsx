@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useMutation } from 'convex/react';
+import { useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useCart } from '@/context/CartContext';
@@ -25,7 +25,7 @@ export default function CheckoutPage() {
   const { cart, cartTotal, clearCart, checkoutDetails, shippingCharges, balancePaymentItem, clearBalancePayment } = useCart();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const createOrder = useMutation(api.orders.create);
+  const createOrder = useAction(api.orders.create);
 
   const [transactionId, setTransactionId] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);

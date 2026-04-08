@@ -74,7 +74,7 @@ export default function AdminOrdersPage() {
   };
 
   const orderList = orders ?? [];
-  const filteredOrders = orderList.filter(order => {
+  const filteredOrders = orderList.filter((order: any) => {
     const orderId = order._id as string;
     const matchesSearch =
       orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -145,7 +145,7 @@ export default function AdminOrdersPage() {
               <p className="text-white/40 uppercase tracking-widest font-mono">No orders found.</p>
             </div>
           ) : (
-            filteredOrders.map((order) => {
+            filteredOrders.map((order: any) => {
               const orderId = order._id as string;
               const createdAt = order._creationTime ? new Date(order._creationTime).toLocaleDateString() : 'N/A';
 
@@ -295,7 +295,7 @@ export default function AdminOrdersPage() {
                   {/* Items List */}
                   <div className="mt-8 pt-6 border-t border-white/5">
                     <div className="flex flex-wrap gap-4">
-                      {order.items.map((item, idx) => (
+                      {order.items.map((item: any, idx: any) => (
                         <div key={idx} className="flex items-center gap-3 bg-white/5 p-2 rounded-sm border border-white/5">
                           <div className="relative w-8 h-8 bg-black rounded-sm overflow-hidden">
                             <Image src={item.image} alt={item.name} fill className="object-cover" referrerPolicy="no-referrer" />

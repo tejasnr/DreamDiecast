@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -31,7 +31,7 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
   const { user } = useAuth();
   const assets = useQuery(api.assets.list);
   const websiteSettings = useSettings();
-  const createAsset = useMutation(api.assets.create);
+  const createAsset = useAction(api.assets.create);
   const removeAsset = useMutation(api.assets.remove);
   const updateSetting = useMutation(api.settings.updateWebsiteSetting);
 
@@ -283,7 +283,7 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {assets.map((asset) => (
+                    {assets.map((asset: any) => (
                       <div
                         key={asset._id}
                         className="group relative aspect-video glass overflow-hidden border border-white/5 hover:border-accent/50 transition-all cursor-pointer"

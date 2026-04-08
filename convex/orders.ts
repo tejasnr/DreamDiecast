@@ -1,4 +1,5 @@
-import { mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { decodeBase64DataUrl } from "./_storage";
 import { requireAdmin, requireUser } from "./_utils";
@@ -22,46 +23,65 @@ export const listAll = query({
   },
 });
 
-export const create = mutation({
+const orderItemValidator = v.object({
+  productId: v.id("products"),
+  name: v.string(),
+  price: v.number(),
+  originalPrice: v.optional(v.number()),
+  image: v.string(),
+  category: v.string(),
+  brand: v.string(),
+  scale: v.string(),
+  quantity: v.number(),
+});
+
+const shippingDetailsValidator = v.object({
+  name: v.string(),
+  phone: v.string(),
+  address: v.string(),
+  city: v.string(),
+  state: v.string(),
+  pincode: v.string(),
+});
+
+export const insertOrder = internalMutation({
+  args: {
+    userId: v.id("users"),
+    userEmail: v.string(),
+    items: v.array(orderItemValidator),
+    subtotal: v.optional(v.number()),
+    shippingCharges: v.optional(v.number()),
+    totalAmount: v.number(),
+    transactionId: v.string(),
+    paymentProofUrl: v.string(),
+    paymentMethod: v.string(),
+    shippingDetails: v.optional(shippingDetailsValidator),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("orders", {
+      ...args,
+      paymentStatus: "submitted",
+      orderStatus: "pending",
+    });
+  },
+});
+
+export const create = action({
   args: {
     workosUserId: v.optional(v.string()),
     userId: v.id("users"),
     userEmail: v.string(),
-    items: v.array(
-      v.object({
-        productId: v.id("products"),
-        name: v.string(),
-        price: v.number(),
-        originalPrice: v.optional(v.number()),
-        image: v.string(),
-        category: v.string(),
-        brand: v.string(),
-        scale: v.string(),
-        quantity: v.number(),
-      })
-    ),
+    items: v.array(orderItemValidator),
     subtotal: v.optional(v.number()),
     shippingCharges: v.optional(v.number()),
     totalAmount: v.number(),
     transactionId: v.string(),
     paymentProofDataUrl: v.string(),
     paymentMethod: v.string(),
-    shippingDetails: v.optional(
-      v.object({
-        name: v.string(),
-        phone: v.string(),
-        address: v.string(),
-        city: v.string(),
-        state: v.string(),
-        pincode: v.string(),
-      })
-    ),
+    shippingDetails: v.optional(shippingDetailsValidator),
   },
-  handler: async (ctx, args) => {
-    const user = await requireUser(ctx, args.workosUserId);
-    if (user._id !== args.userId) {
-      throw new Error("Unauthorized");
-    }
+  handler: async (ctx, args): Promise<string> => {
+    await requireUser(ctx, args.workosUserId);
 
     const { bytes, contentType } = decodeBase64DataUrl(args.paymentProofDataUrl);
     const storageId = await ctx.storage.store(new Blob([bytes], { type: contentType }));
@@ -71,7 +91,7 @@ export const create = mutation({
       throw new Error("Failed to store payment proof");
     }
 
-    return await ctx.db.insert("orders", {
+    return await ctx.runMutation(internal.orders.insertOrder, {
       userId: args.userId,
       userEmail: args.userEmail,
       items: args.items,
@@ -81,8 +101,6 @@ export const create = mutation({
       transactionId: args.transactionId,
       paymentProofUrl,
       paymentMethod: args.paymentMethod,
-      paymentStatus: "submitted",
-      orderStatus: "pending",
       shippingDetails: args.shippingDetails,
     });
   },

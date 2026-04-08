@@ -26,7 +26,7 @@ export function useGarage() {
     user ? { userId: user.convexUserId as Id<"users"> } : "skip"
   );
 
-  const items: GarageItem[] = (data ?? []).map((item) => ({
+  const items: GarageItem[] = (data ?? []).map((item: any) => ({
     id: item._id,
     productId: item.productId,
     name: item.name,

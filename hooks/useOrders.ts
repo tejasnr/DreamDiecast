@@ -46,11 +46,11 @@ export function useOrders() {
     user ? { userId: user.convexUserId as Id<"users"> } : "skip"
   );
 
-  const orders: Order[] = (data ?? []).map((o) => ({
+  const orders: Order[] = (data ?? []).map((o: any) => ({
     id: o._id,
     userId: o.userId,
     userEmail: o.userEmail,
-    items: o.items.map((item) => ({
+    items: o.items.map((item: any) => ({
       id: item.productId,
       name: item.name,
       price: item.price,

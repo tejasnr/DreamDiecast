@@ -88,7 +88,7 @@ export default function FulfillmentPage() {
               </Link>
             </div>
           ) : (
-            orderList.map((order) => {
+            orderList.map((order: any) => {
               const orderId = order._id as string;
 
               return (
@@ -168,7 +168,7 @@ export default function FulfillmentPage() {
                       <ShoppingBag size={12} /> Items to Pack ({order.items.length})
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {order.items.map((item, idx) => (
+                      {order.items.map((item: any, idx: any) => (
                         <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-sm border border-white/5 group/item">
                           <div className="relative w-16 h-12 bg-black rounded-sm overflow-hidden flex-shrink-0">
                             <Image src={item.image} alt={item.name} fill className="object-cover" referrerPolicy="no-referrer" />

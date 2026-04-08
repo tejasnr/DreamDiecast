@@ -656,7 +656,7 @@ export default function AdminPage() {
                     <p className="text-white/40 uppercase tracking-widest text-[10px]">No customer pre-orders found.</p>
                   </div>
                 ) : (
-                  preOrderList.map((order) => (
+                  preOrderList.map((order: any) => (
                     <div key={order._id} className="glass p-6 flex flex-col md:flex-row items-center gap-8 group">
                       <div className="relative w-32 h-20 bg-white/5 overflow-hidden">
                         <Image

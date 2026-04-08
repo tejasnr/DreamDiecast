@@ -18,7 +18,8 @@ export function isAdminEmail(email: string) {
 export async function getUserByWorkosId(ctx: ConvexContext, workosUserId: string) {
   return await ctx.db
     .query("users")
-    .withIndex("by_workosUserId", (q: typeof v) => q.eq("workosUserId", workosUserId))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .withIndex("by_workosUserId", (q: any) => q.eq("workosUserId", workosUserId))
     .unique();
 }
 

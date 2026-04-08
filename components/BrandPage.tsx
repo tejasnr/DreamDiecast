@@ -26,7 +26,7 @@ export default function BrandPage({ brand }: BrandPageProps) {
   const data = useQuery(api.products.getByBrand, { brand: brand.name });
 
   const products = useMemo((): Product[] => {
-    return (data ?? []).map((p) => ({
+    return (data ?? []).map((p: any) => ({
       id: p.id ?? p._id,
       name: p.name,
       price: p.price,
@@ -41,7 +41,7 @@ export default function BrandPage({ brand }: BrandPageProps) {
         material: p.details.material ?? '',
         features: p.details.features ?? [],
       } : undefined,
-      reviews: p.reviews?.map((r) => ({
+      reviews: p.reviews?.map((r: any) => ({
         user: r.user,
         rating: r.rating,
         comment: r.comment,
