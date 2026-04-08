@@ -68,6 +68,11 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.convex.cloud',
+        pathname: '/**',
+      },
     ],
   },
   transpilePackages: ['motion'],
