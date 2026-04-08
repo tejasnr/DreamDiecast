@@ -122,14 +122,15 @@ export default function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src={settings?.heroBackground || "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?q=80&w=1920&auto=format&fit=crop"}
+          src="/assets/gt3rs.jpg"
           alt="Hero Background"
           fill
-          className="object-cover opacity-40"
+          className="object-cover opacity-50 object-right"
           priority
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]/40" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
@@ -137,7 +138,7 @@ export default function Hero() {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="max-w-3xl"
+          className="max-w-xl md:max-w-2xl"
         >
           <div className="flex items-center space-x-3 mb-4">
             <span className="w-12 h-[2px] bg-accent" />
