@@ -9,6 +9,12 @@ const DEFAULT_SETTINGS = {
   categoryJdm: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=800&auto=format&fit=crop",
   categoryEuropean: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800&auto=format&fit=crop",
   categoryHypercars: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?q=80&w=800&auto=format&fit=crop",
+  brandHotwheels: "",
+  brandBburago: "",
+  brandMinigt: "",
+  brandPoprace: "",
+  brandPostercars: "",
+  brandMatchbox: "",
 };
 
 export const getWebsite = query({
@@ -36,7 +42,13 @@ export const updateWebsiteSetting = mutation({
       v.literal("footerBackground"),
       v.literal("categoryJdm"),
       v.literal("categoryEuropean"),
-      v.literal("categoryHypercars")
+      v.literal("categoryHypercars"),
+      v.literal("brandHotwheels"),
+      v.literal("brandBburago"),
+      v.literal("brandMinigt"),
+      v.literal("brandPoprace"),
+      v.literal("brandPostercars"),
+      v.literal("brandMatchbox")
     ),
     value: v.string(),
   },

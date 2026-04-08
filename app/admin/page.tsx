@@ -347,7 +347,7 @@ export default function AdminPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Price (PHP)</label>
+                      <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Price (INR)</label>
                       <input
                         required
                         type="number"
@@ -551,7 +551,7 @@ export default function AdminPage() {
                     <div className="flex flex-wrap justify-center md:justify-start gap-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">
                       <span className="flex items-center gap-1"><Tag size={12} className="text-accent" /> {product.category}</span>
                       <span className="flex items-center gap-1"><Package size={12} className="text-accent" /> {product.brand}</span>
-                      <span className="flex items-center gap-1"><DollarSign size={12} className="text-accent" /> {product.price} PHP</span>
+                      <span className="flex items-center gap-1"><DollarSign size={12} className="text-accent" /> ₹{product.price}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -607,7 +607,7 @@ export default function AdminPage() {
                         <div className="flex flex-wrap justify-center md:justify-start gap-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">
                           <span className="flex items-center gap-1 text-accent"><Tag size={12} /> {product.category}</span>
                           <span className="flex items-center gap-1"><Package size={12} /> {product.brand}</span>
-                          <span className="flex items-center gap-1"><DollarSign size={12} /> {product.price} PHP</span>
+                          <span className="flex items-center gap-1"><DollarSign size={12} /> ₹{product.price}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -670,7 +670,7 @@ export default function AdminPage() {
                       <div className="flex-1 text-center md:text-left">
                         <h3 className="text-xl font-display font-bold uppercase tracking-tight mb-1">{order.name}</h3>
                         <div className="flex flex-wrap justify-center md:justify-start gap-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">
-                          <span className="flex items-center gap-1 text-accent"><DollarSign size={12} /> Paid: {order.price} PHP</span>
+                          <span className="flex items-center gap-1 text-accent"><DollarSign size={12} /> Paid: ₹{order.price}</span>
                           <span className="flex items-center gap-1"><Package size={12} /> {order.brand}</span>
                           <span className="flex items-center gap-1"><Loader2 size={12} className={order.status === 'arrived' ? 'text-green-500' : 'text-accent'} /> Status: {order.status}</span>
                         </div>

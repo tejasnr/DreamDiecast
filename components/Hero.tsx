@@ -76,12 +76,8 @@ export default function Hero() {
   }, [isRolling, spawnSmoke]);
 
   const handleAdminClick = async () => {
-    if (!user || user.role !== 'admin') {
-      // Non-admin or not logged in: just do the animation but don't open admin
-      if (!user) {
-        setIsAuthModalOpen(true);
-        return;
-      }
+    if (!user) {
+      setIsAuthModalOpen(true);
       return;
     }
 
@@ -109,11 +105,20 @@ export default function Hero() {
       transition: { duration: 0.4, times: [0, 0.5, 1] }
     });
 
-    router.push('/admin');
+    if (user.role === 'admin') {
+      router.push('/admin');
+    } else {
+      // Reset wheel position for non-admin users
+      await controls.start({
+        rotate: 0,
+        x: 0,
+        transition: { duration: 0.6, ease: "easeOut" }
+      });
+    }
   };
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden pt-32 pb-20">
+    <section className="relative min-h-screen flex items-center overflow-x-clip pt-32 pb-20">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -132,7 +137,7 @@ export default function Hero() {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="max-w-2xl"
+          className="max-w-3xl"
         >
           <div className="flex items-center space-x-3 mb-4">
             <span className="w-12 h-[2px] bg-accent" />
@@ -141,8 +146,9 @@ export default function Hero() {
             </span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-8xl font-display font-bold leading-[0.95] md:leading-[0.9] uppercase mb-6 md:mb-8">
-            The Ultimate <br />
-            <span className="text-gradient italic">Diecast Vault.</span>
+            Your Dream <br />
+            Garage <br />
+            <span className="text-gradient italic">Scaled Down.</span>
           </h1>
           <p className="text-white/60 text-base md:text-lg mb-8 md:mb-10 max-w-md leading-relaxed border-l-2 border-accent/30 pl-6">
             Curated selection of high-end collectibles. From dry carbon Paganis to limited edition JDM legends. Mint condition, guaranteed.

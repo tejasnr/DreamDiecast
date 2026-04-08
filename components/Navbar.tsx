@@ -35,9 +35,9 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium uppercase tracking-widest">
-            <Link href="/pre-orders" className="hover:text-accent transition-colors">Pre-Orders</Link>
-            <Link href="/current-stock" className="hover:text-accent transition-colors">Current Stock</Link>
+            <Link href="/brands" className="hover:text-accent transition-colors">Brands</Link>
             <Link href="/new-arrivals" className="hover:text-accent transition-colors">New Arrivals</Link>
+            <Link href="/pre-orders" className="hover:text-accent transition-colors">Pre-Orders</Link>
             <Link href="/bundles" className="hover:text-accent transition-colors">Bundles</Link>
           </div>
 
@@ -146,9 +146,9 @@ export default function Navbar() {
               className="absolute top-full left-0 right-0 bg-[#050505]/95 backdrop-blur-xl border-b border-white/10 p-8 flex flex-col space-y-6 md:hidden shadow-2xl"
             >
               <div className="flex flex-col space-y-4">
-                <Link href="/pre-orders" className="text-2xl font-display uppercase tracking-tighter" onClick={() => setIsMobileMenuOpen(false)}>Pre-Orders</Link>
-                <Link href="/current-stock" className="text-2xl font-display uppercase tracking-tighter" onClick={() => setIsMobileMenuOpen(false)}>Current Stock</Link>
+                <Link href="/brands" className="text-2xl font-display uppercase tracking-tighter" onClick={() => setIsMobileMenuOpen(false)}>Brands</Link>
                 <Link href="/new-arrivals" className="text-2xl font-display uppercase tracking-tighter" onClick={() => setIsMobileMenuOpen(false)}>New Arrivals</Link>
+                <Link href="/pre-orders" className="text-2xl font-display uppercase tracking-tighter" onClick={() => setIsMobileMenuOpen(false)}>Pre-Orders</Link>
                 <Link href="/bundles" className="text-2xl font-display uppercase tracking-tighter" onClick={() => setIsMobileMenuOpen(false)}>Bundles</Link>
               </div>
 

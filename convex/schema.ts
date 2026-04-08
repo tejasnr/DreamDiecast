@@ -141,6 +141,12 @@ export default defineSchema({
     categoryJdm: v.optional(v.string()),
     categoryEuropean: v.optional(v.string()),
     categoryHypercars: v.optional(v.string()),
+    brandHotwheels: v.optional(v.string()),
+    brandBburago: v.optional(v.string()),
+    brandMinigt: v.optional(v.string()),
+    brandPoprace: v.optional(v.string()),
+    brandPostercars: v.optional(v.string()),
+    brandMatchbox: v.optional(v.string()),
   }).index("by_key", ["key"]),
 
   assets: defineTable({

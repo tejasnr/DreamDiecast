@@ -86,6 +86,29 @@ export const remove = mutation({
   },
 });
 
+export const getByBrand = query({
+  args: { brand: v.string() },
+  handler: async (ctx, args) => {
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_brand", (q) => q.eq("brand", args.brand))
+      .collect();
+    return products.map((p) => ({ ...p, id: p._id }));
+  },
+});
+
+export const getCountByBrand = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    const counts: Record<string, number> = {};
+    for (const p of products) {
+      counts[p.brand] = (counts[p.brand] || 0) + 1;
+    }
+    return counts;
+  },
+});
+
 export const markArrived = mutation({
   args: { workosUserId: v.optional(v.string()), id: v.id("products") },
   handler: async (ctx, args) => {

@@ -2,6 +2,15 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  async redirects() {
+    return [
+      {
+        source: '/current-stock',
+        destination: '/brands',
+        permanent: true,
+      },
+    ];
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -50,6 +59,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'bing.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'workoscdn.com',
         port: '',
         pathname: '/**',
       },

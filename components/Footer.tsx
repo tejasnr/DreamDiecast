@@ -39,9 +39,9 @@ export default function Footer() {
           <div>
             <h4 className="font-display font-bold uppercase tracking-widest mb-8 text-sm">Collections</h4>
             <ul className="space-y-4 text-sm text-white/40 uppercase tracking-widest">
-              <li><Link href="/pre-orders" className="hover:text-accent transition-colors">Pre-Orders</Link></li>
+              <li><Link href="/brands" className="hover:text-accent transition-colors">Brands</Link></li>
               <li><Link href="/new-arrivals" className="hover:text-accent transition-colors">New Arrivals</Link></li>
-              <li><Link href="/current-stock" className="hover:text-accent transition-colors">Current Stock</Link></li>
+              <li><Link href="/pre-orders" className="hover:text-accent transition-colors">Pre-Orders</Link></li>
               <li><Link href="/bundles" className="hover:text-accent transition-colors">Bundles</Link></li>
             </ul>
           </div>
