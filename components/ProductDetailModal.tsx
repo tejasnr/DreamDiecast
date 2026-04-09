@@ -24,7 +24,11 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
   if (!product) return null;
 
-  const isOutOfStock = product.stock !== undefined && product.stock <= 0 && product.category !== 'Pre-Order';
+  const isPreOrder = product.listingType === 'pre-order' || product.category === 'Pre-Order' || product.isPreorder;
+  const isOutOfStock = product.stock !== undefined && product.stock <= 0 && !isPreOrder;
+  const resolvedMaterial = product.material || product.details?.material;
+  const resolvedCondition = product.condition;
+  const resolvedFeatures = product.specialFeatures || product.details?.features?.join(', ');
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -129,23 +133,23 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-6 border-y border-white/5 gap-6">
                 <div>
                   <span className="text-white/40 text-[10px] uppercase tracking-widest block mb-1">
-                    {product.category === 'Pre-Order' ? 'Booking Price' : 'Price'}
+                    {isPreOrder ? 'Booking Advance' : 'Price'}
                   </span>
                   <span className="text-3xl font-display font-bold text-white">
-                    ₹{product.category === 'Pre-Order' ? '100' : product.price.toLocaleString()}
+                    ₹{isPreOrder ? (product.bookingAdvance ?? product.price).toLocaleString() : product.price.toLocaleString()}
                   </span>
-                  {product.category === 'Pre-Order' && (
+                  {isPreOrder && product.totalFinalPrice && (
                     <span className="text-[10px] text-white/20 uppercase tracking-widest block mt-1">
-                      Full Price: ₹{product.price.toLocaleString()}
+                      Full Price: ₹{product.totalFinalPrice.toLocaleString()}
                     </span>
                   )}
                 </div>
-                <button 
+                <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
                   className={`w-full sm:w-auto px-10 py-4 font-display font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                    isOutOfStock 
-                      ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10' 
+                    isOutOfStock
+                      ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'
                       : 'bg-accent text-white hover:bg-white hover:text-black glow-orange'
                   }`}
                 >
@@ -154,7 +158,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                       <X size={18} />
                       Out of Stock
                     </>
-                  ) : product.category === 'Pre-Order' ? (
+                  ) : isPreOrder ? (
                     <>
                       <Package size={18} />
                       Pre-order Now
@@ -168,32 +172,59 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 </button>
               </div>
 
-              {/* Description */}
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">Description</h4>
-                <p className="text-white/60 text-sm leading-relaxed font-light">
-                  {product.description || "No description available for this premium collectible."}
-                </p>
-              </div>
+              {/* Auto-generated description from structured data */}
+              {isPreOrder && (
+                <div className="space-y-3 bg-accent/5 border border-accent/20 p-4 rounded-sm">
+                  <p className="text-xs text-accent/80 italic">
+                    Check the product description for the final pricing and ETA of the chosen models.
+                  </p>
+                  <div className="space-y-1 text-sm text-white/60">
+                    {product.totalFinalPrice && (
+                      <p>Price — ₹{product.totalFinalPrice.toLocaleString()} shipped</p>
+                    )}
+                    {product.eta && <p>ETA — {product.eta}</p>}
+                  </div>
+                </div>
+              )}
+
+              {resolvedFeatures && (
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">Special Features</h4>
+                  <p className="text-white/60 text-sm leading-relaxed">{resolvedFeatures}</p>
+                </div>
+              )}
 
               {/* Specifications */}
-              {product.details && (
-                <div className="grid grid-cols-2 gap-8 py-8 border-t border-white/5">
-                  <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-6 py-6 border-t border-white/5">
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Brand</h4>
+                  <p className="text-sm text-white font-medium">{product.brand}</p>
+                </div>
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Scale</h4>
+                  <p className="text-sm text-white font-medium">{product.scale}</p>
+                </div>
+                {resolvedCondition && (
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Condition</h4>
+                    <p className="text-sm text-white font-medium">{resolvedCondition}</p>
+                  </div>
+                )}
+                {resolvedMaterial && (
+                  <div className="space-y-3">
                     <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Material</h4>
-                    <p className="text-sm text-white font-medium">{product.details.material}</p>
+                    <p className="text-sm text-white font-medium">{resolvedMaterial}</p>
                   </div>
-                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Features</h4>
-                    <ul className="space-y-2">
-                      {product.details.features.map((feature, i) => (
-                        <li key={i} className="text-xs text-white/60 flex items-center">
-                          <ArrowRight size={10} className="mr-2 text-accent" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                )}
+              </div>
+
+              {/* Manual description */}
+              {product.description && (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">Description</h4>
+                  <p className="text-white/60 text-sm leading-relaxed font-light">
+                    {product.description}
+                  </p>
                 </div>
               )}
 

@@ -32,6 +32,16 @@ export default defineSchema({
         })
       )
     ),
+    // New fields
+    sku: v.optional(v.string()),
+    condition: v.optional(v.string()),
+    material: v.optional(v.string()),
+    specialFeatures: v.optional(v.string()),
+    listingType: v.optional(v.string()),
+    status: v.optional(v.string()),
+    bookingAdvance: v.optional(v.number()),
+    totalFinalPrice: v.optional(v.number()),
+    eta: v.optional(v.string()),
   })
     .index("by_category", ["category"])
     .index("by_brand", ["brand"]),
@@ -115,23 +125,44 @@ export default defineSchema({
     .index("by_userId_status", ["userId", "status"]),
 
   preOrders: defineTable({
-    userId: v.id("users"),
+    // Keep old fields for backward compat
+    userId: v.optional(v.id("users")),
     productId: v.id("products"),
-    name: v.string(),
-    price: v.number(),
-    image: v.string(),
-    category: v.string(),
-    brand: v.string(),
-    scale: v.string(),
-    depositAmount: v.number(),
+    name: v.optional(v.string()),
+    price: v.optional(v.number()),
+    image: v.optional(v.string()),
+    category: v.optional(v.string()),
+    brand: v.optional(v.string()),
+    scale: v.optional(v.string()),
+    depositAmount: v.optional(v.number()),
+
+    // New fields
+    customerName: v.optional(v.string()),
+    customerPhone: v.optional(v.string()),
+    customerEmail: v.optional(v.string()),
+    productName: v.optional(v.string()),
+    productSku: v.optional(v.string()),
+    productImage: v.optional(v.string()),
+    totalPrice: v.optional(v.number()),
+    depositPaid: v.optional(v.number()),
     status: v.union(
+      // Old statuses (backward compat)
       v.literal("pending"),
       v.literal("confirmed"),
       v.literal("arrived"),
+      // New statuses
+      v.literal("waiting_for_stock"),
+      v.literal("stock_arrived"),
+      v.literal("fully_paid_shipped"),
       v.literal("cancelled")
     ),
+    source: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
   })
-    .index("by_userId", ["userId"]),
+    .index("by_userId", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_productId", ["productId"]),
 
   settings: defineTable({
     key: v.string(),

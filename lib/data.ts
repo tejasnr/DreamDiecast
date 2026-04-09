@@ -10,7 +10,8 @@ export interface Product {
   name: string;
   price: number;
   image: string;
-  category: 'Pre-Order' | 'In Stock' | 'New Arrival' | 'Bundle' | 'Current Stock';
+  images?: string[];
+  category: string;
   brand: string;
   scale: string;
   description?: string;
@@ -22,6 +23,17 @@ export interface Product {
     features: string[];
   };
   createdAt?: number;
+  // New fields
+  sku?: string;
+  condition?: string;
+  material?: string;
+  specialFeatures?: string;
+  listingType?: string;
+  status?: string;
+  isPreorder?: boolean;
+  bookingAdvance?: number;
+  totalFinalPrice?: number;
+  eta?: string;
 }
 
 export const products: Product[] = [];

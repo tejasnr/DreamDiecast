@@ -17,10 +17,40 @@ export const listAll = query({
   args: { workosUserId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
-    return await ctx.db.query("preOrders").order("desc").collect();
+    const preOrders = await ctx.db.query("preOrders").order("desc").collect();
+
+    // Normalize old records for display
+    return preOrders.map((po) => ({
+      ...po,
+      customerName: po.customerName || po.name || "Unknown",
+      productName: po.productName || po.name || "Unknown Product",
+      productImage: po.productImage || po.image,
+      totalPrice: po.totalPrice ?? po.price ?? 0,
+      depositPaid: po.depositPaid ?? po.depositAmount ?? 0,
+      // Map old statuses to new ones for display
+      normalizedStatus: mapStatus(po.status),
+    }));
   },
 });
 
+function mapStatus(status: string): string {
+  switch (status) {
+    case "pending":
+    case "confirmed":
+      return "waiting_for_stock";
+    case "arrived":
+      return "stock_arrived";
+    case "waiting_for_stock":
+    case "stock_arrived":
+    case "fully_paid_shipped":
+    case "cancelled":
+      return status;
+    default:
+      return "waiting_for_stock";
+  }
+}
+
+// Existing create mutation for website checkout
 export const create = mutation({
   args: {
     workosUserId: v.optional(v.string()),
@@ -40,6 +70,9 @@ export const create = mutation({
       throw new Error("Unauthorized");
     }
 
+    // Get product for enriched data
+    const product = await ctx.db.get(args.productId);
+
     return await ctx.db.insert("preOrders", {
       userId: args.userId,
       productId: args.productId,
@@ -50,11 +83,81 @@ export const create = mutation({
       brand: args.brand,
       scale: args.scale,
       depositAmount: args.depositAmount,
-      status: "pending",
+      // Also write new-format fields
+      customerName: (user as any).name || user.email,
+      customerEmail: user.email,
+      productName: args.name,
+      productImage: args.image,
+      productSku: product?.sku,
+      totalPrice: product?.totalFinalPrice ?? args.price,
+      depositPaid: args.depositAmount,
+      status: "waiting_for_stock",
+      source: "website",
+      createdAt: Date.now(),
     });
   },
 });
 
+// Admin creates a manual pre-order (WhatsApp/Instagram customer)
+export const createManual = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    customerName: v.string(),
+    customerPhone: v.optional(v.string()),
+    customerEmail: v.optional(v.string()),
+    productId: v.id("products"),
+    depositPaid: v.number(),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const product = await ctx.db.get(args.productId);
+    if (!product) throw new Error("Product not found");
+
+    const totalPrice = product.totalFinalPrice ?? product.price;
+    const depositPaid = args.depositPaid;
+
+    // Auto-mark as fully paid if deposit covers total
+    const status =
+      depositPaid >= totalPrice ? "fully_paid_shipped" : "waiting_for_stock";
+
+    return await ctx.db.insert("preOrders", {
+      customerName: args.customerName,
+      customerPhone: args.customerPhone,
+      customerEmail: args.customerEmail,
+      productId: args.productId,
+      productName: product.name,
+      productSku: product.sku,
+      productImage: product.image,
+      totalPrice,
+      depositPaid,
+      status,
+      source: "manual",
+      notes: args.notes,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+// Admin updates pre-order status
+export const updateStatus = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    preOrderId: v.id("preOrders"),
+    status: v.union(
+      v.literal("waiting_for_stock"),
+      v.literal("stock_arrived"),
+      v.literal("fully_paid_shipped"),
+      v.literal("cancelled")
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    await ctx.db.patch(args.preOrderId, { status: args.status });
+  },
+});
+
+// Keep the old markArrived for backward compat
 export const markArrived = mutation({
   args: {
     workosUserId: v.optional(v.string()),
@@ -66,16 +169,18 @@ export const markArrived = mutation({
     if (!preOrder) {
       throw new Error("Pre-order not found");
     }
-    await ctx.db.patch(args.preOrderId, { status: "arrived" });
+    await ctx.db.patch(args.preOrderId, { status: "stock_arrived" });
 
-    const garageItem = await ctx.db
-      .query("garageItems")
-      .withIndex("by_userId", (q) => q.eq("userId", preOrder.userId))
-      .filter((q) => q.eq(q.field("productId"), preOrder.productId))
-      .first();
+    if (preOrder.userId) {
+      const garageItem = await ctx.db
+        .query("garageItems")
+        .withIndex("by_userId", (q) => q.eq("userId", preOrder.userId!))
+        .filter((q) => q.eq(q.field("productId"), preOrder.productId))
+        .first();
 
-    if (garageItem) {
-      await ctx.db.patch(garageItem._id, { status: "arrived" });
+      if (garageItem) {
+        await ctx.db.patch(garageItem._id, { status: "arrived" });
+      }
     }
   },
 });
