@@ -26,6 +26,14 @@ export default function PostHogProvider({ children }: { children: React.ReactNod
       posthog.init(key, {
         api_host: host || 'https://us.i.posthog.com',
         capture_pageview: false,
+        capture_pageleave: true,
+        session_recording: {
+          maskAllInputs: false,
+          maskInputFn: (text, element) => {
+            if (element?.getAttribute('type') === 'password') return '*'.repeat(text.length);
+            return text;
+          },
+        },
         loaded: (ph) => {
           if (process.env.NODE_ENV === 'development') {
             ph.opt_out_capturing();
