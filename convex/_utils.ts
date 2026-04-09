@@ -3,6 +3,7 @@ import type { Id } from "./_generated/dataModel";
 
 const ADMIN_EMAILS = new Set([
   "diecastrs1@gmail.com",
+  "rakuteninsi1@gmail.com",
   "rakuteninsi3@gmail.com",
   "geettejas@gmail.com",
   "sujithx86@gmail.com",
