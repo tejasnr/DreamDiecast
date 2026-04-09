@@ -25,13 +25,19 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
       onClick={() => !isOutOfStock && onClick?.(product)}
     >
       <div className="relative aspect-square overflow-hidden bg-surface rounded-sm border border-white/5">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
-          referrerPolicy="no-referrer"
-        />
+        {product.image ? (
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/5 text-white/20 text-xs font-mono uppercase">
+            No Image
+          </div>
+        )}
         
         {/* Category Badge */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">

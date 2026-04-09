@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { requireAdmin } from "./_utils";
 
 const DEFAULT_SETTINGS = {
-  heroBackground: "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?q=80&w=1920&auto=format&fit=crop",
+  heroBackground: "/assets/gt3rs.png",
   vaultImage: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?q=80&w=1920&auto=format&fit=crop",
   footerBackground: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1920&auto=format&fit=crop",
   categoryJdm: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=800&auto=format&fit=crop",

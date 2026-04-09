@@ -2,6 +2,7 @@
 
 import Hero from '@/components/Hero';
 import BrandGrid from '@/components/BrandGrid';
+import ThemeGrid from '@/components/ThemeGrid';
 import ProductGrid from '@/components/ProductGrid';
 import Image from 'next/image';
 import { useSettings } from '@/hooks/useSettings';
@@ -14,6 +15,7 @@ export default function Home() {
     <main className="min-h-screen">
       <Hero />
       <BrandGrid />
+      <ThemeGrid />
       <ProductGrid />
 
       {/* Inner Circle Section */}
