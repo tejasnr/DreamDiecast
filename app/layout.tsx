@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <title>DreamDiecast | Premium Diecast Collectibles</title>
         <meta name="description" content="Elevate your collection with exclusive diecast models from Pagani, Toyota, BMW and more." />
       </head>
-      <body className="bg-[#050505] text-white antialiased">
+      <body className="bg-[#050505] text-white antialiased" suppressHydrationWarning>
         <ConvexProvider client={convex}>
           <PostHogProvider>
             <AuthProvider>
