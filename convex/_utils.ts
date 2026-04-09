@@ -4,7 +4,8 @@ import type { Id } from "./_generated/dataModel";
 const ADMIN_EMAILS = new Set([
   "diecastrs1@gmail.com",
   "rakuteninsi3@gmail.com",
-  "nightmareplayz15@gmail.com",
+  "geettejas@gmail.com",
+  "sujithx86@gmail.com",
 ]);
 
 // Minimal context typing to avoid tight coupling with generated types.

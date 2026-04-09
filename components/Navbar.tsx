@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Menu, X, LogOut, Package, Clock } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, LogOut, Package, Clock, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -72,6 +72,16 @@ export default function Navbar() {
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         className="absolute right-0 mt-4 w-48 glass border border-white/10 p-2 shadow-2xl"
                       >
+                        {user.role === 'admin' && (
+                          <Link
+                            href="/admin"
+                            className="flex items-center gap-3 px-4 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors rounded-sm"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <Shield size={14} className="text-accent" />
+                            Admin
+                          </Link>
+                        )}
                         <Link
                           href="/garage"
                           className="flex items-center gap-3 px-4 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors rounded-sm"
@@ -154,6 +164,11 @@ export default function Navbar() {
 
               {user ? (
                 <div className="flex flex-col space-y-4 pt-6 border-t border-white/10">
+                  {user.role === 'admin' && (
+                    <Link href="/admin" className="text-lg font-display uppercase text-accent flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Shield size={18} /> Admin
+                    </Link>
+                  )}
                   <Link href="/garage" className="text-lg font-display uppercase text-accent flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Package size={18} /> Purchases
                   </Link>
