@@ -18,6 +18,7 @@ import {
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { Id } from '@/convex/_generated/dataModel';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 interface AssetManagerProps {
   isOpen: boolean;
@@ -35,6 +36,12 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    variant: 'danger' | 'default';
+    onConfirm: () => void;
+  } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -113,13 +120,38 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
     }
   }, [user]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this asset?')) return;
-    try {
-      await removeAsset({ workosUserId: user?.workosUserId, id: id as Id<"assets"> });
-    } catch (err) {
-      console.error('Error deleting asset:', err);
-    }
+  const handleDelete = (id: string) => {
+    setConfirmModal({
+      title: 'Delete Asset',
+      message: 'Are you sure you want to delete this asset? This cannot be undone.',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await removeAsset({ workosUserId: user?.workosUserId, id: id as Id<"assets"> });
+        } catch (err) {
+          console.error('Error deleting asset:', err);
+        }
+      },
+    });
+  };
+
+  const handleBulkDelete = () => {
+    setConfirmModal({
+      title: 'Delete Selected Assets',
+      message: `Delete ${selectedAssets.size} asset(s)? This cannot be undone.`,
+      variant: 'danger',
+      onConfirm: async () => {
+        const assetsToDelete = assets?.filter(a => selectedAssets.has(a.url)) || [];
+        for (const asset of assetsToDelete) {
+          try {
+            await removeAsset({ workosUserId: user?.workosUserId, id: asset._id as Id<"assets"> });
+          } catch (err) {
+            console.error('Error deleting asset:', err);
+          }
+        }
+        setSelectedAssets(new Set());
+      },
+    });
   };
 
   const toggleAssetSelection = (url: string) => {
@@ -141,6 +173,14 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedAssets.size === (assets?.length || 0)) {
+      setSelectedAssets(new Set());
+    } else {
+      setSelectedAssets(new Set(assets?.map(a => a.url) || []));
+    }
+  };
+
   if (!isOpen) return null;
 
   const loading = assets === undefined;
@@ -159,17 +199,27 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-6xl h-[85vh] glass flex flex-col overflow-hidden border border-white/10"
+        className="relative w-full max-w-6xl h-[95vh] md:h-[85vh] glass flex flex-col overflow-hidden border border-white/10"
       >
         {/* Header */}
-        <div className="p-6 border-b border-white/10 flex items-center justify-between bg-black/20">
+        <div className="p-4 md:p-6 border-b border-white/10 flex items-center justify-between bg-black/20">
           <div>
             <h2 className="text-2xl font-display font-bold uppercase tracking-tight">Asset Library</h2>
             <p className="text-[10px] uppercase tracking-widest text-white/40 font-mono mt-1">Manage images & media</p>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-3">
+            {assets && assets.length > 0 && (
+              <button
+                onClick={handleSelectAll}
+                className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+              >
+                {selectedAssets.size === assets.length ? 'Deselect All' : 'Select All'}
+              </button>
+            )}
+            <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col">
@@ -178,7 +228,7 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`mx-6 mt-6 border-2 border-dashed rounded-sm transition-all ${
+            className={`mx-3 md:mx-6 mt-4 md:mt-6 border-2 border-dashed rounded-sm transition-all ${
               isDragging
                 ? 'border-accent bg-accent/10'
                 : 'border-white/20 bg-white/[0.02] hover:border-white/40'
@@ -253,13 +303,19 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="mx-6 mt-3 overflow-hidden"
+                className="mx-3 md:mx-6 mt-3 overflow-hidden"
               >
                 <div className="flex items-center justify-between bg-accent/10 border border-accent/30 px-4 py-3 rounded-sm">
                   <span className="text-xs font-bold uppercase tracking-widest text-accent">
                     {selectedAssets.size} asset{selectedAssets.size > 1 ? 's' : ''} selected
                   </span>
                   <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleBulkDelete}
+                      className="bg-red-500/20 text-red-400 px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-red-500 hover:text-white transition-all"
+                    >
+                      <Trash2 size={14} /> Delete Selected
+                    </button>
                     {onSelect && (
                       <button
                         onClick={handleAddSelectedToProduct}
@@ -281,7 +337,7 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
           </AnimatePresence>
 
           {/* Asset Grid */}
-          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-3 md:p-6 custom-scrollbar">
             {loading ? (
               <div className="h-full flex items-center justify-center">
                 <Loader2 className="animate-spin text-accent" size={32} />
@@ -303,13 +359,7 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
                           ? 'border-accent ring-1 ring-accent/50'
                           : 'border-white/5 hover:border-accent/50'
                       }`}
-                      onClick={() => {
-                        if (onSelect) {
-                          toggleAssetSelection(asset.url);
-                        } else {
-                          navigator.clipboard.writeText(asset.url);
-                        }
-                      }}
+                      onClick={() => toggleAssetSelection(asset.url)}
                     >
                       <Image
                         src={asset.url}
@@ -324,12 +374,20 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
                           <Check size={12} />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
+                      {/* Mobile-visible delete */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(asset._id); }}
+                        className="absolute top-1 right-1 z-10 p-1.5 bg-black/70 text-red-400 rounded md:hidden"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      {/* Desktop hover overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
                         <p className="text-[10px] font-bold uppercase tracking-tight truncate">{asset.name}</p>
                         <div className="flex items-center justify-between mt-2">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(asset._id); }}
-                            className="p-1.5 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white transition-all rounded"
+                            className="p-1.5 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white transition-all rounded hidden md:block"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -347,6 +405,15 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
           </div>
         </div>
       </motion.div>
+
+      <ConfirmModal
+        isOpen={!!confirmModal}
+        title={confirmModal?.title || ''}
+        message={confirmModal?.message || ''}
+        variant={confirmModal?.variant || 'default'}
+        onConfirm={() => confirmModal?.onConfirm()}
+        onCancel={() => setConfirmModal(null)}
+      />
     </div>
   );
 }

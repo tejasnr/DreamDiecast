@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Star, Package, ShieldCheck, Truck, ArrowRight, ShoppingCart } from 'lucide-react';
+import { X, Star, Package, ShieldCheck, Truck, ArrowRight, ShoppingCart, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import Image from 'next/image';
 import { Product } from '@/lib/data';
 import { useCart } from '@/context/CartContext';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { trackEvent } from '@/lib/posthog';
 
 interface ProductDetailModalProps {
@@ -15,14 +17,29 @@ interface ProductDetailModalProps {
 
 export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
   const { addToCart } = useCart();
+  const router = useRouter();
+  const { user } = useAuth();
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [addedFeedback, setAddedFeedback] = useState(false);
 
   useEffect(() => {
     if (product) {
       trackEvent('product_viewed', { productId: product.id, name: product.name, category: product.category });
+      setActiveImageIndex(0);
+      setAddedFeedback(false);
     }
   }, [product?.id]);
 
   if (!product) return null;
+
+  // Build gallery images: prefer images array, fall back to single image
+  const galleryImages: string[] = product.images?.length
+    ? product.images
+    : product.image
+      ? [product.image]
+      : [];
+  const hasMultipleImages = galleryImages.length > 1;
+  const currentImage = galleryImages[activeImageIndex] || product.image;
 
   const isPreOrder = product.listingType === 'pre-order' || product.category === 'Pre-Order' || product.isPreorder;
   const isOutOfStock = product.stock !== undefined && product.stock <= 0 && !isPreOrder;
@@ -33,8 +50,15 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
   const handleAddToCart = () => {
     if (isOutOfStock) return;
     addToCart(product);
-    // Optional: Show some feedback or close modal
-    // onClose(); 
+    setAddedFeedback(true);
+    setTimeout(() => setAddedFeedback(false), 1500);
+  };
+
+  const handleBuyNow = () => {
+    if (isOutOfStock) return;
+    addToCart(product);
+    onClose();
+    router.push('/checkout/details');
   };
 
   return (
@@ -65,21 +89,67 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           </button>
 
           {/* Left: Image Section */}
-          <div className="w-full md:w-1/2 relative aspect-[4/3] md:aspect-auto bg-surface flex-shrink-0">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden" />
-            
-            {isOutOfStock && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                <span className="bg-red-600 text-white px-8 py-3 text-xl font-display font-bold uppercase tracking-[0.3em] shadow-2xl">
-                  Out of Stock
-                </span>
+          <div className="w-full md:w-1/2 relative bg-surface flex-shrink-0 flex flex-col">
+            {/* Main Image */}
+            <div className="relative aspect-[4/3] md:aspect-auto md:flex-1">
+              {currentImage && (
+                <Image
+                  src={currentImage}
+                  alt={product.name}
+                  fill
+                  className="object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden" />
+
+              {/* Arrow Navigation */}
+              {hasMultipleImages && (
+                <>
+                  <button
+                    onClick={() => setActiveImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 hover:bg-accent transition-colors backdrop-blur-md"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={() => setActiveImageIndex((prev) => (prev + 1) % galleryImages.length)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 hover:bg-accent transition-colors backdrop-blur-md"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </>
+              )}
+
+              {isOutOfStock && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                  <span className="bg-red-600 text-white px-8 py-3 text-xl font-display font-bold uppercase tracking-[0.3em] shadow-2xl">
+                    Out of Stock
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnail Strip */}
+            {hasMultipleImages && (
+              <div className="flex gap-1 p-2 overflow-x-auto bg-black/40 backdrop-blur-md">
+                {galleryImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImageIndex(idx)}
+                    className={`relative w-14 h-14 flex-shrink-0 overflow-hidden border-2 transition-all ${
+                      idx === activeImageIndex ? 'border-accent' : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <Image
+                      src={img}
+                      alt={`${product.name} ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -101,7 +171,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 <h2 className="text-3xl md:text-4xl font-display font-bold uppercase tracking-tighter leading-none mb-4">
                   {product.name}
                 </h2>
-                
+
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center text-accent">
                     {[...Array(5)].map((_, i) => (
@@ -123,14 +193,18 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm ${
                       product.stock > 5 ? 'text-white/40 border border-white/10' : 'text-orange-500 border border-orange-500/20 bg-orange-500/5'
                     }`}>
-                      {product.stock > 0 ? `${product.stock} Units In Stock` : 'Out of Stock'}
+                      {product.stock <= 0
+                        ? 'Out of Stock'
+                        : product.stock <= 5
+                          ? 'Only Few Left'
+                          : 'In Stock'}
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Price & Action */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-6 border-y border-white/5 gap-6">
+              <div className="flex flex-col gap-6 py-6 border-y border-white/5">
                 <div>
                   <span className="text-white/40 text-[10px] uppercase tracking-widest block mb-1">
                     {isPreOrder ? 'Booking Advance' : 'Price'}
@@ -144,32 +218,42 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                  className={`w-full sm:w-auto px-10 py-4 font-display font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                    isOutOfStock
-                      ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'
-                      : 'bg-accent text-white hover:bg-white hover:text-black glow-orange'
-                  }`}
-                >
-                  {isOutOfStock ? (
-                    <>
-                      <X size={18} />
-                      Out of Stock
-                    </>
-                  ) : isPreOrder ? (
-                    <>
-                      <Package size={18} />
-                      Pre-order Now
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart size={18} />
-                      Add to Cart
-                    </>
+                <div className="flex flex-col sm:flex-row gap-3 w-full">
+                  {/* Add to Cart */}
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock}
+                    className={`flex-1 px-8 py-4 font-display font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                      isOutOfStock
+                        ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'
+                        : 'border border-white/10 bg-white/5 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {addedFeedback ? (
+                      <><Check size={18} /> Added!</>
+                    ) : isOutOfStock ? (
+                      <><X size={18} /> Out of Stock</>
+                    ) : isPreOrder ? (
+                      <><ShoppingCart size={18} /> Pre-order</>
+                    ) : (
+                      <><ShoppingCart size={18} /> Add to Cart</>
+                    )}
+                  </button>
+
+                  {/* Buy Now / Checkout */}
+                  {!isOutOfStock && (
+                    <button
+                      onClick={handleBuyNow}
+                      className="flex-1 px-8 py-4 font-display font-bold uppercase tracking-wider bg-accent text-white hover:bg-white hover:text-black transition-all glow-orange flex items-center justify-center gap-2"
+                    >
+                      {isPreOrder ? (
+                        <><ArrowRight size={18} /> Pre-order &amp; Checkout</>
+                      ) : (
+                        <><ArrowRight size={18} /> Buy Now</>
+                      )}
+                    </button>
                   )}
-                </button>
+                </div>
               </div>
 
               {/* Auto-generated description from structured data */}

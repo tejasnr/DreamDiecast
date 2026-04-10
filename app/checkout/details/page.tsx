@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { 
-  MapPin, 
-  Phone, 
+import {
+  MapPin,
+  Phone,
   User,
-  ArrowRight, 
-  ArrowLeft, 
+  ArrowRight,
+  ArrowLeft,
   Loader2,
   Truck,
   AlertCircle
@@ -17,6 +17,7 @@ import {
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { trackEvent } from '@/lib/posthog';
+import { FLAT_SHIPPING_RATE } from '@/lib/constants';
 
 export default function CheckoutDetailsPage() {
   const { cart, cartTotal, setCheckoutDetails, setShippingCharges, balancePaymentItem } = useCart();
@@ -34,7 +35,6 @@ export default function CheckoutDetailsPage() {
     pincode: '',
   });
 
-  const [isCalculating, setIsCalculating] = useState(false);
   const [shippingInfo, setShippingInfo] = useState<{ cost: number; courier: string; etd: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,56 +47,36 @@ export default function CheckoutDetailsPage() {
     }
   }, [user, authLoading, cart, router, balancePaymentItem]);
 
-  const handlePincodeChange = async (pincode: string) => {
-    setFormData(prev => ({ ...prev, pincode }));
-    
-    if (pincode.length === 6) {
-      calculateShipping(pincode);
+  const handlePincodeChange = (pincode: string) => {
+    const cleaned = pincode.replace(/\D/g, '').slice(0, 6);
+    setFormData(prev => ({ ...prev, pincode: cleaned }));
+
+    if (cleaned.length === 6) {
+      if (!/^\d{6}$/.test(cleaned)) {
+        setError('Please enter a valid 6-digit pincode');
+        return;
+      }
+      calculateShipping(cleaned);
+    } else {
+      setShippingInfo(null);
+      setShippingCharges(0);
+      setError(null);
     }
   };
 
-  const calculateShipping = async (pincode: string) => {
+  const calculateShipping = (pincode: string) => {
+    setError(null);
     if (isShippingFree) {
-      setShippingInfo({
-        cost: 0,
-        courier: 'Pre-Order Booking',
-        etd: 'N/A'
-      });
+      setShippingInfo({ cost: 0, courier: 'Free Shipping', etd: '' });
       setShippingCharges(0);
       return;
     }
-
-    setIsCalculating(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/shipping/calculate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          delivery_postcode: pincode,
-          weight: 0.5 // Default weight for diecast cars
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setShippingInfo({
-          cost: data.shipping_cost,
-          courier: data.courier_name,
-          etd: data.estimated_delivery_days
-        });
-        setShippingCharges(data.shipping_cost);
-      } else {
-        setError(data.error || 'Could not calculate shipping for this pincode');
-        setShippingInfo(null);
-        setShippingCharges(0);
-      }
-    } catch (err) {
-      console.error('Shipping calc error:', err);
-      setError('Failed to connect to shipping service');
-    } finally {
-      setIsCalculating(false);
-    }
+    setShippingInfo({
+      cost: FLAT_SHIPPING_RATE,
+      courier: 'Standard Shipping',
+      etd: '5-7',
+    });
+    setShippingCharges(FLAT_SHIPPING_RATE);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -141,8 +121,8 @@ export default function CheckoutDetailsPage() {
                     <label className="text-[10px] text-white/40 uppercase tracking-widest font-bold flex items-center gap-2">
                       <User size={12} className="text-accent" /> Full Name
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -155,8 +135,8 @@ export default function CheckoutDetailsPage() {
                     <label className="text-[10px] text-white/40 uppercase tracking-widest font-bold flex items-center gap-2">
                       <Phone size={12} className="text-accent" /> Phone Number
                     </label>
-                    <input 
-                      type="tel" 
+                    <input
+                      type="tel"
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -169,7 +149,7 @@ export default function CheckoutDetailsPage() {
                     <label className="text-[10px] text-white/40 uppercase tracking-widest font-bold flex items-center gap-2">
                       <MapPin size={12} className="text-accent" /> Street Address
                     </label>
-                    <textarea 
+                    <textarea
                       required
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -182,8 +162,8 @@ export default function CheckoutDetailsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] text-white/40 uppercase tracking-widest font-bold">City</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         required
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -193,8 +173,8 @@ export default function CheckoutDetailsPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] text-white/40 uppercase tracking-widest font-bold">State</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         required
                         value={formData.state}
                         onChange={(e) => setFormData({ ...formData, state: e.target.value })}
@@ -206,22 +186,15 @@ export default function CheckoutDetailsPage() {
 
                   <div className="space-y-2">
                     <label className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Pincode</label>
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        required
-                        maxLength={6}
-                        value={formData.pincode}
-                        onChange={(e) => handlePincodeChange(e.target.value)}
-                        placeholder="6-digit Pincode"
-                        className="w-full bg-white/5 border border-white/10 p-4 text-sm focus:border-accent outline-none transition-colors rounded-sm font-mono"
-                      />
-                      {isCalculating && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                          <Loader2 className="animate-spin text-accent" size={16} />
-                        </div>
-                      )}
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      value={formData.pincode}
+                      onChange={(e) => handlePincodeChange(e.target.value)}
+                      placeholder="6-digit Pincode"
+                      className="w-full bg-white/5 border border-white/10 p-4 text-sm focus:border-accent outline-none transition-colors rounded-sm font-mono"
+                    />
                   </div>
                 </div>
 
@@ -254,9 +227,9 @@ export default function CheckoutDetailsPage() {
                   </div>
                 )}
 
-                <button 
+                <button
                   type="submit"
-                  disabled={!shippingInfo || isCalculating}
+                  disabled={!shippingInfo}
                   className="w-full bg-accent text-white py-5 font-display font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all glow-orange flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continue to Payment <ArrowRight size={18} />
@@ -290,10 +263,10 @@ export default function CheckoutDetailsPage() {
                 {cart.map((item) => (
                   <div key={item.id} className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white/5 rounded-sm overflow-hidden flex-shrink-0 relative">
-                      <NextImage 
-                        src={item.image} 
-                        alt={item.name} 
-                        fill 
+                      <NextImage
+                        src={item.image}
+                        alt={item.name}
+                        fill
                         className="object-cover"
                         referrerPolicy="no-referrer"
                       />

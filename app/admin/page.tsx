@@ -20,6 +20,9 @@ import {
   ShoppingBag,
   Truck,
   CheckCircle,
+  MessageCircle,
+  EyeOff,
+  Eye,
 } from 'lucide-react';
 
 import Image from 'next/image';
@@ -27,6 +30,8 @@ import Link from 'next/link';
 import AssetManager from '@/components/AssetManager';
 import ProductForm from '@/components/admin/ProductForm';
 import PreOrderTable from '@/components/admin/PreOrderTable';
+import ConfirmModal from '@/components/admin/ConfirmModal';
+import { WHATSAPP_COMMUNITY_LINK } from '@/lib/constants';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -44,6 +49,8 @@ export default function AdminPage() {
 
   const removeProduct = useMutation(api.products.remove);
   const markProductArrived = useMutation(api.products.markArrived);
+  const markPreOrdersArrived = useMutation(api.preOrders.markArrivedByProduct);
+  const updateProduct = useMutation(api.products.update);
 
   const [activeTab, setActiveTab] = useState<'products' | 'pre-orders'>(
     'products'
@@ -51,6 +58,12 @@ export default function AdminPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
   const [isAssetManagerOpen, setIsAssetManagerOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    variant: 'danger' | 'default';
+    onConfirm: () => void;
+  } | null>(null);
 
   const isAdmin = user?.role === 'admin';
   const loading = authLoading || products === undefined;
@@ -62,15 +75,74 @@ export default function AdminPage() {
 
   const pendingFulfillmentCount = fulfillmentOrders?.length ?? 0;
 
-  const handleDelete = async (id: string) => {
-    try {
-      await removeProduct({
-        workosUserId: user!.workosUserId,
-        id: id as Id<'products'>,
-      });
-    } catch (err) {
-      console.error('Error deleting product:', err);
-    }
+  const showConfirm = (title: string, message: string, variant: 'danger' | 'default', onConfirm: () => void) => {
+    setConfirmModal({ title, message, variant, onConfirm });
+  };
+
+  const handleDelete = (product: any) => {
+    showConfirm(
+      'Delete Product',
+      `This will permanently remove "${product.name}". This action cannot be undone.`,
+      'danger',
+      async () => {
+        try {
+          await removeProduct({
+            workosUserId: user!.workosUserId,
+            id: product.id as Id<'products'>,
+          });
+        } catch (err) {
+          console.error('Error deleting product:', err);
+        }
+      }
+    );
+  };
+
+  const handleStatusChange = (product: any, status: string, message: string) => {
+    showConfirm(
+      status === 'unlisted' ? 'Unlist Product' : 'Re-list Product',
+      message,
+      status === 'unlisted' ? 'danger' : 'default',
+      async () => {
+        try {
+          await updateProduct({
+            workosUserId: user!.workosUserId,
+            id: product.id as Id<'products'>,
+            status,
+          });
+        } catch (err) {
+          console.error(`Error updating product status:`, err);
+        }
+      }
+    );
+  };
+
+  const handleArrived = (product: any) => {
+    showConfirm(
+      'Mark as Arrived',
+      `Mark "${product.name}" as arrived? This will convert it to in-stock and notify all pre-order customers.`,
+      'default',
+      async () => {
+        try {
+          await markProductArrived({
+            workosUserId: user!.workosUserId,
+            id: product.id as Id<'products'>,
+          });
+          await markPreOrdersArrived({
+            workosUserId: user!.workosUserId,
+            productId: product.id as Id<'products'>,
+          });
+          const message = `🚗 *${product.name}* has arrived!\n\nPlease make your remaining payments here:\nhttps://dreamdiecast.in/pre-orders`;
+          if (WHATSAPP_COMMUNITY_LINK) {
+            navigator.clipboard.writeText(message);
+            window.open(WHATSAPP_COMMUNITY_LINK, '_blank');
+          } else {
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+          }
+        } catch (err) {
+          console.error('Error marking product as arrived:', err);
+        }
+      }
+    );
   };
 
   const startEdit = (product: any) => {
@@ -100,6 +172,10 @@ export default function AdminPage() {
 
   const productList = products ?? [];
   const preOrderList = preOrders ?? [];
+
+  // Extract unique names and SKUs for autocomplete
+  const nameSuggestions = [...new Set(productList.map((p: any) => p.name).filter(Boolean))];
+  const skuSuggestions = [...new Set(productList.map((p: any) => p.sku).filter(Boolean))];
 
   // Determine listing type for filtering
   const isPreOrderProduct = (p: any) =>
@@ -196,6 +272,8 @@ export default function AdminPage() {
             setEditProduct(null);
           }}
           editProduct={editProduct}
+          nameSuggestions={nameSuggestions}
+          skuSuggestions={skuSuggestions}
         />
 
         {/* Product List */}
@@ -211,7 +289,7 @@ export default function AdminPage() {
               inStockProducts.map((product: any) => (
                 <div
                   key={product.id}
-                  className="glass p-6 flex flex-col md:flex-row items-center gap-8 group"
+                  className={`glass p-6 flex flex-col md:flex-row items-center gap-8 group ${product.status === 'unlisted' ? 'opacity-50' : ''}`}
                 >
                   <div className="relative w-32 h-20 bg-white/5 overflow-hidden">
                     {product.image && (
@@ -251,9 +329,32 @@ export default function AdminPage() {
                           {product.listingType}
                         </span>
                       )}
+                      {product.status === 'unlisted' && (
+                        <span className="flex items-center gap-1 text-red-400 bg-red-500/10 px-2 py-0.5 rounded-sm">
+                          <EyeOff size={10} /> Unlisted
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    {/* Unlist / Re-list toggle */}
+                    {product.status === 'unlisted' ? (
+                      <button
+                        onClick={() => handleStatusChange(product, 'active', `Re-list "${product.name}"?`)}
+                        className="p-3 bg-accent/20 hover:bg-accent hover:text-white transition-all rounded-full"
+                        title="Re-list product"
+                      >
+                        <Eye size={18} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleStatusChange(product, 'unlisted', `Unlist "${product.name}" from the store?`)}
+                        className="p-3 bg-white/5 hover:bg-red-500/20 hover:text-red-400 transition-all rounded-full"
+                        title="Unlist product"
+                      >
+                        <EyeOff size={18} />
+                      </button>
+                    )}
                     <button
                       onClick={() => startEdit(product)}
                       className="p-3 bg-white/5 hover:bg-accent hover:text-white transition-all rounded-full"
@@ -261,7 +362,7 @@ export default function AdminPage() {
                       <Edit2 size={18} />
                     </button>
                     <button
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => handleDelete(product)}
                       className="p-3 bg-white/5 hover:bg-red-500 hover:text-white transition-all rounded-full"
                     >
                       <Trash2 size={18} />
@@ -296,7 +397,7 @@ export default function AdminPage() {
                   preOrderProducts.map((product: any) => (
                     <div
                       key={product.id}
-                      className="glass p-6 flex flex-col md:flex-row items-center gap-8 group"
+                      className={`glass p-6 flex flex-col md:flex-row items-center gap-8 group ${product.status === 'unlisted' ? 'opacity-50' : ''}`}
                     >
                       <div className="relative w-32 h-20 bg-white/5 overflow-hidden">
                         {product.image && (
@@ -317,6 +418,11 @@ export default function AdminPage() {
                           <span className="flex items-center gap-1 text-accent">
                             <Tag size={12} /> Pre-Order
                           </span>
+                          {product.status === 'unlisted' && (
+                            <span className="flex items-center gap-1 text-red-400 bg-red-500/10 px-2 py-0.5 rounded-sm">
+                              <EyeOff size={10} /> Unlisted
+                            </span>
+                          )}
                           <span className="flex items-center gap-1">
                             <Package size={12} /> {product.brand}
                           </span>
@@ -342,24 +448,34 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <button
-                          onClick={async () => {
-                            try {
-                              await markProductArrived({
-                                workosUserId: user!.workosUserId,
-                                id: product.id as Id<'products'>,
-                              });
-                            } catch (err) {
-                              console.error(
-                                'Error updating product category:',
-                                err
-                              );
-                            }
-                          }}
-                          className="bg-white text-black px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center gap-2"
-                        >
-                          <CheckCircle size={14} /> Mark as Arrived
-                        </button>
+                        {/* Arrived + WA — always visible for PO products (hidden if already converted to Current Stock) */}
+                        {product.category !== 'Current Stock' && (
+                          <button
+                            onClick={() => handleArrived(product)}
+                            className="bg-white text-black px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center gap-2"
+                          >
+                            <CheckCircle size={14} /> <MessageCircle size={14} /> Arrived + WA
+                          </button>
+                        )}
+
+                        {/* Toggle unlist / re-list */}
+                        {product.status === 'unlisted' ? (
+                          <button
+                            onClick={() => handleStatusChange(product, 'active', `Re-list "${product.name}"?`)}
+                            className="bg-accent/20 text-accent px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center gap-2"
+                          >
+                            <Eye size={14} /> Re-list
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleStatusChange(product, 'unlisted', `Unlist "${product.name}" from the public pre-orders page?`)}
+                            className="p-3 bg-white/5 hover:bg-red-500/20 hover:text-red-400 transition-all rounded-full"
+                            title="Stop PO / Unlist"
+                          >
+                            <EyeOff size={18} />
+                          </button>
+                        )}
+
                         <button
                           onClick={() => startEdit(product)}
                           className="p-3 bg-white/5 hover:bg-accent hover:text-white transition-all rounded-full"
@@ -382,6 +498,15 @@ export default function AdminPage() {
       <AssetManager
         isOpen={isAssetManagerOpen}
         onClose={() => setIsAssetManagerOpen(false)}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmModal}
+        title={confirmModal?.title || ''}
+        message={confirmModal?.message || ''}
+        variant={confirmModal?.variant || 'default'}
+        onConfirm={() => confirmModal?.onConfirm()}
+        onCancel={() => setConfirmModal(null)}
       />
     </div>
   );
