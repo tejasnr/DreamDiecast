@@ -42,6 +42,6 @@ export function useGarage() {
 
   return {
     items,
-    loading: data === undefined,
+    loading: user ? data === undefined : false,
   };
 }

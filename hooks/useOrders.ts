@@ -73,6 +73,6 @@ export function useOrders() {
 
   return {
     orders,
-    loading: data === undefined,
+    loading: user ? data === undefined : false,
   };
 }

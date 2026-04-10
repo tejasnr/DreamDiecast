@@ -24,16 +24,28 @@ export default function ProductGrid() {
 
     return products
       .filter(product => {
-        // Category Filter
-        if (activeFilter !== 'All') {
-          if (activeFilter === 'In Stock') {
-            if (product.category !== 'In Stock' && product.category !== 'Current Stock') return false;
-          } else if (product.category !== activeFilter) {
-            return false;
-          }
+        if (activeFilter === 'All') return true;
+
+        if (activeFilter === 'In Stock') {
+          return product.listingType === 'in-stock'
+            || product.category === 'In Stock'
+            || product.category === 'Current Stock'
+            || product.status === 'In Stock';
         }
-        
-        return true;
+
+        if (activeFilter === 'Pre-Order') {
+          return product.listingType === 'pre-order'
+            || product.category === 'Pre-Order'
+            || product.isPreorder === true;
+        }
+
+        if (activeFilter === 'New Arrival') {
+          const twoWeeksAgo = Date.now() - (14 * 24 * 60 * 60 * 1000);
+          const createdAt = getTimestamp(product.createdAt);
+          return createdAt > twoWeeksAgo;
+        }
+
+        return product.category === activeFilter;
       })
       .sort((a, b) => {
         // 3. Sort by latest added

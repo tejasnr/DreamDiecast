@@ -6,7 +6,9 @@ import { Loader2 } from 'lucide-react';
 
 export default function PreOrdersPage() {
   const { products, loading } = useProducts();
-  const preOrderProducts = products.filter(p => p.category === 'Pre-Order');
+  const preOrderProducts = products.filter(
+    p => p.listingType === 'pre-order' || p.category === 'Pre-Order' || p.isPreorder === true
+  );
   
   if (loading) {
     return (

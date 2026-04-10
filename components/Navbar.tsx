@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import CartDrawer from './CartDrawer';
 import AuthModal from './AuthModal';
+import SearchModal from './SearchModal';
 
 export default function Navbar() {
   const { cartCount } = useCart();
@@ -18,6 +19,7 @@ export default function Navbar() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -42,7 +44,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-6">
-            <button className="hover:text-accent transition-colors">
+            <button className="hover:text-accent transition-colors" onClick={() => setIsSearchOpen(true)}>
               <Search size={20} />
             </button>
 
@@ -199,6 +201,7 @@ export default function Navbar() {
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 }

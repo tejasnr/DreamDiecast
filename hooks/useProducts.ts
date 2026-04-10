@@ -29,6 +29,9 @@ export function useProducts() {
       date: '',
     })),
     createdAt: p._creationTime,
+    listingType: p.listingType,
+    status: p.status,
+    isPreorder: p.isPreorder,
   }));
 
   return {

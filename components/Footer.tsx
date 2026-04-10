@@ -29,10 +29,10 @@ export default function Footer() {
             <h4 className="font-display font-bold uppercase tracking-widest mb-8 text-sm">Quick Links</h4>
             <ul className="space-y-4 text-sm text-white/40 uppercase tracking-widest">
               <li><Link href="/" className="hover:text-accent transition-colors">Home</Link></li>
-              <li><a href="#" className="hover:text-accent transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Shipping Policy</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Returns & Refunds</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Privacy Policy</a></li>
+              <li><Link href="/about" className="hover:text-accent transition-colors">About Us</Link></li>
+              <li><Link href="/shipping-policy" className="hover:text-accent transition-colors">Shipping Policy</Link></li>
+              <li><Link href="/returns" className="hover:text-accent transition-colors">Returns & Refunds</Link></li>
+              <li><Link href="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
 

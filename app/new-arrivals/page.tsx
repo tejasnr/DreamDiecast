@@ -6,7 +6,13 @@ import { Loader2 } from 'lucide-react';
 
 export default function NewArrivalsPage() {
   const { products, loading } = useProducts();
-  const newProducts = products.filter(p => p.category === 'New Arrival');
+  const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+  const newProducts = products.filter(p => {
+    const createdAt = p.createdAt
+      ? (typeof p.createdAt === 'number' ? p.createdAt : new Date(String(p.createdAt)).getTime())
+      : 0;
+    return createdAt > Date.now() - TWO_WEEKS_MS;
+  });
   
   if (loading) {
     return (

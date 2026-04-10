@@ -38,7 +38,7 @@ export default function MyPreOrdersPage() {
     }
   };
 
-  if (authLoading || itemsLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={48} />
@@ -57,6 +57,14 @@ export default function MyPreOrdersPage() {
         <Link href="/" className="bg-white text-black px-8 py-4 font-display font-bold uppercase tracking-wider hover:bg-accent hover:text-white transition-all">
           Return Home
         </Link>
+      </div>
+    );
+  }
+
+  if (itemsLoading) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <Loader2 className="animate-spin text-accent" size={48} />
       </div>
     );
   }

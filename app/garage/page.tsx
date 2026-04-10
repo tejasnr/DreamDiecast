@@ -33,7 +33,7 @@ export default function GaragePage() {
   const ownedItems = items.filter(item => item.status === 'owned');
   const preOrderItems = items.filter(item => item.status === 'pre-ordered' || item.status === 'arrived');
 
-  if (authLoading || itemsLoading || ordersLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={48} />
@@ -52,6 +52,14 @@ export default function GaragePage() {
         <Link href="/" className="bg-white text-black px-8 py-4 font-display font-bold uppercase tracking-wider hover:bg-accent hover:text-white transition-all">
           Return Home
         </Link>
+      </div>
+    );
+  }
+
+  if (itemsLoading || ordersLoading) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <Loader2 className="animate-spin text-accent" size={48} />
       </div>
     );
   }
