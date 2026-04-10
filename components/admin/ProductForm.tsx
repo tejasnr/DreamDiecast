@@ -17,11 +17,14 @@ import {
 } from '@/lib/constants';
 import ImageDropzone from './ImageDropzone';
 import AssetPickerModal from './AssetPickerModal';
+import AutocompleteInput from './AutocompleteInput';
 
 interface ProductFormProps {
   isOpen: boolean;
   onClose: () => void;
   editProduct?: any;
+  nameSuggestions?: string[];
+  skuSuggestions?: string[];
 }
 
 function resolveListingType(product: any): 'in-stock' | 'pre-order' {
@@ -52,6 +55,8 @@ export default function ProductForm({
   isOpen,
   onClose,
   editProduct,
+  nameSuggestions = [],
+  skuSuggestions = [],
 }: ProductFormProps) {
   const { user } = useAuth();
   const createProduct = useMutation(api.products.create);
@@ -263,12 +268,10 @@ export default function ProductForm({
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
                   SKU
                 </label>
-                <input
-                  type="text"
+                <AutocompleteInput
                   value={form.sku}
-                  onChange={(e) =>
-                    setForm({ ...form, sku: e.target.value })
-                  }
+                  onChange={(val) => setForm({ ...form, sku: val })}
+                  suggestions={skuSuggestions}
                   className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors"
                   placeholder="e.g. CM64-RB-02"
                 />
@@ -279,13 +282,11 @@ export default function ProductForm({
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
                   Product Name *
                 </label>
-                <input
+                <AutocompleteInput
                   required
-                  type="text"
                   value={form.name}
-                  onChange={(e) =>
-                    setForm({ ...form, name: e.target.value })
-                  }
+                  onChange={(val) => setForm({ ...form, name: val })}
+                  suggestions={nameSuggestions}
                   className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors"
                   placeholder="e.g. Pagani Huayra R"
                 />

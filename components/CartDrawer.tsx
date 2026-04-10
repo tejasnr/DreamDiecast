@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import AuthModal from './AuthModal';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -16,10 +18,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { cart, removeFromCart, updateQuantity, cartTotal, cartCount } = useCart();
   const { user } = useAuth();
   const router = useRouter();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const handleCheckout = () => {
     if (!user) {
-      alert('Please login to complete your purchase.');
+      setIsAuthModalOpen(true);
       return;
     }
     onClose();
@@ -27,6 +30,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   };
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <>
@@ -160,5 +164,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         </>
       )}
     </AnimatePresence>
+    <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+    </>
   );
 }

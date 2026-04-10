@@ -81,7 +81,9 @@ export const create = action({
     shippingDetails: v.optional(shippingDetailsValidator),
   },
   handler: async (ctx, args): Promise<string> => {
-    await requireUser(ctx, args.workosUserId);
+    // Actions don't have ctx.db, so use runQuery for user validation
+    if (!args.workosUserId) throw new Error("Unauthorized: please log in");
+    await ctx.runQuery(internal._utils.validateUser, { workosUserId: args.workosUserId });
 
     const { bytes, contentType } = decodeBase64DataUrl(args.paymentProofDataUrl);
     const storageId = await ctx.storage.store(new Blob([bytes], { type: contentType }));

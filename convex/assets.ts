@@ -38,7 +38,9 @@ export const create = action({
     dataUrl: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
-    await requireAdmin(ctx, args.workosUserId);
+    // Actions don't have ctx.db, so use runQuery for admin validation
+    if (!args.workosUserId) throw new Error("Unauthorized: please log in");
+    await ctx.runQuery(internal._utils.validateAdmin, { workosUserId: args.workosUserId });
     let finalUrl = args.url;
     let storageId: Id<"_storage"> | undefined;
 

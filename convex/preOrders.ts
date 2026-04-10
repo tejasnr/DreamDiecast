@@ -157,6 +157,28 @@ export const updateStatus = mutation({
   },
 });
 
+// Batch-update all pre-orders for a product to stock_arrived
+export const markArrivedByProduct = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    productId: v.id("products"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const preOrders = await ctx.db
+      .query("preOrders")
+      .filter((q) => q.eq(q.field("productId"), args.productId))
+      .collect();
+
+    for (const po of preOrders) {
+      if (po.status !== "fully_paid_shipped" && po.status !== "cancelled") {
+        await ctx.db.patch(po._id, { status: "stock_arrived" });
+      }
+    }
+    return preOrders.length;
+  },
+});
+
 // Keep the old markArrived for backward compat
 export const markArrived = mutation({
   args: {

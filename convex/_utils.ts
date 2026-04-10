@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internalQuery } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 
 const ADMIN_EMAILS = new Set([
@@ -50,3 +51,24 @@ export async function requireAdmin(ctx: ConvexContext, workosUserId?: string) {
   }
   return user;
 }
+
+// Internal queries callable from actions via ctx.runQuery()
+// Actions don't have ctx.db, so they must use these instead of requireAdmin/requireUser
+export const validateAdmin = internalQuery({
+  args: { workosUserId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getUserByWorkosId(ctx, args.workosUserId);
+    if (!user) throw new Error("Unauthorized");
+    if (user.role !== "admin") throw new Error("Forbidden");
+    return user;
+  },
+});
+
+export const validateUser = internalQuery({
+  args: { workosUserId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getUserByWorkosId(ctx, args.workosUserId);
+    if (!user) throw new Error("Unauthorized");
+    return user;
+  },
+});

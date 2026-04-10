@@ -46,21 +46,6 @@ export default function MyPreOrdersPage() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6">
-          <Car className="text-white/20" size={40} />
-        </div>
-        <h1 className="text-4xl font-display font-bold uppercase tracking-tighter mb-4">Access Denied</h1>
-        <p className="text-white/40 max-w-md mb-8 uppercase tracking-widest text-xs">Please login to view your pre-orders.</p>
-        <Link href="/" className="bg-white text-black px-8 py-4 font-display font-bold uppercase tracking-wider hover:bg-accent hover:text-white transition-all">
-          Return Home
-        </Link>
-      </div>
-    );
-  }
-
   if (itemsLoading) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
