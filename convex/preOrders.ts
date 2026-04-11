@@ -1,4 +1,4 @@
-import { action, internalMutation, mutation, query } from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin, requireUser } from "./_utils";
@@ -373,7 +373,7 @@ export const submitBalancePayment = action({
 });
 
 // Internal query used by the action above
-export const getForPaymentInternal = internalMutation({
+export const getForPaymentInternal = internalQuery({
   args: { preOrderId: v.id("preOrders") },
   handler: async (ctx, args) => {
     const po = await ctx.db.get(args.preOrderId);
