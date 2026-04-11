@@ -186,7 +186,12 @@ export const countPendingVerification = query({
   handler: async (ctx) => {
     const orders = await ctx.db
       .query("orders")
-      .filter((q) => q.eq(q.field("paymentStatus"), "submitted"))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("paymentStatus"), "submitted"),
+          q.eq(q.field("paymentStatus"), "pending")
+        )
+      )
       .collect();
     return orders.length;
   },

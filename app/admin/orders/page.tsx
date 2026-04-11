@@ -298,7 +298,7 @@ export default function AdminOrdersPage() {
                       {order.items.map((item: any, idx: any) => (
                         <div key={idx} className="flex items-center gap-3 bg-white/5 p-2 rounded-sm border border-white/5">
                           <div className="relative w-8 h-8 bg-black rounded-sm overflow-hidden">
-                            <Image src={item.image} alt={item.name} fill className="object-cover" referrerPolicy="no-referrer" />
+                            {item.image && <Image src={item.image} alt={item.name} fill className="object-cover" referrerPolicy="no-referrer" />}
                           </div>
                           <div className="text-[8px] uppercase tracking-widest">
                             <p className="font-bold text-white/60 truncate max-w-[100px]">{item.name}</p>

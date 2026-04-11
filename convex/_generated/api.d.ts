@@ -11,6 +11,7 @@
 import type * as _storage from "../_storage.js";
 import type * as _utils from "../_utils.js";
 import type * as assets from "../assets.js";
+import type * as emails from "../emails.js";
 import type * as garage from "../garage.js";
 import type * as http from "../http.js";
 import type * as orders from "../orders.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   _storage: typeof _storage;
   _utils: typeof _utils;
   assets: typeof assets;
+  emails: typeof emails;
   garage: typeof garage;
   http: typeof http;
   orders: typeof orders;
