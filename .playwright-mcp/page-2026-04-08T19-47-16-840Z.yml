@@ -1,0 +1,303 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "DreamDiecast" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Brands" [ref=e6] [cursor=pointer]:
+          - /url: /brands
+        - link "New Arrivals" [ref=e7] [cursor=pointer]:
+          - /url: /new-arrivals
+        - link "Pre-Orders" [ref=e8] [cursor=pointer]:
+          - /url: /pre-orders
+        - link "Bundles" [ref=e9] [cursor=pointer]:
+          - /url: /bundles
+      - generic [ref=e10]:
+        - button [ref=e11]:
+          - img [ref=e12]
+        - button "Login" [ref=e16]
+        - button [ref=e17]:
+          - img [ref=e18]
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - img "Hero Background" [ref=e25]
+      - generic [ref=e29]:
+        - generic [ref=e32]: Precision Engineered 1:64
+        - heading "Your Dream Garage Scaled Down." [level=1] [ref=e33]:
+          - text: Your Dream
+          - text: Garage
+          - text: Scaled Down.
+        - paragraph [ref=e34]: Curated selection of high-end collectibles. From dry carbon Paganis to limited edition JDM legends. Mint condition, guaranteed.
+        - generic [ref=e35]:
+          - button "Enter the Garage" [ref=e36]
+          - button "View Pre-Orders" [ref=e37]
+          - button "P-ZERO" [ref=e39] [cursor=pointer]:
+            - generic [ref=e43]: P-ZERO
+      - generic [ref=e63]: "01"
+    - generic [ref=e67]:
+      - generic [ref=e68]:
+        - generic [ref=e71]: SHOP BY BRAND
+        - paragraph [ref=e72]: Browse our collection by manufacturer
+      - generic [ref=e73]:
+        - link "Hot Wheels logo Hot Wheels Since 1968" [ref=e74] [cursor=pointer]:
+          - /url: /brands/hotwheels
+          - generic [ref=e75]:
+            - img "Hot Wheels logo" [ref=e78]
+            - generic [ref=e79]:
+              - generic [ref=e80]: Hot Wheels
+              - generic [ref=e81]: Since 1968
+        - link "Bburago logo Bburago Precision Models" [ref=e82] [cursor=pointer]:
+          - /url: /brands/bburago
+          - generic [ref=e83]:
+            - img "Bburago logo" [ref=e86]
+            - generic [ref=e87]:
+              - generic [ref=e88]: Bburago
+              - generic [ref=e89]: Precision Models
+        - link "Mini GT logo Mini GT True Scale Miniatures" [ref=e90] [cursor=pointer]:
+          - /url: /brands/minigt
+          - generic [ref=e91]:
+            - img "Mini GT logo" [ref=e94]
+            - generic [ref=e95]:
+              - generic [ref=e96]: Mini GT
+              - generic [ref=e97]: True Scale Miniatures
+        - link "Pop Race logo Pop Race Limited Runs" [ref=e98] [cursor=pointer]:
+          - /url: /brands/poprace
+          - generic [ref=e99]:
+            - img "Pop Race logo" [ref=e102]
+            - generic [ref=e103]:
+              - generic [ref=e104]: Pop Race
+              - generic [ref=e105]: Limited Runs
+        - link "Poster Cars logo Poster Cars Collector Art" [ref=e106] [cursor=pointer]:
+          - /url: /brands/postercars
+          - generic [ref=e107]:
+            - img "Poster Cars logo" [ref=e110]
+            - generic [ref=e111]:
+              - generic [ref=e112]: Poster Cars
+              - generic [ref=e113]: Collector Art
+        - link "Matchbox logo Matchbox Since 1953" [ref=e114] [cursor=pointer]:
+          - /url: /brands/matchbox
+          - generic [ref=e115]:
+            - img "Matchbox logo" [ref=e118]
+            - generic [ref=e119]:
+              - generic [ref=e120]: Matchbox
+              - generic [ref=e121]: Since 1953
+    - generic [ref=e123]:
+      - generic [ref=e124]:
+        - generic [ref=e127]: Shop by Theme
+        - paragraph [ref=e128]: Find your style of collectible
+      - generic [ref=e129]:
+        - link "JDM Legends Skylines · Supras · NSXs" [ref=e130] [cursor=pointer]:
+          - /url: /themes/jdm-legends
+          - generic [ref=e133]:
+            - generic [ref=e134]: JDM Legends
+            - generic [ref=e135]: Skylines · Supras · NSXs
+        - link "Exotics & Hypercars Lamborghini · Ferrari · Bugatti" [ref=e136] [cursor=pointer]:
+          - /url: /themes/exotics-hypercars
+          - generic [ref=e139]:
+            - generic [ref=e140]: Exotics & Hypercars
+            - generic [ref=e141]: Lamborghini · Ferrari · Bugatti
+        - link "Motorsport / Track Day Le Mans · F1 · DTM" [ref=e142] [cursor=pointer]:
+          - /url: /themes/motorsport-track-day
+          - generic [ref=e145]:
+            - generic [ref=e146]: Motorsport / Track Day
+            - generic [ref=e147]: Le Mans · F1 · DTM
+    - generic [ref=e229]:
+      - generic [ref=e230]:
+        - generic [ref=e231]:
+          - heading "Featured Models" [level=2] [ref=e232]
+          - paragraph [ref=e233]: Handpicked selection of our finest diecast cars
+        - generic [ref=e234]:
+          - button "All" [ref=e235]
+          - button "Pre-Order" [ref=e236]
+          - button "In Stock" [ref=e237]
+          - button "New Arrival" [ref=e238]
+      - generic [ref=e239]:
+        - generic [ref=e240] [cursor=pointer]:
+          - generic [ref=e241]:
+            - generic [ref=e242]: No Image
+            - generic [ref=e244]: Standard
+            - generic [ref=e246]:
+              - generic [ref=e247]: Mint Condition
+              - generic [ref=e248]: Metal Chassis
+            - button [ref=e249]:
+              - img [ref=e250]
+          - generic [ref=e254]:
+            - generic [ref=e255]:
+              - generic [ref=e256]:
+                - generic [ref=e257]: Matchbox
+                - generic [ref=e258]: Scale 1:64
+              - generic [ref=e260]: ₹600
+            - heading "Matchbox Tesla Cybertruck" [level=3] [ref=e261]
+        - generic [ref=e262] [cursor=pointer]:
+          - generic [ref=e263]:
+            - generic [ref=e264]: No Image
+            - generic [ref=e266]: Standard
+            - generic [ref=e268]:
+              - generic [ref=e269]: Mint Condition
+              - generic [ref=e270]: Metal Chassis
+            - button [ref=e271]:
+              - img [ref=e272]
+          - generic [ref=e276]:
+            - generic [ref=e277]:
+              - generic [ref=e278]:
+                - generic [ref=e279]: MiniGT
+                - generic [ref=e280]: Scale 1:64
+              - generic [ref=e282]: ₹1,100
+            - heading "MiniGT Toyota GR Supra" [level=3] [ref=e283]
+        - generic [ref=e284] [cursor=pointer]:
+          - generic [ref=e285]:
+            - generic [ref=e286]: No Image
+            - generic [ref=e288]: Convention
+            - generic [ref=e290]:
+              - generic [ref=e291]: Mint Condition
+              - generic [ref=e292]: Metal Chassis
+            - button [ref=e293]:
+              - img [ref=e294]
+          - generic [ref=e298]:
+            - generic [ref=e299]:
+              - generic [ref=e300]:
+                - generic [ref=e301]: Hot Wheels
+                - generic [ref=e302]: Scale 1:64
+              - generic [ref=e304]: ₹8,000
+            - heading "Hot Wheels Japan Convention Skyline" [level=3] [ref=e305]
+        - generic [ref=e306] [cursor=pointer]:
+          - generic [ref=e307]:
+            - generic [ref=e308]: No Image
+            - generic [ref=e310]: Premium
+            - generic [ref=e312]:
+              - generic [ref=e313]: Mint Condition
+              - generic [ref=e314]: Metal Chassis
+            - button [ref=e315]:
+              - img [ref=e316]
+          - generic [ref=e320]:
+            - generic [ref=e321]:
+              - generic [ref=e322]:
+                - generic [ref=e323]: Bburago
+                - generic [ref=e324]: Scale 1:18
+              - generic [ref=e326]: ₹4,500
+            - heading "Bburago Ferrari SF90 Stradale" [level=3] [ref=e327]
+        - generic [ref=e328] [cursor=pointer]:
+          - generic [ref=e329]:
+            - generic [ref=e330]: No Image
+            - generic [ref=e332]: Standard
+            - generic [ref=e334]:
+              - generic [ref=e335]: Mint Condition
+              - generic [ref=e336]: Metal Chassis
+            - button [ref=e337]:
+              - img [ref=e338]
+          - generic [ref=e342]:
+            - generic [ref=e343]:
+              - generic [ref=e344]:
+                - generic [ref=e345]: Pop Race
+                - generic [ref=e346]: Scale 1:64
+              - generic [ref=e348]: ₹950
+            - heading "Pop Race Porsche 911 GT3 RS" [level=3] [ref=e349]
+        - generic [ref=e350] [cursor=pointer]:
+          - generic [ref=e351]:
+            - generic [ref=e352]: No Image
+            - generic [ref=e354]: Standard
+            - generic [ref=e356]:
+              - generic [ref=e357]: Mint Condition
+              - generic [ref=e358]: Metal Chassis
+            - button [ref=e359]:
+              - img [ref=e360]
+          - generic [ref=e364]:
+            - generic [ref=e365]:
+              - generic [ref=e366]:
+                - generic [ref=e367]: MiniGT
+                - generic [ref=e368]: Scale 1:64
+              - generic [ref=e370]: ₹1,200
+            - heading "MiniGT Nissan GT-R R35 Liberty Walk" [level=3] [ref=e371]
+        - generic [ref=e372] [cursor=pointer]:
+          - generic [ref=e373]:
+            - generic [ref=e374]: No Image
+            - generic [ref=e376]: Premium
+            - generic [ref=e378]:
+              - generic [ref=e379]: Mint Condition
+              - generic [ref=e380]: Metal Chassis
+            - button [ref=e381]:
+              - img [ref=e382]
+          - generic [ref=e386]:
+            - generic [ref=e387]:
+              - generic [ref=e388]:
+                - generic [ref=e389]: Hot Wheels
+                - generic [ref=e390]: Scale 1:64
+              - generic [ref=e392]: ₹2,500
+            - heading "Hot Wheels RLC '71 Datsun 510" [level=3] [ref=e393]
+      - button "View All Products" [ref=e395]
+    - generic [ref=e150]:
+      - img "Inner Circle Background" [ref=e152]
+      - generic [ref=e155]:
+        - heading "Join the Inner Circle" [level=2] [ref=e156]
+        - paragraph [ref=e157]: Get instant updates on exclusive drops, pre-order windows, and member-only deals. Follow us for the latest.
+        - generic [ref=e158]:
+          - link "Join WhatsApp Community" [ref=e159] [cursor=pointer]:
+            - /url: https://chat.whatsapp.com/BvgtaCooKYpJpsfDo978Fy?mode=gi_t
+            - img [ref=e160]
+            - text: Join WhatsApp Community
+          - link "Follow on Instagram" [ref=e162] [cursor=pointer]:
+            - /url: https://www.instagram.com/dreamdiecastofficial/
+            - img [ref=e163]
+            - text: Follow on Instagram
+  - contentinfo [ref=e166]:
+    - generic [ref=e167]:
+      - generic [ref=e168]:
+        - generic [ref=e169]:
+          - heading "DreamDiecast" [level=2] [ref=e170]
+          - paragraph [ref=e171]: The ultimate destination for premium diecast car collectors. We bring you the most exclusive models from around the world.
+          - generic [ref=e172]:
+            - link [ref=e173] [cursor=pointer]:
+              - /url: https://www.instagram.com/dreamdiecastofficial/
+              - img [ref=e174]
+            - link [ref=e177] [cursor=pointer]:
+              - /url: https://chat.whatsapp.com/BvgtaCooKYpJpsfDo978Fy?mode=gi_t
+              - img [ref=e178]
+        - generic [ref=e180]:
+          - heading "Quick Links" [level=4] [ref=e181]
+          - list [ref=e182]:
+            - listitem [ref=e183]:
+              - link "Home" [ref=e184] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e185]:
+              - link "About Us" [ref=e186] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e187]:
+              - link "Shipping Policy" [ref=e188] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e189]:
+              - link "Returns & Refunds" [ref=e190] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e191]:
+              - link "Privacy Policy" [ref=e192] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e193]:
+          - heading "Collections" [level=4] [ref=e194]
+          - list [ref=e195]:
+            - listitem [ref=e196]:
+              - link "Brands" [ref=e197] [cursor=pointer]:
+                - /url: /brands
+            - listitem [ref=e198]:
+              - link "New Arrivals" [ref=e199] [cursor=pointer]:
+                - /url: /new-arrivals
+            - listitem [ref=e200]:
+              - link "Pre-Orders" [ref=e201] [cursor=pointer]:
+                - /url: /pre-orders
+            - listitem [ref=e202]:
+              - link "Bundles" [ref=e203] [cursor=pointer]:
+                - /url: /bundles
+        - generic [ref=e204]:
+          - heading "Contact" [level=4] [ref=e205]
+          - list [ref=e206]:
+            - listitem [ref=e207]:
+              - img [ref=e208]
+              - generic [ref=e211]: dreamdiecast@gmail.com
+            - listitem [ref=e212]:
+              - img [ref=e213]
+              - generic [ref=e215]: +91 9902444938
+            - listitem [ref=e216]:
+              - img [ref=e217]
+              - generic [ref=e220]: Bangalore, Karnataka, India
+      - paragraph [ref=e222]: © 2026 DreamDiecast. All Rights Reserved.
+  - button "Open Next.js Dev Tools" [ref=e401] [cursor=pointer]:
+    - img [ref=e402]
+  - alert [ref=e227]

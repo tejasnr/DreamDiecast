@@ -1,0 +1,89 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "DreamDiecast" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Brands" [ref=e6] [cursor=pointer]:
+          - /url: /brands
+        - link "New Arrivals" [ref=e7] [cursor=pointer]:
+          - /url: /new-arrivals
+        - link "Pre-Orders" [ref=e8] [cursor=pointer]:
+          - /url: /pre-orders
+        - link "Bundles" [ref=e9] [cursor=pointer]:
+          - /url: /bundles
+      - generic [ref=e10]:
+        - button [ref=e11]:
+          - img [ref=e12]
+        - button "Login" [ref=e16]
+        - button [ref=e17]:
+          - img [ref=e18]
+        - button [ref=e22]:
+          - img [ref=e23]
+  - generic [ref=e24]:
+    - generic [ref=e25]: Error 404
+    - heading "Lost in the Vault" [level=1] [ref=e26]
+    - paragraph [ref=e27]: The model you are looking for has been moved to a private collection or doesn't exist in our current inventory.
+    - link "Back to Showroom" [ref=e28] [cursor=pointer]:
+      - /url: /
+      - img [ref=e29]
+      - text: Back to Showroom
+  - contentinfo [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - heading "DreamDiecast" [level=2] [ref=e35]
+          - paragraph [ref=e36]: The ultimate destination for premium diecast car collectors. We bring you the most exclusive models from around the world.
+          - generic [ref=e37]:
+            - link [ref=e38] [cursor=pointer]:
+              - /url: https://www.instagram.com/dreamdiecastofficial/
+              - img [ref=e39]
+            - link [ref=e42] [cursor=pointer]:
+              - /url: https://chat.whatsapp.com/BvgtaCooKYpJpsfDo978Fy?mode=gi_t
+              - img [ref=e43]
+        - generic [ref=e45]:
+          - heading "Quick Links" [level=4] [ref=e46]
+          - list [ref=e47]:
+            - listitem [ref=e48]:
+              - link "Home" [ref=e49] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e50]:
+              - link "About Us" [ref=e51] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e52]:
+              - link "Shipping Policy" [ref=e53] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e54]:
+              - link "Returns & Refunds" [ref=e55] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e56]:
+              - link "Privacy Policy" [ref=e57] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e58]:
+          - heading "Collections" [level=4] [ref=e59]
+          - list [ref=e60]:
+            - listitem [ref=e61]:
+              - link "Brands" [ref=e62] [cursor=pointer]:
+                - /url: /brands
+            - listitem [ref=e63]:
+              - link "New Arrivals" [ref=e64] [cursor=pointer]:
+                - /url: /new-arrivals
+            - listitem [ref=e65]:
+              - link "Pre-Orders" [ref=e66] [cursor=pointer]:
+                - /url: /pre-orders
+            - listitem [ref=e67]:
+              - link "Bundles" [ref=e68] [cursor=pointer]:
+                - /url: /bundles
+        - generic [ref=e69]:
+          - heading "Contact" [level=4] [ref=e70]
+          - list [ref=e71]:
+            - listitem [ref=e72]:
+              - img [ref=e73]
+              - text: dreamdiecast@gmail.com
+            - listitem [ref=e76]:
+              - img [ref=e77]
+              - text: +91 9902444938
+            - listitem [ref=e79]:
+              - img [ref=e80]
+              - text: Bangalore, Karnataka, India
+      - paragraph [ref=e84]: © 2026 DreamDiecast. All Rights Reserved.

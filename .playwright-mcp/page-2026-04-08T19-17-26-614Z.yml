@@ -1,0 +1,176 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "DreamDiecast" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Brands" [ref=e6] [cursor=pointer]:
+          - /url: /brands
+        - link "New Arrivals" [ref=e7] [cursor=pointer]:
+          - /url: /new-arrivals
+        - link "Pre-Orders" [ref=e8] [cursor=pointer]:
+          - /url: /pre-orders
+        - link "Bundles" [ref=e9] [cursor=pointer]:
+          - /url: /bundles
+      - generic [ref=e10]:
+        - button [ref=e11]:
+          - img [ref=e12]
+        - button "Login" [ref=e16]
+        - button [ref=e17]:
+          - img [ref=e18]
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - img "Hero Background" [ref=e25]
+      - generic [ref=e28]:
+        - generic [ref=e31]: Precision Engineered 1:64
+        - heading "Your Dream Garage Scaled Down." [level=1] [ref=e32]:
+          - text: Your Dream
+          - text: Garage
+          - text: Scaled Down.
+        - paragraph [ref=e33]: Curated selection of high-end collectibles. From dry carbon Paganis to limited edition JDM legends. Mint condition, guaranteed.
+        - generic [ref=e34]:
+          - button "Enter the Garage" [ref=e35]
+          - button "View Pre-Orders" [ref=e36]
+          - button "P-ZERO" [ref=e38] [cursor=pointer]:
+            - generic [ref=e42]: P-ZERO
+      - generic [ref=e62]: "01"
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - generic [ref=e69]: SHOP BY BRAND
+        - paragraph [ref=e70]: Browse our collection by manufacturer
+      - generic [ref=e71]:
+        - link "Hot Wheels logo Hot Wheels Since 1968" [ref=e72] [cursor=pointer]:
+          - /url: /brands/hotwheels
+          - generic [ref=e73]:
+            - img "Hot Wheels logo" [ref=e76]
+            - generic [ref=e77]:
+              - generic [ref=e78]: Hot Wheels
+              - generic [ref=e79]: Since 1968
+        - link "Bburago logo Bburago Precision Models" [ref=e80] [cursor=pointer]:
+          - /url: /brands/bburago
+          - generic [ref=e81]:
+            - img "Bburago logo" [ref=e84]
+            - generic [ref=e85]:
+              - generic [ref=e86]: Bburago
+              - generic [ref=e87]: Precision Models
+        - link "Mini GT logo Mini GT True Scale Miniatures" [ref=e88] [cursor=pointer]:
+          - /url: /brands/minigt
+          - generic [ref=e89]:
+            - img "Mini GT logo" [ref=e92]
+            - generic [ref=e93]:
+              - generic [ref=e94]: Mini GT
+              - generic [ref=e95]: True Scale Miniatures
+        - link "Pop Race logo Pop Race Limited Runs" [ref=e96] [cursor=pointer]:
+          - /url: /brands/poprace
+          - generic [ref=e97]:
+            - img "Pop Race logo" [ref=e100]
+            - generic [ref=e101]:
+              - generic [ref=e102]: Pop Race
+              - generic [ref=e103]: Limited Runs
+        - link "Poster Cars logo Poster Cars Collector Art" [ref=e104] [cursor=pointer]:
+          - /url: /brands/postercars
+          - generic [ref=e105]:
+            - img "Poster Cars logo" [ref=e108]
+            - generic [ref=e109]:
+              - generic [ref=e110]: Poster Cars
+              - generic [ref=e111]: Collector Art
+        - link "Matchbox logo Matchbox Since 1953" [ref=e112] [cursor=pointer]:
+          - /url: /brands/matchbox
+          - generic [ref=e113]:
+            - img "Matchbox logo" [ref=e116]
+            - generic [ref=e117]:
+              - generic [ref=e118]: Matchbox
+              - generic [ref=e119]: Since 1953
+    - generic [ref=e121]:
+      - generic [ref=e122]:
+        - generic [ref=e125]: Shop by Theme
+        - paragraph [ref=e126]: Find your style of collectible
+      - generic [ref=e127]:
+        - link "JDM Legends Skylines · Supras · NSXs" [ref=e128] [cursor=pointer]:
+          - /url: /themes/jdm-legends
+          - generic [ref=e131]:
+            - generic [ref=e132]: JDM Legends
+            - generic [ref=e133]: Skylines · Supras · NSXs
+        - link "Exotics & Hypercars Lamborghini · Ferrari · Bugatti" [ref=e134] [cursor=pointer]:
+          - /url: /themes/exotics-hypercars
+          - generic [ref=e137]:
+            - generic [ref=e138]: Exotics & Hypercars
+            - generic [ref=e139]: Lamborghini · Ferrari · Bugatti
+        - link "Motorsport / Track Day Le Mans · F1 · DTM" [ref=e140] [cursor=pointer]:
+          - /url: /themes/motorsport-track-day
+          - generic [ref=e143]:
+            - generic [ref=e144]: Motorsport / Track Day
+            - generic [ref=e145]: Le Mans · F1 · DTM
+    - generic [ref=e148]:
+      - img "Inner Circle Background" [ref=e150]
+      - generic [ref=e153]:
+        - heading "Join the Inner Circle" [level=2] [ref=e154]
+        - paragraph [ref=e155]: Get instant updates on exclusive drops, pre-order windows, and member-only deals. Follow us for the latest.
+        - generic [ref=e156]:
+          - link "Join WhatsApp Community" [ref=e157] [cursor=pointer]:
+            - /url: https://chat.whatsapp.com/BvgtaCooKYpJpsfDo978Fy?mode=gi_t
+            - img [ref=e158]
+            - text: Join WhatsApp Community
+          - link "Follow on Instagram" [ref=e160] [cursor=pointer]:
+            - /url: https://www.instagram.com/dreamdiecastofficial/
+            - img [ref=e161]
+            - text: Follow on Instagram
+  - contentinfo [ref=e164]:
+    - generic [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - heading "DreamDiecast" [level=2] [ref=e168]
+          - paragraph [ref=e169]: The ultimate destination for premium diecast car collectors. We bring you the most exclusive models from around the world.
+          - generic [ref=e170]:
+            - link [ref=e171] [cursor=pointer]:
+              - /url: https://www.instagram.com/dreamdiecastofficial/
+              - img [ref=e172]
+            - link [ref=e175] [cursor=pointer]:
+              - /url: https://chat.whatsapp.com/BvgtaCooKYpJpsfDo978Fy?mode=gi_t
+              - img [ref=e176]
+        - generic [ref=e178]:
+          - heading "Quick Links" [level=4] [ref=e179]
+          - list [ref=e180]:
+            - listitem [ref=e181]:
+              - link "Home" [ref=e182] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e183]:
+              - link "About Us" [ref=e184] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e185]:
+              - link "Shipping Policy" [ref=e186] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e187]:
+              - link "Returns & Refunds" [ref=e188] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e189]:
+              - link "Privacy Policy" [ref=e190] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e191]:
+          - heading "Collections" [level=4] [ref=e192]
+          - list [ref=e193]:
+            - listitem [ref=e194]:
+              - link "Brands" [ref=e195] [cursor=pointer]:
+                - /url: /brands
+            - listitem [ref=e196]:
+              - link "New Arrivals" [ref=e197] [cursor=pointer]:
+                - /url: /new-arrivals
+            - listitem [ref=e198]:
+              - link "Pre-Orders" [ref=e199] [cursor=pointer]:
+                - /url: /pre-orders
+            - listitem [ref=e200]:
+              - link "Bundles" [ref=e201] [cursor=pointer]:
+                - /url: /bundles
+        - generic [ref=e202]:
+          - heading "Contact" [level=4] [ref=e203]
+          - list [ref=e204]:
+            - listitem [ref=e205]:
+              - img [ref=e206]
+              - generic [ref=e209]: dreamdiecast@gmail.com
+            - listitem [ref=e210]:
+              - img [ref=e211]
+              - generic [ref=e213]: +91 9902444938
+            - listitem [ref=e214]:
+              - img [ref=e215]
+              - generic [ref=e218]: Bangalore, Karnataka, India
+      - paragraph [ref=e220]: © 2026 DreamDiecast. All Rights Reserved.

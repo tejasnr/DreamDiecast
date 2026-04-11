@@ -1,0 +1,134 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "DreamDiecast" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Brands" [ref=e6] [cursor=pointer]:
+          - /url: /brands
+        - link "New Arrivals" [ref=e7] [cursor=pointer]:
+          - /url: /new-arrivals
+        - link "Pre-Orders" [ref=e8] [cursor=pointer]:
+          - /url: /pre-orders
+        - link "Bundles" [ref=e9] [cursor=pointer]:
+          - /url: /bundles
+      - generic [ref=e10]:
+        - button [ref=e11]:
+          - img [ref=e12]
+        - button "Login" [ref=e16]
+        - button [ref=e17]:
+          - img [ref=e18]
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e26]: Brands
+      - heading "Shop by Brand" [level=1] [ref=e27]
+      - paragraph [ref=e28]: Explore our curated selection of diecast manufacturers. Each brand tells a different story.
+    - generic [ref=e30]:
+      - link "Hot Wheels logo — Models Hot Wheels Since 1968" [ref=e31] [cursor=pointer]:
+        - /url: /brands/hotwheels
+        - generic [ref=e32]:
+          - img "Hot Wheels logo" [ref=e35]
+          - generic [ref=e36]: — Models
+          - generic [ref=e37]:
+            - generic [ref=e38]: Hot Wheels
+            - generic [ref=e39]: Since 1968
+      - link "Bburago logo — Models Bburago Precision Models" [ref=e40] [cursor=pointer]:
+        - /url: /brands/bburago
+        - generic [ref=e41]:
+          - img "Bburago logo" [ref=e44]
+          - generic [ref=e45]: — Models
+          - generic [ref=e46]:
+            - generic [ref=e47]: Bburago
+            - generic [ref=e48]: Precision Models
+      - link "Mini GT logo — Models Mini GT True Scale Miniatures" [ref=e49] [cursor=pointer]:
+        - /url: /brands/minigt
+        - generic [ref=e50]:
+          - img "Mini GT logo" [ref=e53]
+          - generic [ref=e54]: — Models
+          - generic [ref=e55]:
+            - generic [ref=e56]: Mini GT
+            - generic [ref=e57]: True Scale Miniatures
+      - link "Pop Race logo — Models Pop Race Limited Runs" [ref=e58] [cursor=pointer]:
+        - /url: /brands/poprace
+        - generic [ref=e59]:
+          - img "Pop Race logo" [ref=e62]
+          - generic [ref=e63]: — Models
+          - generic [ref=e64]:
+            - generic [ref=e65]: Pop Race
+            - generic [ref=e66]: Limited Runs
+      - link "Poster Cars logo — Models Poster Cars Collector Art" [ref=e67] [cursor=pointer]:
+        - /url: /brands/postercars
+        - generic [ref=e68]:
+          - img "Poster Cars logo" [ref=e71]
+          - generic [ref=e72]: — Models
+          - generic [ref=e73]:
+            - generic [ref=e74]: Poster Cars
+            - generic [ref=e75]: Collector Art
+      - link "Matchbox logo — Models Matchbox Since 1953" [ref=e76] [cursor=pointer]:
+        - /url: /brands/matchbox
+        - generic [ref=e77]:
+          - img "Matchbox logo" [ref=e80]
+          - generic [ref=e81]: — Models
+          - generic [ref=e82]:
+            - generic [ref=e83]: Matchbox
+            - generic [ref=e84]: Since 1953
+  - contentinfo [ref=e85]:
+    - generic [ref=e86]:
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - heading "DreamDiecast" [level=2] [ref=e89]
+          - paragraph [ref=e90]: The ultimate destination for premium diecast car collectors. We bring you the most exclusive models from around the world.
+          - generic [ref=e91]:
+            - link [ref=e92] [cursor=pointer]:
+              - /url: https://www.instagram.com/dreamdiecastofficial/
+              - img [ref=e93]
+            - link [ref=e96] [cursor=pointer]:
+              - /url: https://chat.whatsapp.com/BvgtaCooKYpJpsfDo978Fy?mode=gi_t
+              - img [ref=e97]
+        - generic [ref=e99]:
+          - heading "Quick Links" [level=4] [ref=e100]
+          - list [ref=e101]:
+            - listitem [ref=e102]:
+              - link "Home" [ref=e103] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e104]:
+              - link "About Us" [ref=e105] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e106]:
+              - link "Shipping Policy" [ref=e107] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e108]:
+              - link "Returns & Refunds" [ref=e109] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e110]:
+              - link "Privacy Policy" [ref=e111] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e112]:
+          - heading "Collections" [level=4] [ref=e113]
+          - list [ref=e114]:
+            - listitem [ref=e115]:
+              - link "Brands" [ref=e116] [cursor=pointer]:
+                - /url: /brands
+            - listitem [ref=e117]:
+              - link "New Arrivals" [ref=e118] [cursor=pointer]:
+                - /url: /new-arrivals
+            - listitem [ref=e119]:
+              - link "Pre-Orders" [ref=e120] [cursor=pointer]:
+                - /url: /pre-orders
+            - listitem [ref=e121]:
+              - link "Bundles" [ref=e122] [cursor=pointer]:
+                - /url: /bundles
+        - generic [ref=e123]:
+          - heading "Contact" [level=4] [ref=e124]
+          - list [ref=e125]:
+            - listitem [ref=e126]:
+              - img [ref=e127]
+              - generic [ref=e130]: dreamdiecast@gmail.com
+            - listitem [ref=e131]:
+              - img [ref=e132]
+              - generic [ref=e134]: +91 9902444938
+            - listitem [ref=e135]:
+              - img [ref=e136]
+              - generic [ref=e139]: Bangalore, Karnataka, India
+      - paragraph [ref=e141]: © 2026 DreamDiecast. All Rights Reserved.
+  - alert [ref=e146]
