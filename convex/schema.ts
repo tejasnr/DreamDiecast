@@ -152,13 +152,38 @@ export default defineSchema({
       v.literal("arrived"),
       // New statuses
       v.literal("waiting_for_stock"),
+      v.literal("deposit_submitted"),
+      v.literal("deposit_verified"),
       v.literal("stock_arrived"),
+      v.literal("balance_submitted"),
+      v.literal("balance_verified"),
+      v.literal("shipped"),
+      v.literal("delivered"),
       v.literal("fully_paid_shipped"),
       v.literal("cancelled")
     ),
     source: v.optional(v.string()),
     notes: v.optional(v.string()),
     createdAt: v.optional(v.number()),
+
+    // Balance payment fields
+    balanceTransactionId: v.optional(v.string()),
+    balancePaymentProofStorageId: v.optional(v.id("_storage")),
+    balancePaymentProofUrl: v.optional(v.string()),
+    balancePaymentStatus: v.optional(v.string()),
+    balanceAmount: v.optional(v.number()),
+    balancePaidAt: v.optional(v.number()),
+    shippingCharges: v.optional(v.number()),
+    shippingAddress: v.optional(
+      v.object({
+        name: v.string(),
+        phone: v.string(),
+        address: v.string(),
+        city: v.string(),
+        state: v.string(),
+        pincode: v.string(),
+      })
+    ),
   })
     .index("by_userId", ["userId"])
     .index("by_status", ["status"])

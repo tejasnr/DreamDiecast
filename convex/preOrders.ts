@@ -1,6 +1,8 @@
-import { mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { requireAdmin, requireUser } from "./_utils";
+import { decodeBase64DataUrl } from "./_storage";
 
 export const byUser = query({
   args: { userId: v.id("users") },
@@ -41,7 +43,13 @@ function mapStatus(status: string): string {
     case "arrived":
       return "stock_arrived";
     case "waiting_for_stock":
+    case "deposit_submitted":
+    case "deposit_verified":
     case "stock_arrived":
+    case "balance_submitted":
+    case "balance_verified":
+    case "shipped":
+    case "delivered":
     case "fully_paid_shipped":
     case "cancelled":
       return status;
@@ -91,7 +99,7 @@ export const create = mutation({
       productSku: product?.sku,
       totalPrice: product?.totalFinalPrice ?? args.price,
       depositPaid: args.depositAmount,
-      status: "waiting_for_stock",
+      status: "deposit_submitted",
       source: "website",
       createdAt: Date.now(),
     });
@@ -119,7 +127,7 @@ export const createManual = mutation({
 
     // Auto-mark as fully paid if deposit covers total
     const status =
-      depositPaid >= totalPrice ? "fully_paid_shipped" : "waiting_for_stock";
+      depositPaid >= totalPrice ? "fully_paid_shipped" : "deposit_verified";
 
     return await ctx.db.insert("preOrders", {
       customerName: args.customerName,
@@ -146,7 +154,13 @@ export const updateStatus = mutation({
     preOrderId: v.id("preOrders"),
     status: v.union(
       v.literal("waiting_for_stock"),
+      v.literal("deposit_submitted"),
+      v.literal("deposit_verified"),
       v.literal("stock_arrived"),
+      v.literal("balance_submitted"),
+      v.literal("balance_verified"),
+      v.literal("shipped"),
+      v.literal("delivered"),
       v.literal("fully_paid_shipped"),
       v.literal("cancelled")
     ),
@@ -170,12 +184,22 @@ export const markArrivedByProduct = mutation({
       .filter((q) => q.eq(q.field("productId"), args.productId))
       .collect();
 
+    let count = 0;
     for (const po of preOrders) {
-      if (po.status !== "fully_paid_shipped" && po.status !== "cancelled") {
+      const s = mapStatus(po.status);
+      if (
+        s !== "fully_paid_shipped" &&
+        s !== "cancelled" &&
+        s !== "shipped" &&
+        s !== "delivered" &&
+        s !== "balance_submitted" &&
+        s !== "balance_verified"
+      ) {
         await ctx.db.patch(po._id, { status: "stock_arrived" });
+        count++;
       }
     }
-    return preOrders.length;
+    return count;
   },
 });
 
@@ -203,6 +227,191 @@ export const markArrived = mutation({
       if (garageItem) {
         await ctx.db.patch(garageItem._id, { status: "arrived" });
       }
+    }
+  },
+});
+
+// Public query: fetch pre-order for balance payment page (no auth required)
+export const getForPayment = query({
+  args: { preOrderId: v.id("preOrders") },
+  handler: async (ctx, args) => {
+    const po = await ctx.db.get(args.preOrderId);
+    if (!po) return null;
+
+    const product = await ctx.db.get(po.productId);
+    const normalizedStatus = mapStatus(po.status);
+    const totalPrice = po.totalPrice ?? po.price ?? 0;
+    const depositPaid = po.depositPaid ?? po.depositAmount ?? 0;
+    const balanceDue = totalPrice - depositPaid;
+    const shippingCharges = 100;
+    const totalToPay = balanceDue + shippingCharges;
+
+    return {
+      _id: po._id,
+      status: normalizedStatus,
+      customerName: po.customerName || po.name || "Customer",
+      customerPhone: po.customerPhone,
+      customerEmail: po.customerEmail,
+      productName: po.productName || po.name || "Product",
+      productImage: po.productImage || po.image,
+      totalPrice,
+      depositPaid,
+      balanceDue,
+      shippingCharges,
+      totalToPay,
+      balancePaymentStatus: po.balancePaymentStatus,
+      shippingAddress: po.shippingAddress,
+      product: product
+        ? {
+            name: product.name,
+            image: product.image,
+            brand: product.brand,
+            scale: product.scale,
+          }
+        : null,
+    };
+  },
+});
+
+// Internal mutation for balance payment (called from action)
+export const insertBalancePayment = internalMutation({
+  args: {
+    preOrderId: v.id("preOrders"),
+    transactionId: v.string(),
+    paymentProofStorageId: v.id("_storage"),
+    paymentProofUrl: v.string(),
+    balanceAmount: v.number(),
+    shippingAddress: v.optional(
+      v.object({
+        name: v.string(),
+        phone: v.string(),
+        address: v.string(),
+        city: v.string(),
+        state: v.string(),
+        pincode: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const po = await ctx.db.get(args.preOrderId);
+    if (!po) throw new Error("Pre-order not found");
+
+    const patch: any = {
+      balanceTransactionId: args.transactionId,
+      balancePaymentProofStorageId: args.paymentProofStorageId,
+      balancePaymentProofUrl: args.paymentProofUrl,
+      balancePaymentStatus: "submitted",
+      balanceAmount: args.balanceAmount,
+      balancePaidAt: Date.now(),
+      shippingCharges: 100,
+      status: "balance_submitted",
+    };
+
+    if (args.shippingAddress) {
+      patch.shippingAddress = args.shippingAddress;
+    }
+
+    await ctx.db.patch(args.preOrderId, patch);
+  },
+});
+
+// Public action: submit balance payment (no auth required, uses preOrderId as token)
+export const submitBalancePayment = action({
+  args: {
+    preOrderId: v.id("preOrders"),
+    transactionId: v.string(),
+    paymentProofDataUrl: v.string(),
+    shippingAddress: v.optional(
+      v.object({
+        name: v.string(),
+        phone: v.string(),
+        address: v.string(),
+        city: v.string(),
+        state: v.string(),
+        pincode: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    // Store payment proof image
+    const { bytes, contentType } = decodeBase64DataUrl(args.paymentProofDataUrl);
+    const storageId = await ctx.storage.store(
+      new Blob([bytes], { type: contentType })
+    );
+    const paymentProofUrl = await ctx.storage.getUrl(storageId);
+    if (!paymentProofUrl) throw new Error("Failed to store payment proof");
+
+    // Get PO to calculate balance
+    const po = await ctx.runQuery(internal.preOrders.getForPaymentInternal, {
+      preOrderId: args.preOrderId,
+    });
+    if (!po) throw new Error("Pre-order not found");
+
+    const balanceAmount = po.totalToPay;
+
+    await ctx.runMutation(internal.preOrders.insertBalancePayment, {
+      preOrderId: args.preOrderId,
+      transactionId: args.transactionId,
+      paymentProofStorageId: storageId,
+      paymentProofUrl,
+      balanceAmount,
+      shippingAddress: args.shippingAddress,
+    });
+
+    // Schedule admin email notification for balance payment
+    try {
+      await ctx.scheduler.runAfter(0, internal.emails.notifyAdminsBalancePayment, {
+        preOrderId: args.preOrderId,
+        productName: po.productName,
+        customerName: po.customerName,
+        balanceAmount,
+      });
+    } catch {
+      // Don't fail the payment if email fails
+    }
+  },
+});
+
+// Internal query used by the action above
+export const getForPaymentInternal = internalMutation({
+  args: { preOrderId: v.id("preOrders") },
+  handler: async (ctx, args) => {
+    const po = await ctx.db.get(args.preOrderId);
+    if (!po) return null;
+    const totalPrice = po.totalPrice ?? po.price ?? 0;
+    const depositPaid = po.depositPaid ?? po.depositAmount ?? 0;
+    const balanceDue = totalPrice - depositPaid;
+    const totalToPay = balanceDue + 100;
+    return {
+      totalToPay,
+      productName: po.productName || po.name || "Product",
+      customerName: po.customerName || po.name || "Customer",
+    };
+  },
+});
+
+// Admin verifies or rejects balance payment
+export const updateBalancePaymentStatus = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    preOrderId: v.id("preOrders"),
+    balancePaymentStatus: v.union(v.literal("verified"), v.literal("rejected")),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const po = await ctx.db.get(args.preOrderId);
+    if (!po) throw new Error("Pre-order not found");
+
+    if (args.balancePaymentStatus === "verified") {
+      await ctx.db.patch(args.preOrderId, {
+        balancePaymentStatus: "verified",
+        status: "balance_verified",
+      });
+    } else {
+      await ctx.db.patch(args.preOrderId, {
+        balancePaymentStatus: "rejected",
+        status: "stock_arrived",
+      });
     }
   },
 });

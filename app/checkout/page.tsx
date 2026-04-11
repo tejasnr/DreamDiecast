@@ -20,6 +20,7 @@ import {
 import NextImage from 'next/image';
 import Link from 'next/link';
 import { trackEvent } from '@/lib/posthog';
+import { PO_SHIPPING_NOTE } from '@/lib/constants';
 
 export default function CheckoutPage() {
   const { cart, cartTotal, clearCart, checkoutDetails, shippingCharges, balancePaymentItem, clearBalancePayment } = useCart();
@@ -35,6 +36,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
 
   const upiId = 'sujithsaravanan2004@okaxis';
+  const isAllPreOrder = !balancePaymentItem && cart.length > 0 && cart.every(item => item.category === 'Pre-Order');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -165,7 +167,10 @@ export default function CheckoutPage() {
       } else {
         clearCart();
       }
-      router.push(`/order-success?orderId=${orderId}`);
+      const successUrl = isAllPreOrder
+        ? `/order-success?orderId=${orderId}&preOrder=true`
+        : `/order-success?orderId=${orderId}`;
+      router.push(successUrl);
     } catch (err) {
       console.error('Checkout error:', err);
       setError('An unexpected error occurred. Please try again.');
@@ -261,6 +266,15 @@ export default function CheckoutPage() {
                   MRP Pricing – No Scalping. We believe in fair prices for all collectors.
                 </p>
               </div>
+
+              {isAllPreOrder && (
+                <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-sm flex gap-3">
+                  <Info size={18} className="text-blue-400 flex-shrink-0" />
+                  <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">
+                    This is a deposit payment. You&apos;ll pay shipping (₹100) when your item arrives.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -371,6 +385,8 @@ export default function CheckoutPage() {
                       <>
                         <Loader2 className="animate-spin" size={18} /> Processing...
                       </>
+                    ) : isAllPreOrder ? (
+                      'Pay Deposit'
                     ) : (
                       'I Have Paid – Place Order'
                     )}

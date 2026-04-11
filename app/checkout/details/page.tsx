@@ -13,12 +13,13 @@ import {
   Loader2,
   Truck,
   AlertCircle,
-  Package
+  Package,
+  Info
 } from 'lucide-react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { trackEvent } from '@/lib/posthog';
-import { FLAT_SHIPPING_RATE } from '@/lib/constants';
+import { FLAT_SHIPPING_RATE, PO_SHIPPING_NOTE } from '@/lib/constants';
 
 export default function CheckoutDetailsPage() {
   const { cart, cartTotal, setCheckoutDetails, setShippingCharges, balancePaymentItem } = useCart();
@@ -114,6 +115,20 @@ export default function CheckoutDetailsPage() {
               <h1 className="text-4xl font-display font-bold uppercase tracking-tighter mb-2">Shipping Details</h1>
               <p className="text-white/40 uppercase tracking-widest text-[10px] font-bold">Where should we send your collectibles?</p>
             </div>
+
+            {isShippingFree && (
+              <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-sm flex gap-3">
+                <Info size={18} className="text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">
+                    Pre-Order Deposit
+                  </p>
+                  <p className="text-[10px] text-blue-400/70 uppercase tracking-widest leading-relaxed mt-1">
+                    You&apos;re securing your item. Shipping + any balance will be collected when it arrives.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="glass p-8 border border-white/10 space-y-6">
@@ -222,7 +237,7 @@ export default function CheckoutDetailsPage() {
                       </p>
                     ) : (
                       <p className="text-[8px] text-accent/60 uppercase tracking-widest">
-                        Shipping will be calculated when item arrives
+                        {PO_SHIPPING_NOTE}
                       </p>
                     )}
                   </div>

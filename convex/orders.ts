@@ -1,5 +1,5 @@
 import { action, internalMutation, mutation, query } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 import { v } from "convex/values";
 import { decodeBase64DataUrl } from "./_storage";
 import { requireAdmin, requireUser } from "./_utils";
@@ -58,11 +58,31 @@ export const insertOrder = internalMutation({
     shippingDetails: v.optional(shippingDetailsValidator),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("orders", {
+    const orderId = await ctx.db.insert("orders", {
       ...args,
       paymentStatus: "submitted",
       orderStatus: "pending",
     });
+
+    // Schedule admin email notification (fire-and-forget)
+    try {
+      await ctx.scheduler.runAfter(0, internal.emails.notifyAdminsNewOrder, {
+        orderId: orderId as string,
+        customerEmail: args.userEmail,
+        totalAmount: args.totalAmount,
+        itemCount: args.items.length,
+        isPreOrder: args.items.some((i) => i.category === "Pre-Order"),
+        items: args.items.map((i) => ({
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+        })),
+      });
+    } catch {
+      // Don't fail order creation if email scheduling fails
+    }
+
+    return orderId;
   },
 });
 
@@ -159,6 +179,16 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
     await ctx.db.delete(args.orderId);
+  },
+});
+
+export const countPendingVerification = query({
+  handler: async (ctx) => {
+    const orders = await ctx.db
+      .query("orders")
+      .filter((q) => q.eq(q.field("paymentStatus"), "submitted"))
+      .collect();
+    return orders.length;
   },
 });
 

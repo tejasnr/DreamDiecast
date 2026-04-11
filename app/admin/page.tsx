@@ -46,6 +46,7 @@ export default function AdminPage() {
     api.orders.listForFulfillment,
     user?.role === 'admin' ? { workosUserId: user.workosUserId } : 'skip'
   );
+  const pendingOrdersCount = useQuery(api.orders.countPendingVerification) ?? 0;
 
   const removeProduct = useMutation(api.products.remove);
   const markProductArrived = useMutation(api.products.markArrived);
@@ -228,9 +229,14 @@ export default function AdminPage() {
             </div>
             <Link
               href="/admin/orders"
-              className="border border-white/10 hover:border-accent text-white/60 hover:text-accent px-6 py-4 font-display font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+              className="border border-white/10 hover:border-accent text-white/60 hover:text-accent px-6 py-4 font-display font-bold uppercase tracking-wider transition-all flex items-center gap-2 relative"
             >
               <ShoppingBag size={20} /> Orders
+              {pendingOrdersCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-accent text-white text-[8px] font-bold w-5 h-5 flex items-center justify-center rounded-full animate-pulse">
+                  {pendingOrdersCount}
+                </span>
+              )}
             </Link>
             <Link
               href="/admin/fulfillment"

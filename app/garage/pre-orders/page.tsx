@@ -1,44 +1,36 @@
 'use client';
 
-import { useGarage, GarageItem } from '@/hooks/useGarage';
 import { useAuth } from '@/context/AuthContext';
-import { useMutation } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
+import { useGarage } from '@/hooks/useGarage';
 import { motion } from 'motion/react';
-import { Loader2, Clock, Calendar, ArrowRight, Car, CreditCard } from 'lucide-react';
+import { Loader2, Clock, Calendar, ArrowRight, CreditCard } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import PreOrderTimeline from '@/components/PreOrderTimeline';
+import { PO_STATUS_DISPLAY } from '@/lib/constants';
+
+function mapGarageStatusToPOStatus(garageStatus: string, poStatus?: string): string {
+  if (poStatus) return poStatus;
+  if (garageStatus === 'arrived') return 'stock_arrived';
+  return 'deposit_verified';
+}
 
 export default function MyPreOrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const { items, loading: itemsLoading } = useGarage();
-  const updateGarageStatus = useMutation(api.garage.updateStatus);
-  const [payingId, setPayingId] = useState<string | null>(null);
+
+  // Also fetch actual pre-orders from convex for richer data
+  const preOrders = useQuery(
+    api.preOrders.byUser,
+    user?.convexUserId ? { userId: user.convexUserId as Id<'users'> } : 'skip'
+  );
 
   const preOrderItems = items.filter(item => item.status === 'pre-ordered' || item.status === 'arrived');
 
-  const handleFinalPayment = async (item: GarageItem) => {
-    if (!user) return;
-    try {
-      setPayingId(item.id);
-
-      await updateGarageStatus({
-        workosUserId: user.workosUserId,
-        garageItemId: item.id as Id<'garageItems'>,
-        status: 'owned',
-        price: item.originalPrice || item.price,
-      });
-    } catch (error) {
-      console.error('Payment failed:', error);
-      alert('Payment failed. Please try again.');
-    } finally {
-      setPayingId(null);
-    }
-  };
-
-  if (authLoading) {
+  if (authLoading || itemsLoading) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={48} />
@@ -46,12 +38,12 @@ export default function MyPreOrdersPage() {
     );
   }
 
-  if (itemsLoading) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <Loader2 className="animate-spin text-accent" size={48} />
-      </div>
-    );
+  // Build a map of productId -> preOrder for enriched data
+  const poByProduct = new Map<string, any>();
+  if (preOrders) {
+    for (const po of preOrders) {
+      poByProduct.set(po.productId as string, po);
+    }
   }
 
   return (
@@ -88,65 +80,89 @@ export default function MyPreOrdersPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {preOrderItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={`group flex flex-col md:flex-row items-center border p-6 gap-8 transition-colors ${item.status === 'arrived' ? 'bg-accent/5 border-accent/30' : 'bg-white/5 border-white/10 hover:bg-white/[0.07]'}`}
-              >
-                <div className="relative w-full md:w-48 aspect-[16/9] overflow-hidden bg-black">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
+            {preOrderItems.map((item, index) => {
+              const po = poByProduct.get(item.productId);
+              const poStatus = mapGarageStatusToPOStatus(item.status, po?.status);
+              const statusDisplay = PO_STATUS_DISPLAY[poStatus];
+              const totalPrice = po?.totalPrice ?? item.originalPrice ?? item.price;
+              const depositPaid = po?.depositPaid ?? item.price;
+              const balanceDue = totalPrice - depositPaid;
+              const isStockArrived = poStatus === 'stock_arrived';
 
-                <div className="flex-1 text-center md:text-left">
-                  <p className="text-accent text-[10px] font-bold uppercase tracking-widest mb-1">{item.brand} • {item.scale}</p>
-                  <h3 className="text-2xl font-display font-bold uppercase tracking-tight mb-2">{item.name}</h3>
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4 text-white/40">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={12} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Applied: {new Date(item.purchasedAt).toLocaleDateString()}</span>
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`group border p-6 transition-colors ${
+                    isStockArrived
+                      ? 'bg-accent/5 border-accent/30'
+                      : 'bg-white/5 border-white/10 hover:bg-white/[0.07]'
+                  }`}
+                >
+                  <div className="flex flex-col md:flex-row items-center gap-8">
+                    <div className="relative w-full md:w-48 aspect-[16/9] overflow-hidden bg-black">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        referrerPolicy="no-referrer"
+                      />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock size={12} className={item.status === 'arrived' ? 'text-green-500' : 'text-accent'} />
-                      <span className={`text-[10px] font-bold uppercase tracking-widest ${item.status === 'arrived' ? 'text-green-500' : 'text-accent'}`}>
-                        Status: {item.status === 'arrived' ? 'Arrived - Final Payment Required' : 'Pending Release'}
-                      </span>
+
+                    <div className="flex-1 text-center md:text-left space-y-3">
+                      <div>
+                        <p className="text-accent text-[10px] font-bold uppercase tracking-widest mb-1">{item.brand} &bull; {item.scale}</p>
+                        <h3 className="text-2xl font-display font-bold uppercase tracking-tight">{item.name}</h3>
+                      </div>
+
+                      {/* Timeline stepper */}
+                      <PreOrderTimeline status={poStatus} />
+
+                      <div className="flex flex-wrap justify-center md:justify-start gap-4 text-white/40">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={12} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">
+                            Applied: {new Date(item.purchasedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${statusDisplay?.color || 'text-white/40'}`}>
+                          {statusDisplay?.label || poStatus}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex flex-col items-center md:items-end gap-4">
-                  <div className="text-right">
-                    <p className="text-[10px] text-white/20 uppercase tracking-widest mb-1">Total Price: ${item.originalPrice || item.price}</p>
-                    <span className="text-2xl font-display font-bold">${item.price} Paid</span>
-                  </div>
+                    <div className="flex flex-col items-center md:items-end gap-4">
+                      <div className="text-right">
+                        <p className="text-[10px] text-white/20 uppercase tracking-widest mb-1">
+                          Deposit: ₹{depositPaid.toLocaleString()} paid
+                        </p>
+                        {balanceDue > 0 ? (
+                          <p className="text-xs text-white/40 uppercase tracking-widest">
+                            Balance: ₹{balanceDue.toLocaleString()} + ₹100 shipping
+                          </p>
+                        ) : (
+                          <p className="text-xs text-green-400 uppercase tracking-widest">
+                            Fully deposited &bull; Shipping: ₹100
+                          </p>
+                        )}
+                      </div>
 
-                  {item.status === 'arrived' && (
-                    <button
-                      onClick={() => handleFinalPayment(item)}
-                      disabled={payingId === item.id}
-                      className="bg-white text-black px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center gap-2 glow-orange"
-                    >
-                      {payingId === item.id ? (
-                        <Loader2 className="animate-spin" size={14} />
-                      ) : (
-                        <>
-                          <CreditCard size={14} /> Pay Balance (${(item.originalPrice || item.price) - item.price})
-                        </>
+                      {isStockArrived && po && (
+                        <Link
+                          href={`/pay/${po._id}`}
+                          className="bg-white text-black px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center gap-2 glow-orange"
+                        >
+                          <CreditCard size={14} /> Pay Now &rarr;
+                        </Link>
                       )}
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>
