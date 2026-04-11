@@ -34,7 +34,7 @@ export default function CheckoutPage() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const upiId = 'dreamdiecast@upi';
+  const upiId = 'sujithsaravanan2004@okaxis';
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -278,14 +278,11 @@ export default function CheckoutPage() {
                 <div className="flex flex-col items-center text-center space-y-6">
                   <div className="relative w-48 h-48 bg-white p-2 rounded-lg shadow-2xl">
                     <NextImage
-                      src="https://picsum.photos/seed/upi-qr/400/400"
+                      src="/assets/QR.png"
                       alt="UPI QR Code"
                       fill
                       className="object-contain p-2"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 pointer-events-none">
-                      <span className="text-[8px] text-black/20 font-bold uppercase tracking-widest">Placeholder QR</span>
-                    </div>
                   </div>
 
                   <div className="w-full space-y-2">

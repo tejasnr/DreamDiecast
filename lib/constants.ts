@@ -27,7 +27,7 @@ export const PRE_ORDER_STATUSES = [
 export type ListingType = (typeof LISTING_TYPES)[number];
 export type PreOrderStatus = (typeof PRE_ORDER_STATUSES)[number];
 
-export const FLAT_SHIPPING_RATE = 80;
+export const FLAT_SHIPPING_RATE = 100;
 
 // WhatsApp community link for announcements (set to your community invite link)
 export const WHATSAPP_COMMUNITY_LINK = '';
