@@ -54,11 +54,13 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     setTimeout(() => setAddedFeedback(false), 1500);
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (isOutOfStock) return;
     addToCart(product);
-    onClose();
     router.push('/checkout/details');
+    onClose();
   };
 
   return (

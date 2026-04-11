@@ -12,7 +12,8 @@ import {
   ArrowLeft,
   Loader2,
   Truck,
-  AlertCircle
+  AlertCircle,
+  Package
 } from 'lucide-react';
 import Link from 'next/link';
 import NextImage from 'next/image';
@@ -263,13 +264,19 @@ export default function CheckoutDetailsPage() {
                 {cart.map((item) => (
                   <div key={item.id} className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white/5 rounded-sm overflow-hidden flex-shrink-0 relative">
-                      <NextImage
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                        referrerPolicy="no-referrer"
-                      />
+                      {item.image ? (
+                        <NextImage
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/20">
+                          <Package size={16} />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-bold uppercase tracking-tight truncate">{item.name}</p>
