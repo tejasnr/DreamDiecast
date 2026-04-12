@@ -4,12 +4,12 @@ import { useGarage } from '@/hooks/useGarage';
 import { useOrders } from '@/hooks/useOrders';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Loader2, Package, Calendar, ArrowRight, Car, Clock, CreditCard, CheckCircle, XCircle, ExternalLink, ShoppingBag, User, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function GaragePage() {
   const { user, loading: authLoading } = useAuth();
@@ -17,7 +17,28 @@ export default function GaragePage() {
   const { orders, loading: ordersLoading } = useOrders();
   const { initiateBalancePayment } = useCart();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'owned' | 'pre-orders' | 'orders'>('owned');
+  const [ordersFilter, setOrdersFilter] = useState<'all' | 'regular' | 'pre-order' | 'balance'>('all');
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') ?? searchParams.get('filter');
+    if (!tabParam) return;
+    const normalized = tabParam.toLowerCase();
+    let nextTab: 'owned' | 'pre-orders' | 'orders' | null = null;
+
+    if (['pre-orders', 'preorder', 'pre-order', 'preorders'].includes(normalized)) {
+      nextTab = 'pre-orders';
+    } else if (['orders'].includes(normalized)) {
+      nextTab = 'orders';
+    } else if (['owned', 'purchases'].includes(normalized)) {
+      nextTab = 'owned';
+    }
+
+    if (nextTab && nextTab !== activeTab) {
+      setActiveTab(nextTab);
+    }
+  }, [searchParams, activeTab]);
 
   const handlePayBalance = (item: { productId: string; name: string; price: number; image: string; id: string }) => {
     initiateBalancePayment({
@@ -32,6 +53,30 @@ export default function GaragePage() {
 
   const ownedItems = items.filter(item => item.status === 'owned');
   const preOrderItems = items.filter(item => item.status === 'pre-ordered' || item.status === 'arrived');
+  const orderTypeLabel = (order: typeof orders[number]) => {
+    if (order.items.some((item) => item.category === 'Balance Payment')) return 'Balance Payment';
+    if (order.items.some((item) => item.category === 'Pre-Order')) return 'Pre-Order Deposit';
+    return 'Order';
+  };
+  const regularOrdersCount = orders.filter(
+    (order) => !order.items.some((item) => item.category === 'Pre-Order' || item.category === 'Balance Payment')
+  ).length;
+  const preOrderOrdersCount = orders.filter((order) =>
+    order.items.some((item) => item.category === 'Pre-Order')
+  ).length;
+  const balanceOrdersCount = orders.filter((order) =>
+    order.items.some((item) => item.category === 'Balance Payment')
+  ).length;
+  const filteredOrders = orders.filter((order) => {
+    if (ordersFilter === 'all') return true;
+    if (ordersFilter === 'pre-order') {
+      return order.items.some((item) => item.category === 'Pre-Order');
+    }
+    if (ordersFilter === 'balance') {
+      return order.items.some((item) => item.category === 'Balance Payment');
+    }
+    return !order.items.some((item) => item.category === 'Pre-Order' || item.category === 'Balance Payment');
+  });
 
   if (authLoading) {
     return (
@@ -217,24 +262,74 @@ export default function GaragePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              {orders.length === 0 ? (
+              <div className="flex flex-wrap gap-3 mb-8">
+                <button
+                  onClick={() => setOrdersFilter('all')}
+                  className={`px-5 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm ${
+                    ordersFilter === 'all' ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  }`}
+                >
+                  All ({orders.length})
+                </button>
+                <button
+                  onClick={() => setOrdersFilter('regular')}
+                  className={`px-5 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm ${
+                    ordersFilter === 'regular' ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  }`}
+                >
+                  Orders ({regularOrdersCount})
+                </button>
+                <button
+                  onClick={() => setOrdersFilter('pre-order')}
+                  className={`px-5 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm ${
+                    ordersFilter === 'pre-order' ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  }`}
+                >
+                  Pre-Order Deposits ({preOrderOrdersCount})
+                </button>
+                <button
+                  onClick={() => setOrdersFilter('balance')}
+                  className={`px-5 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm ${
+                    ordersFilter === 'balance' ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  }`}
+                >
+                  Balance Payments ({balanceOrdersCount})
+                </button>
+              </div>
+
+              {filteredOrders.length === 0 ? (
                 <div className="border border-white/10 p-20 text-center">
                   <ShoppingBag className="mx-auto text-white/10 mb-6" size={48} />
                   <h2 className="text-2xl font-display font-bold uppercase mb-2">No orders found</h2>
-                  <p className="text-white/40 text-sm uppercase tracking-widest mb-8">You haven&apos;t placed any orders yet.</p>
+                  <p className="text-white/40 text-sm uppercase tracking-widest mb-8">No orders match this filter yet.</p>
                   <Link href="/current-stock" className="inline-flex items-center gap-2 text-accent text-xs font-bold uppercase tracking-widest hover:gap-4 transition-all">
                     Start Shopping <ArrowRight size={14} />
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {orders.map((order) => (
+                  {filteredOrders.map((order) => {
+                    const typeLabel = orderTypeLabel(order);
+                    const typeStyle =
+                      typeLabel === 'Balance Payment'
+                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                        : typeLabel === 'Pre-Order Deposit'
+                          ? 'bg-accent/10 border-accent/30 text-accent'
+                          : 'bg-white/5 border-white/10 text-white/40';
+
+                    return (
                     <div key={order.id} className="glass border border-white/10 p-8 relative overflow-hidden group">
                       <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-3xl rounded-full -mr-32 -mt-32 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                       
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
                         {/* Order Info */}
                         <div className="space-y-6">
+                          <div>
+                            <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-2">Order Type</p>
+                            <span className={`inline-flex items-center px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${typeStyle}`}>
+                              {typeLabel}
+                            </span>
+                          </div>
                           <div>
                             <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-2">Order ID</p>
                             <p className="text-sm font-mono font-bold text-white tracking-widest">#{order.id.slice(-8)}</p>
@@ -342,7 +437,7 @@ export default function GaragePage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
             </motion.div>

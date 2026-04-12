@@ -14,7 +14,7 @@ export default function Hero() {
   };
 
   const handlePreOrdersClick = () => {
-    router.push('/garage?filter=pre-order');
+    router.push('/garage?tab=pre-orders');
   };
 
   return (
