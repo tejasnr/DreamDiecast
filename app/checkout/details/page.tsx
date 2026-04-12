@@ -50,6 +50,12 @@ export default function CheckoutDetailsPage() {
     }
   }, [user, authLoading, cart, router, balancePaymentItem]);
 
+  useEffect(() => {
+    if (isShippingFree) {
+      setShippingCharges(0);
+    }
+  }, [isShippingFree, setShippingCharges]);
+
   const handlePincodeChange = (pincode: string) => {
     const cleaned = pincode.replace(/\D/g, '').slice(0, 6);
     setFormData(prev => ({ ...prev, pincode: cleaned }));
@@ -125,7 +131,7 @@ export default function CheckoutDetailsPage() {
                     Pre-Order Deposit
                   </p>
                   <p className="text-[10px] text-blue-400/70 uppercase tracking-widest leading-relaxed mt-1">
-                    You&apos;re securing your item. Shipping + any balance will be collected when it arrives.
+                    {PO_SHIPPING_NOTE}
                   </p>
                 </div>
               </div>

@@ -58,9 +58,25 @@ export const insertOrder = internalMutation({
     shippingDetails: v.optional(shippingDetailsValidator),
   },
   handler: async (ctx, args) => {
-    // Determine orderType based on items
-    const isPreOrder = args.items.some((i) => i.category === "Pre-Order");
-    const orderType = isPreOrder ? "pre-order" as const : "order" as const;
+    const user = await ctx.db.get(args.userId);
+    const products = await Promise.all(
+      args.items.map((item) => ctx.db.get(item.productId))
+    );
+
+    const preOrderFlags = args.items.map((item, index) => {
+      if (item.category === "Balance Payment") return false;
+      const product = products[index];
+      return (
+        product?.listingType === "pre-order" ||
+        product?.category === "Pre-Order" ||
+        product?.isPreorder === true ||
+        item.category === "Pre-Order"
+      );
+    });
+
+    const orderType = preOrderFlags.some(Boolean)
+      ? ("pre-order" as const)
+      : ("order" as const);
 
     const orderId = await ctx.db.insert("orders", {
       ...args,
@@ -68,6 +84,61 @@ export const insertOrder = internalMutation({
       orderStatus: "pending",
       orderType,
     });
+
+    if (preOrderFlags.some(Boolean)) {
+      const now = Date.now();
+      for (let index = 0; index < args.items.length; index++) {
+        if (!preOrderFlags[index]) continue;
+
+        const item = args.items[index];
+        const product = products[index];
+        const totalPrice =
+          product?.totalFinalPrice ??
+          product?.price ??
+          item.originalPrice ??
+          item.price;
+        const customerName = user?.name || args.userEmail;
+        const quantity = Math.max(1, item.quantity || 1);
+
+        for (let count = 0; count < quantity; count++) {
+          await ctx.db.insert("preOrders", {
+            userId: args.userId,
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            category: item.category,
+            brand: item.brand,
+            scale: item.scale,
+            depositAmount: item.price,
+            customerName,
+            customerEmail: args.userEmail,
+            productName: item.name,
+            productImage: item.image,
+            productSku: product?.sku,
+            totalPrice,
+            depositPaid: item.price,
+            status: "deposit_submitted",
+            source: "website",
+            createdAt: now,
+          });
+
+          await ctx.db.insert("garageItems", {
+            userId: args.userId,
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
+            originalPrice: totalPrice,
+            image: item.image,
+            category: item.category,
+            brand: item.brand,
+            scale: item.scale,
+            purchasedAt: now,
+            status: "pre-ordered",
+          });
+        }
+      }
+    }
 
     return orderId;
   },

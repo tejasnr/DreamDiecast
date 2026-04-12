@@ -19,7 +19,7 @@ export default function GaragePage() {
   const { initiateBalancePayment } = useCart();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'owned' | 'pre-orders' | 'orders'>('owned');
-  const [orderTypeFilter, setOrderTypeFilter] = useState<'all' | 'order' | 'pre-order'>('all');
+  const [orderTypeFilter, setOrderTypeFilter] = useState<'all' | 'order' | 'pre-order'>('order');
 
   const handlePayBalance = (item: { productId: string; name: string; price: number; image: string; id: string }) => {
     initiateBalancePayment({

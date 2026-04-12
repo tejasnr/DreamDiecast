@@ -57,7 +57,16 @@ function CountdownTimer({ expiresAt, onExpired }: { expiresAt: number; onExpired
 }
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, clearCart, checkoutDetails, shippingCharges, balancePaymentItem, clearBalancePayment } = useCart();
+  const {
+    cart,
+    cartTotal,
+    clearCart,
+    checkoutDetails,
+    shippingCharges,
+    setShippingCharges,
+    balancePaymentItem,
+    clearBalancePayment
+  } = useCart();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const createOrder = useAction(api.orders.create);
@@ -82,6 +91,13 @@ export default function CheckoutPage() {
   const upiId = 'sujithsaravanan2004@okaxis';
   const isAllPreOrder = !balancePaymentItem && cart.length > 0 && cart.every(item => isPreOrderItem(item));
   const hasInStockItems = !balancePaymentItem && cart.some(item => !isPreOrderItem(item));
+  const effectiveShippingCharges = isAllPreOrder ? 0 : shippingCharges;
+
+  useEffect(() => {
+    if (isAllPreOrder && shippingCharges !== 0) {
+      setShippingCharges(0);
+    }
+  }, [isAllPreOrder, shippingCharges, setShippingCharges]);
 
   // Reserve stock on mount
   useEffect(() => {
@@ -265,8 +281,8 @@ export default function CheckoutPage() {
         userEmail: user.email,
         items,
         subtotal: cartTotal,
-        shippingCharges: shippingCharges,
-        totalAmount: cartTotal + shippingCharges,
+        shippingCharges: effectiveShippingCharges,
+        totalAmount: cartTotal + effectiveShippingCharges,
         transactionId,
         paymentProofDataUrl,
         paymentMethod: 'UPI',
@@ -282,7 +298,7 @@ export default function CheckoutPage() {
         reservedRef.current = false;
       }
 
-      trackEvent('payment_submitted', { orderId, total: cartTotal + shippingCharges, paymentMethod: 'UPI' });
+      trackEvent('payment_submitted', { orderId, total: cartTotal + effectiveShippingCharges, paymentMethod: 'UPI' });
 
       if (balancePaymentItem) {
         clearBalancePayment();
@@ -407,11 +423,11 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-[10px] uppercase tracking-widest text-white/40">
                   <span>Shipping</span>
-                  <span>{shippingCharges > 0 ? `₹${shippingCharges.toLocaleString()}` : 'FREE'}</span>
+                  <span>{effectiveShippingCharges > 0 ? `₹${effectiveShippingCharges.toLocaleString()}` : 'FREE'}</span>
                 </div>
                 <div className="flex justify-between items-end pt-4">
                   <span className="text-xs font-bold uppercase tracking-widest">Total Amount</span>
-                  <span className="text-3xl font-display font-bold text-white">₹{(cartTotal + shippingCharges).toLocaleString()}</span>
+                  <span className="text-3xl font-display font-bold text-white">₹{(cartTotal + effectiveShippingCharges).toLocaleString()}</span>
                 </div>
               </div>
 
@@ -426,7 +442,7 @@ export default function CheckoutPage() {
                 <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-sm flex gap-3">
                   <Info size={18} className="text-blue-400 flex-shrink-0" />
                   <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">
-                    This is a deposit payment. You&apos;ll pay shipping (₹100) when your item arrives.
+                    {PO_SHIPPING_NOTE}
                   </p>
                 </div>
               )}
