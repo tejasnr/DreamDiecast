@@ -10,6 +10,7 @@ import { Loader2, Package, Calendar, ArrowRight, Car, Clock, CreditCard, CheckCi
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ORDER_STATUS_DISPLAY } from '@/lib/constants';
 
 export default function GaragePage() {
   const { user, loading: authLoading } = useAuth();
@@ -18,6 +19,7 @@ export default function GaragePage() {
   const { initiateBalancePayment } = useCart();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'owned' | 'pre-orders' | 'orders'>('owned');
+  const [orderTypeFilter, setOrderTypeFilter] = useState<'all' | 'order' | 'pre-order'>('all');
 
   const handlePayBalance = (item: { productId: string; name: string; price: number; image: string; id: string }) => {
     initiateBalancePayment({
@@ -217,6 +219,23 @@ export default function GaragePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
+              {/* Order Type Filter */}
+              <div className="flex gap-2 mb-6">
+                {(['all', 'order', 'pre-order'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setOrderTypeFilter(t)}
+                    className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm ${
+                      orderTypeFilter === t
+                        ? 'bg-white text-black'
+                        : 'bg-white/5 text-white/40 hover:bg-white/10'
+                    }`}
+                  >
+                    {t === 'all' ? 'All' : t === 'order' ? 'Orders' : 'Pre-Orders'}
+                  </button>
+                ))}
+              </div>
+
               {orders.length === 0 ? (
                 <div className="border border-white/10 p-20 text-center">
                   <ShoppingBag className="mx-auto text-white/10 mb-6" size={48} />
@@ -228,16 +247,29 @@ export default function GaragePage() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {orders.map((order) => (
+                  {orders
+                    .filter((order) => orderTypeFilter === 'all' || order.order_type === orderTypeFilter)
+                    .map((order) => {
+                    const statusDisplay = ORDER_STATUS_DISPLAY[order.order_status] || ORDER_STATUS_DISPLAY.pending;
+                    return (
                     <div key={order.id} className="glass border border-white/10 p-8 relative overflow-hidden group">
                       <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-3xl rounded-full -mr-32 -mt-32 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                      
+
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
                         {/* Order Info */}
                         <div className="space-y-6">
-                          <div>
-                            <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-2">Order ID</p>
-                            <p className="text-sm font-mono font-bold text-white tracking-widest">#{order.id.slice(-8)}</p>
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-2">Order ID</p>
+                              <p className="text-sm font-mono font-bold text-white tracking-widest">#{order.id.slice(-8)}</p>
+                            </div>
+                            <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest rounded-sm border ${
+                              order.order_type === 'pre-order'
+                                ? 'bg-purple-500/10 border-purple-500/20 text-purple-400'
+                                : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                            }`}>
+                              {order.order_type === 'pre-order' ? 'PRE-ORDER' : 'ORDER'}
+                            </span>
                           </div>
                           <div>
                             <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-2">Transaction ID</p>
@@ -260,24 +292,12 @@ export default function GaragePage() {
                         {/* Status & Amount */}
                         <div className="space-y-6">
                           <div>
-                            <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-2">Payment Status</p>
-                            <div className="flex items-center gap-3">
-                              <span className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full border flex items-center gap-2 ${
-                                order.payment_status === 'verified' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
-                                order.payment_status === 'rejected' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                                'bg-yellow-500/10 border-yellow-500/20 text-yellow-500'
-                              }`}>
-                                {order.payment_status === 'verified' && <CheckCircle size={12} />}
-                                {order.payment_status === 'rejected' && <XCircle size={12} />}
-                                {order.payment_status === 'submitted' && <Loader2 size={12} className="animate-spin" />}
-                                {order.payment_status}
-                              </span>
-                            </div>
-                          </div>
-                          <div>
                             <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-2">Order Status</p>
-                            <span className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full border bg-white/5 border-white/10 text-white/40">
-                              {order.order_status}
+                            <span className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full border flex items-center gap-2 w-fit ${statusDisplay.bg} ${statusDisplay.border} ${statusDisplay.color}`}>
+                              {order.order_status === 'completed' && <CheckCircle size={12} />}
+                              {order.order_status === 'cancelled' && <XCircle size={12} />}
+                              {order.order_status === 'pending' && <Loader2 size={12} className="animate-spin" />}
+                              {statusDisplay.label}
                             </span>
                           </div>
                           <div>
@@ -330,9 +350,9 @@ export default function GaragePage() {
                           </div>
                           <div>
                             <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-2">Payment Proof</p>
-                            <a 
-                              href={order.payment_proof_url} 
-                              target="_blank" 
+                            <a
+                              href={order.payment_proof_url}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 text-accent text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors"
                             >
@@ -342,7 +362,8 @@ export default function GaragePage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </motion.div>

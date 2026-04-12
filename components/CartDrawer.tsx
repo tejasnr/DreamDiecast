@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { isPreOrderItem } from '@/lib/data';
 import AuthModal from './AuthModal';
 
 interface CartDrawerProps {
@@ -114,18 +115,18 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                               <Plus size={12} />
                             </button>
                           </div>
-                          {item.stock !== undefined && item.quantity >= item.stock && item.category !== 'Pre-Order' && (
+                          {item.stock !== undefined && item.quantity >= item.stock && !isPreOrderItem(item) && (
                             <span className="text-[8px] text-orange-500 font-bold uppercase tracking-widest">
                               Max Stock Reached
                             </span>
                           )}
                         </div>
                         <span className="text-sm font-display font-bold text-white">
-                          ₹{item.category === 'Pre-Order' 
-                            ? (100 * item.quantity).toLocaleString() 
+                          ₹{isPreOrderItem(item)
+                            ? ((item.bookingAdvance ?? 100) * item.quantity).toLocaleString()
                             : (item.price * item.quantity).toLocaleString()}
                         </span>
-                        {item.category === 'Pre-Order' && (
+                        {isPreOrderItem(item) && (
                           <span className="text-[8px] text-accent font-bold uppercase tracking-widest block mt-1">
                             Booking Price
                           </span>

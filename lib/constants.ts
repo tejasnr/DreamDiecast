@@ -13,7 +13,7 @@ export const CONDITIONS = [
   "Mint / Sealed", "Opened", "Loose"
 ] as const;
 
-export const MATERIALS = ["Diecast Metal", "Resin"] as const;
+export const TYPE_OPTIONS = ["Box", "Blister", "Acrylic Case"] as const;
 
 export const LISTING_TYPES = ["in-stock", "pre-order"] as const;
 
@@ -101,6 +101,54 @@ export const PO_STATUS_DISPLAY: Record<
   fully_paid_shipped: {
     label: "Fully Paid / Shipped",
     adminLabel: "Fully Paid / Shipped",
+    color: "text-green-400",
+    bg: "bg-green-500/10",
+    border: "border-green-500/20",
+  },
+  cancelled: {
+    label: "Cancelled",
+    adminLabel: "Cancelled",
+    color: "text-red-400",
+    bg: "bg-red-500/10",
+    border: "border-red-500/20",
+  },
+};
+
+export const ORDER_STATUS_DISPLAY: Record<
+  string,
+  { label: string; adminLabel: string; color: string; bg: string; border: string }
+> = {
+  pending: {
+    label: "Payment Under Review",
+    adminLabel: "Verify Payment",
+    color: "text-yellow-400",
+    bg: "bg-yellow-500/10",
+    border: "border-yellow-500/20",
+  },
+  verified: {
+    label: "Order Confirmed",
+    adminLabel: "Mark as Shipped",
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/20",
+  },
+  processing: {
+    label: "Order Confirmed",
+    adminLabel: "Mark as Shipped",
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/20",
+  },
+  shipped: {
+    label: "Shipped",
+    adminLabel: "Mark as Completed",
+    color: "text-orange-400",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/20",
+  },
+  completed: {
+    label: "Delivered",
+    adminLabel: "Completed",
     color: "text-green-400",
     bg: "bg-green-500/10",
     border: "border-green-500/20",

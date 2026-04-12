@@ -43,7 +43,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
   const isPreOrder = product.listingType === 'pre-order' || product.category === 'Pre-Order' || product.isPreorder;
   const isOutOfStock = product.stock !== undefined && product.stock <= 0 && !isPreOrder;
-  const resolvedMaterial = product.material || product.details?.material;
+  const resolvedType = product.type || product.details?.type;
   const resolvedCondition = product.condition;
   const resolvedFeatures = product.specialFeatures || product.details?.features?.join(', ');
 
@@ -97,9 +97,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               {currentImage && (
                 <Image
                   src={currentImage}
-                  alt={product.name}
+                  alt={`${product.name} - Image ${activeImageIndex + 1}`}
                   fill
                   className="object-contain"
+                  priority={activeImageIndex === 0}
                   referrerPolicy="no-referrer"
                 />
               )}
@@ -145,9 +146,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   >
                     <Image
                       src={img}
-                      alt={`${product.name} ${idx + 1}`}
+                      alt={`${product.name} - Image ${idx + 1}`}
                       fill
                       className="object-cover"
+                      loading={idx === 0 ? "eager" : "lazy"}
                       referrerPolicy="no-referrer"
                     />
                   </button>
@@ -191,7 +193,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   <span className="text-white/20 text-xs uppercase tracking-widest">
                     {product.reviews?.length || 0} Reviews
                   </span>
-                  {product.stock !== undefined && product.category !== 'Pre-Order' && (
+                  {product.stock !== undefined && !isPreOrder && (
                     <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm ${
                       product.stock > 5 ? 'text-white/40 border border-white/10' : 'text-orange-500 border border-orange-500/20 bg-orange-500/5'
                     }`}>
@@ -296,10 +298,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     <p className="text-sm text-white font-medium">{resolvedCondition}</p>
                   </div>
                 )}
-                {resolvedMaterial && (
+                {resolvedType && (
                   <div className="space-y-3">
-                    <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Material</h4>
-                    <p className="text-sm text-white font-medium">{resolvedMaterial}</p>
+                    <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">Type</h4>
+                    <p className="text-sm text-white font-medium">{resolvedType}</p>
                   </div>
                 )}
               </div>

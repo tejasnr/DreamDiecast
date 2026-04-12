@@ -38,7 +38,7 @@ export default function BrandPage({ brand }: BrandPageProps) {
       stock: p.stock,
       rating: p.rating,
       details: p.details ? {
-        material: p.details.material ?? '',
+        type: p.details.type ?? '',
         features: p.details.features ?? [],
       } : undefined,
       reviews: p.reviews?.map((r: any) => ({

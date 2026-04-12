@@ -43,6 +43,7 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
   const { user } = useAuth();
   const updateStatus = useMutation(api.preOrders.updateStatus);
   const updateBalancePaymentStatus = useMutation(api.preOrders.updateBalancePaymentStatus);
+  const sendArrivalNotification = useMutation(api.preOrders.sendArrivalNotification);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'balance'>('all');
@@ -75,6 +76,21 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
     } catch (err) {
       console.error('Error updating balance status:', err);
       alert('Failed to update balance payment status.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleSendArrivalNotification = async (preOrderId: string) => {
+    setUpdatingId(preOrderId);
+    try {
+      await sendArrivalNotification({
+        workosUserId: user?.workosUserId,
+        preOrderId: preOrderId as Id<'preOrders'>,
+      });
+    } catch (err) {
+      console.error('Error sending arrival notification:', err);
+      alert('Failed to send arrival notification.');
     } finally {
       setUpdatingId(null);
     }
@@ -254,6 +270,11 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
                       <span className={balanceDue > 0 ? 'text-orange-400' : 'text-green-400'}>
                         ₹{balanceDue.toLocaleString()}
                       </span>
+                      {(isStockArrived || isBalanceSubmitted || po.normalizedStatus === 'balance_verified') && balanceDue > 0 && (
+                        <div className="text-[8px] text-white/30 mt-0.5">
+                          +₹100 ship = ₹{(balanceDue + 100).toLocaleString()}
+                        </div>
+                      )}
                     </td>
 
                     {/* Status */}
@@ -329,8 +350,19 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
                           </button>
                         )}
 
+                        {/* Send Arrival Notification button for verified/waiting statuses */}
+                        {(po.normalizedStatus === 'deposit_verified' || po.normalizedStatus === 'waiting_for_stock') && (
+                          <button
+                            onClick={() => handleSendArrivalNotification(po._id)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/30 text-orange-400 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-all"
+                            title="Mark as arrived and send email notification"
+                          >
+                            <Mail size={12} /> Send Arrival Email
+                          </button>
+                        )}
+
                         {/* WhatsApp / Email buttons for other statuses */}
-                        {!isStockArrived && !isBalanceSubmitted && (
+                        {!isStockArrived && !isBalanceSubmitted && po.normalizedStatus !== 'deposit_verified' && po.normalizedStatus !== 'waiting_for_stock' && (
                           <>
                             {hasPhone ? (
                               <a

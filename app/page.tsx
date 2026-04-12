@@ -7,12 +7,30 @@ import ProductGrid from '@/components/ProductGrid';
 import Image from 'next/image';
 import { useSettings } from '@/hooks/useSettings';
 import { trackEvent } from '@/lib/posthog';
+import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const settings = useSettings();
+  const searchParams = useSearchParams();
+  const [showExpiredToast, setShowExpiredToast] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('reservation_expired') === 'true') {
+      setShowExpiredToast(true);
+      // Clean URL
+      window.history.replaceState({}, '', '/');
+      setTimeout(() => setShowExpiredToast(false), 5000);
+    }
+  }, [searchParams]);
 
   return (
     <main className="min-h-screen">
+      {showExpiredToast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-red-500/90 text-white px-6 py-4 rounded-sm shadow-2xl text-sm font-bold uppercase tracking-widest animate-pulse">
+          Your reservation has expired. Items have been returned to stock.
+        </div>
+      )}
       <Hero />
       <BrandGrid />
       <ThemeGrid />

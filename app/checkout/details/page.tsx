@@ -20,13 +20,14 @@ import Link from 'next/link';
 import NextImage from 'next/image';
 import { trackEvent } from '@/lib/posthog';
 import { FLAT_SHIPPING_RATE, PO_SHIPPING_NOTE } from '@/lib/constants';
+import { isPreOrderItem } from '@/lib/data';
 
 export default function CheckoutDetailsPage() {
   const { cart, cartTotal, setCheckoutDetails, setShippingCharges, balancePaymentItem } = useCart();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const isShippingFree = !balancePaymentItem && cart.length > 0 && cart.every(item => item.category === 'Pre-Order');
+  const isShippingFree = !balancePaymentItem && cart.length > 0 && cart.every(item => isPreOrderItem(item));
 
   const [formData, setFormData] = useState({
     name: '',

@@ -1,5 +1,5 @@
 import { action, internalMutation, mutation, query } from "./_generated/server";
-import { internal, api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { decodeBase64DataUrl } from "./_storage";
 import { requireAdmin, requireUser } from "./_utils";
@@ -58,29 +58,16 @@ export const insertOrder = internalMutation({
     shippingDetails: v.optional(shippingDetailsValidator),
   },
   handler: async (ctx, args) => {
+    // Determine orderType based on items
+    const isPreOrder = args.items.some((i) => i.category === "Pre-Order");
+    const orderType = isPreOrder ? "pre-order" as const : "order" as const;
+
     const orderId = await ctx.db.insert("orders", {
       ...args,
       paymentStatus: "submitted",
       orderStatus: "pending",
+      orderType,
     });
-
-    // Schedule admin email notification (fire-and-forget)
-    try {
-      await ctx.scheduler.runAfter(0, internal.emails.notifyAdminsNewOrder, {
-        orderId: orderId as string,
-        customerEmail: args.userEmail,
-        totalAmount: args.totalAmount,
-        itemCount: args.items.length,
-        isPreOrder: args.items.some((i) => i.category === "Pre-Order"),
-        items: args.items.map((i) => ({
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-        })),
-      });
-    } catch {
-      // Don't fail order creation if email scheduling fails
-    }
 
     return orderId;
   },
@@ -101,7 +88,6 @@ export const create = action({
     shippingDetails: v.optional(shippingDetailsValidator),
   },
   handler: async (ctx, args): Promise<string> => {
-    // Actions don't have ctx.db, so use runQuery for user validation
     if (!args.workosUserId) throw new Error("Unauthorized: please log in");
     await ctx.runQuery(internal._utils.validateUser, { workosUserId: args.workosUserId });
 
@@ -128,6 +114,103 @@ export const create = action({
   },
 });
 
+// Admin verifies payment → order status becomes "verified"
+export const verifyPayment = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.paymentStatus === "verified") throw new Error("Payment already verified");
+
+    // Note: Stock for in-stock items is already decremented by the checkout
+    // reservation system (reserveStock on checkout entry, consumeReservation
+    // on order success). No stock decrement needed here.
+
+    await ctx.db.patch(args.orderId, {
+      paymentStatus: "verified",
+      orderStatus: "verified",
+    });
+
+    // Send order confirmation email to user
+    try {
+      await ctx.scheduler.runAfter(0, internal.emails.sendOrderConfirmation, {
+        orderId: args.orderId,
+      });
+    } catch {
+      // Don't fail verification if email scheduling fails
+    }
+  },
+});
+
+// Admin rejects payment → order cancelled
+export const rejectPayment = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    await ctx.db.patch(args.orderId, {
+      paymentStatus: "rejected",
+      orderStatus: "cancelled",
+    });
+  },
+});
+
+// Admin marks order as shipped
+export const markShipped = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.orderStatus !== "verified" && order.orderStatus !== "processing") {
+      throw new Error("Order must be verified before shipping");
+    }
+    await ctx.db.patch(args.orderId, { orderStatus: "shipped" });
+  },
+});
+
+// Admin marks order as completed → auto-create garage items
+export const markCompleted = mutation({
+  args: { workosUserId: v.optional(v.string()), orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.orderStatus !== "shipped") {
+      throw new Error("Order must be shipped before completing");
+    }
+
+    await ctx.db.patch(args.orderId, { orderStatus: "completed" });
+
+    // Auto-create garage items for each order item
+    for (const item of order.items) {
+      await ctx.db.insert("garageItems", {
+        userId: order.userId,
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        originalPrice: item.originalPrice,
+        image: item.image,
+        category: item.category,
+        brand: item.brand,
+        scale: item.scale,
+        purchasedAt: Date.now(),
+        status: "owned",
+      });
+    }
+  },
+});
+
+// Keep old updateStatus for backward compat but route through new flow
 export const updateStatus = mutation({
   args: {
     workosUserId: v.optional(v.string()),
@@ -135,6 +218,7 @@ export const updateStatus = mutation({
     paymentStatus: v.union(v.literal("submitted"), v.literal("verified"), v.literal("rejected")),
     orderStatus: v.union(
       v.literal("pending"),
+      v.literal("verified"),
       v.literal("processing"),
       v.literal("shipped"),
       v.literal("completed"),
@@ -144,33 +228,15 @@ export const updateStatus = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
     const order = await ctx.db.get(args.orderId);
-    if (!order) {
-      throw new Error("Order not found");
-    }
+    if (!order) throw new Error("Order not found");
 
-    if (args.paymentStatus === "verified" && order.paymentStatus !== "verified") {
-      for (const item of order.items) {
-        const product = await ctx.db.get(item.productId);
-        if (product?.stock !== undefined && item.category !== "Pre-Order") {
-          await ctx.db.patch(item.productId, {
-            stock: Math.max(0, product.stock - item.quantity),
-          });
-        }
-      }
-    }
+    // Note: Stock decrement is handled by the checkout reservation system.
+    // No stock adjustment needed here.
 
     await ctx.db.patch(args.orderId, {
       paymentStatus: args.paymentStatus,
       orderStatus: args.orderStatus,
     });
-  },
-});
-
-export const markCompleted = mutation({
-  args: { workosUserId: v.optional(v.string()), orderId: v.id("orders") },
-  handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.workosUserId);
-    await ctx.db.patch(args.orderId, { orderStatus: "completed" });
   },
 });
 
@@ -203,7 +269,11 @@ export const listForFulfillment = query({
     await requireAdmin(ctx, args.workosUserId);
     const orders = await ctx.db.query("orders").collect();
     return orders.filter(
-      (order) => order.paymentStatus === "verified" && order.orderStatus !== "completed"
+      (order) =>
+        order.paymentStatus === "verified" &&
+        (order.orderStatus === "verified" ||
+         order.orderStatus === "processing" ||
+         order.orderStatus === "shipped")
     );
   },
 });

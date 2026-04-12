@@ -19,10 +19,12 @@ import {
   Search,
   MapPin,
   Phone,
-  Truck
+  Truck,
+  Package
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ORDER_STATUS_DISPLAY } from '@/lib/constants';
 
 export default function AdminOrdersPage() {
   const { user, loading: authLoading } = useAuth();
@@ -32,11 +34,15 @@ export default function AdminOrdersPage() {
     api.orders.listAll,
     user?.role === 'admin' ? { workosUserId: user.workosUserId } : 'skip'
   );
-  const updateStatus = useMutation(api.orders.updateStatus);
+  const verifyPaymentMut = useMutation(api.orders.verifyPayment);
+  const rejectPaymentMut = useMutation(api.orders.rejectPayment);
+  const markShippedMut = useMutation(api.orders.markShipped);
+  const markCompletedMut = useMutation(api.orders.markCompleted);
   const removeOrder = useMutation(api.orders.remove);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   const isAdmin = user?.role === 'admin';
   const loading = authLoading || (isAdmin && orders === undefined);
@@ -46,28 +52,33 @@ export default function AdminOrdersPage() {
     return null;
   }
 
-  const updateOrderStatus = async (orderId: string, paymentStatus: string, orderStatus: string) => {
+  const handleAction = async (action: string, orderId: string) => {
     try {
-      await updateStatus({
-        workosUserId: user!.workosUserId,
-        orderId: orderId as Id<'orders'>,
-        paymentStatus: paymentStatus as 'submitted' | 'verified' | 'rejected',
-        orderStatus: orderStatus as 'pending' | 'processing' | 'shipped' | 'completed' | 'cancelled',
-      });
+      const args = { workosUserId: user!.workosUserId, orderId: orderId as Id<'orders'> };
+      switch (action) {
+        case 'verify':
+          await verifyPaymentMut(args);
+          break;
+        case 'reject':
+          await rejectPaymentMut(args);
+          break;
+        case 'ship':
+          await markShippedMut(args);
+          break;
+        case 'complete':
+          await markCompletedMut(args);
+          break;
+      }
     } catch (err) {
-      console.error('Error updating order status:', err);
-      alert('Failed to update order status.');
+      console.error('Error updating order:', err);
+      alert('Failed to update order.');
     }
   };
 
   const deleteOrder = async (orderId: string) => {
     if (!window.confirm('Are you sure you want to delete this order?')) return;
-
     try {
-      await removeOrder({
-        workosUserId: user!.workosUserId,
-        orderId: orderId as Id<'orders'>,
-      });
+      await removeOrder({ workosUserId: user!.workosUserId, orderId: orderId as Id<'orders'> });
     } catch (err) {
       console.error('Error deleting order:', err);
     }
@@ -83,7 +94,10 @@ export default function AdminOrdersPage() {
 
     const matchesStatus = statusFilter === 'all' || order.paymentStatus === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const orderType = order.orderType || (order.items?.some((i: any) => i.category === 'Pre-Order') ? 'pre-order' : 'order');
+    const matchesType = typeFilter === 'all' || orderType === typeFilter;
+
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   if (loading) {
@@ -139,6 +153,23 @@ export default function AdminOrdersPage() {
           </div>
         </div>
 
+        {/* Order Type Filter */}
+        <div className="flex gap-2 mb-8">
+          {(['all', 'order', 'pre-order'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={`px-5 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all rounded-sm ${
+                typeFilter === t
+                  ? 'bg-white text-black'
+                  : 'bg-white/5 text-white/40 hover:bg-white/10'
+              }`}
+            >
+              {t === 'all' ? 'All' : t === 'order' ? 'Orders' : 'Pre-Orders'}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 gap-6">
           {filteredOrders.length === 0 ? (
             <div className="text-center py-24 border border-white/5 carbon-pattern">
@@ -148,6 +179,8 @@ export default function AdminOrdersPage() {
             filteredOrders.map((order: any) => {
               const orderId = order._id as string;
               const createdAt = order._creationTime ? new Date(order._creationTime).toLocaleDateString() : 'N/A';
+              const statusDisplay = ORDER_STATUS_DISPLAY[order.orderStatus] || ORDER_STATUS_DISPLAY.pending;
+              const orderType = order.orderType || (order.items?.some((i: any) => i.category === 'Pre-Order') ? 'pre-order' : 'order');
 
               return (
                 <div key={orderId} className="glass p-8 border border-white/10 relative overflow-hidden group">
@@ -156,9 +189,18 @@ export default function AdminOrdersPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative">
                     {/* Order Info */}
                     <div className="space-y-4">
-                      <div>
-                        <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-1">Order ID</p>
-                        <p className="text-sm font-mono font-bold text-white tracking-widest">#{orderId.slice(-8)}</p>
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-1">Order ID</p>
+                          <p className="text-sm font-mono font-bold text-white tracking-widest">#{orderId.slice(-8)}</p>
+                        </div>
+                        <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest rounded-sm border ${
+                          orderType === 'pre-order'
+                            ? 'bg-purple-500/10 border-purple-500/20 text-purple-400'
+                            : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                        }`}>
+                          {orderType === 'pre-order' ? 'PRE-ORDER' : 'ORDER'}
+                        </span>
                       </div>
                       <div>
                         <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-1">Customer</p>
@@ -220,21 +262,14 @@ export default function AdminOrdersPage() {
                           <p className="text-2xl font-display font-bold text-white">₹{order.totalAmount.toLocaleString()}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <span className={`px-3 py-1 text-[8px] font-bold uppercase tracking-widest rounded-full border ${
-                          order.paymentStatus === 'verified' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
-                          order.paymentStatus === 'rejected' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                          'bg-yellow-500/10 border-yellow-500/20 text-yellow-500'
-                        }`}>
-                          {order.paymentStatus}
-                        </span>
-                        <span className="px-3 py-1 text-[8px] font-bold uppercase tracking-widest rounded-full border bg-white/5 border-white/10 text-white/40">
-                          {order.orderStatus}
+                      <div className="flex gap-2 flex-wrap">
+                        <span className={`px-3 py-1 text-[8px] font-bold uppercase tracking-widest rounded-full border ${statusDisplay.bg} ${statusDisplay.border} ${statusDisplay.color}`}>
+                          {statusDisplay.label}
                         </span>
                       </div>
                     </div>
 
-                    {/* Payment Proof */}
+                    {/* Payment Proof & Actions */}
                     <div className="space-y-4">
                       <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-1">Payment Proof</p>
                       <div className="relative w-full h-32 bg-white/5 rounded-sm overflow-hidden border border-white/10 group/proof">
@@ -253,42 +288,57 @@ export default function AdminOrdersPage() {
                           <ExternalLink size={20} className="text-white" />
                         </a>
                       </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-col gap-3 justify-center">
-                      {order.paymentStatus === 'submitted' && (
-                        <>
+                      {/* Contextual Actions */}
+                      <div className="flex flex-col gap-2">
+                        {order.orderStatus === 'pending' && order.paymentStatus === 'submitted' && (
+                          <>
+                            <button
+                              onClick={() => handleAction('verify', orderId)}
+                              className="w-full bg-green-500 text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
+                            >
+                              <CheckCircle size={14} /> Verify Payment
+                            </button>
+                            <button
+                              onClick={() => handleAction('reject', orderId)}
+                              className="w-full bg-red-500/10 text-red-500 border border-red-500/20 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                            >
+                              <XCircle size={14} /> Reject Payment
+                            </button>
+                          </>
+                        )}
+
+                        {(order.orderStatus === 'verified' || order.orderStatus === 'processing') && (
                           <button
-                            onClick={() => updateOrderStatus(orderId, 'verified', 'processing')}
+                            onClick={() => handleAction('ship', orderId)}
+                            className="w-full bg-accent text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
+                          >
+                            <Truck size={14} /> Mark as Shipped
+                          </button>
+                        )}
+
+                        {order.orderStatus === 'shipped' && (
+                          <button
+                            onClick={() => handleAction('complete', orderId)}
                             className="w-full bg-green-500 text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
                           >
-                            <CheckCircle size={14} /> Verify Payment
+                            <Package size={14} /> Mark as Completed
                           </button>
-                          <button
-                            onClick={() => updateOrderStatus(orderId, 'rejected', 'cancelled')}
-                            className="w-full bg-red-500/10 text-red-500 border border-red-500/20 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                          >
-                            <XCircle size={14} /> Reject Payment
-                          </button>
-                        </>
-                      )}
+                        )}
 
-                      {order.paymentStatus === 'verified' && order.orderStatus !== 'completed' && (
-                        <Link
-                          href="/admin/fulfillment"
-                          className="w-full bg-accent text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
+                        {order.orderStatus === 'completed' && (
+                          <div className="w-full bg-green-500/10 text-green-400 border border-green-500/20 py-3 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                            <CheckCircle size={14} /> Completed
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => deleteOrder(orderId)}
+                          className="w-full bg-white/5 text-white/20 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
                         >
-                          <Truck size={14} /> Process in Fulfillment
-                        </Link>
-                      )}
-
-                      <button
-                        onClick={() => deleteOrder(orderId)}
-                        className="w-full bg-white/5 text-white/20 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                      >
-                        <Trash2 size={14} /> Delete Record
-                      </button>
+                          <Trash2 size={14} /> Delete Record
+                        </button>
+                      </div>
                     </div>
                   </div>
 

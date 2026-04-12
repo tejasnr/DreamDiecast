@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAction } from 'convex/react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAction, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useCart } from '@/context/CartContext';
@@ -15,18 +15,55 @@ import {
   Loader2,
   ArrowLeft,
   ShoppingBag,
-  Info
+  Info,
+  Clock
 } from 'lucide-react';
 import NextImage from 'next/image';
 import Link from 'next/link';
 import { trackEvent } from '@/lib/posthog';
 import { PO_SHIPPING_NOTE } from '@/lib/constants';
+import { isPreOrderItem } from '@/lib/data';
+
+function CountdownTimer({ expiresAt, onExpired }: { expiresAt: number; onExpired: () => void }) {
+  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, expiresAt - Date.now()));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, expiresAt - Date.now());
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+        onExpired();
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt, onExpired]);
+
+  const minutes = Math.floor(timeLeft / 60000);
+  const seconds = Math.floor((timeLeft % 60000) / 1000);
+  const isLow = timeLeft < 60000;
+
+  return (
+    <div className={`flex items-center gap-2 px-4 py-2 rounded-sm border text-sm font-mono font-bold ${
+      isLow
+        ? 'bg-red-500/10 border-red-500/20 text-red-400 animate-pulse'
+        : 'bg-accent/10 border-accent/20 text-accent'
+    }`}>
+      <Clock size={16} />
+      <span>{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}</span>
+      <span className="text-[8px] uppercase tracking-widest opacity-60">remaining</span>
+    </div>
+  );
+}
 
 export default function CheckoutPage() {
   const { cart, cartTotal, clearCart, checkoutDetails, shippingCharges, balancePaymentItem, clearBalancePayment } = useCart();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const createOrder = useAction(api.orders.create);
+  const reserveStock = useMutation(api.stockReservations.reserveStock);
+  const releaseStock = useMutation(api.stockReservations.releaseStock);
+  const consumeReservation = useMutation(api.stockReservations.consumeReservation);
 
   const [transactionId, setTransactionId] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
@@ -34,9 +71,86 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [reservationError, setReservationError] = useState<string | null>(null);
+
+  const sessionIdRef = useRef(
+    typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+  );
+  const reservedRef = useRef(false);
 
   const upiId = 'sujithsaravanan2004@okaxis';
-  const isAllPreOrder = !balancePaymentItem && cart.length > 0 && cart.every(item => item.category === 'Pre-Order');
+  const isAllPreOrder = !balancePaymentItem && cart.length > 0 && cart.every(item => isPreOrderItem(item));
+  const hasInStockItems = !balancePaymentItem && cart.some(item => !isPreOrderItem(item));
+
+  // Reserve stock on mount
+  useEffect(() => {
+    if (!user || reservedRef.current || !hasInStockItems) return;
+
+    const doReserve = async () => {
+      try {
+        const items = cart.map((item) => ({
+          productId: item.id as Id<'products'>,
+          quantity: item.quantity,
+          isPreOrder: isPreOrderItem(item),
+        }));
+
+        const result = await reserveStock({
+          userId: user.convexUserId,
+          sessionId: sessionIdRef.current,
+          items,
+        });
+        setExpiresAt(result.expiresAt);
+        reservedRef.current = true;
+      } catch (err: any) {
+        const msg = err.message || '';
+        if (msg.includes('Insufficient stock')) {
+          setReservationError('One or more items in your cart are no longer available. Please go back and try again.');
+        } else {
+          setReservationError('Unable to reserve your items. Please try again.');
+        }
+      }
+    };
+
+    doReserve();
+  }, [user, hasInStockItems]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Release stock on unmount / navigation away
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (reservedRef.current && user) {
+        // Use sendBeacon for reliability on page close
+        navigator.sendBeacon?.('/api/release-stock', JSON.stringify({
+          userId: user.convexUserId,
+          sessionId: sessionIdRef.current,
+        }));
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Also release on component unmount (route change)
+      if (reservedRef.current && user && !isSubmitting) {
+        releaseStock({
+          userId: user.convexUserId,
+          sessionId: sessionIdRef.current,
+        }).catch(() => {});
+        reservedRef.current = false;
+      }
+    };
+  }, [user, isSubmitting]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleExpired = useCallback(() => {
+    if (user && reservedRef.current) {
+      releaseStock({
+        userId: user.convexUserId,
+        sessionId: sessionIdRef.current,
+      }).catch(() => {});
+      reservedRef.current = false;
+    }
+    router.push('/?reservation_expired=true');
+  }, [user, releaseStock, router]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -118,7 +232,6 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
-      // Convert image to base64 data URL for Convex mutation
       const reader = new FileReader();
       const paymentProofDataUrl = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
@@ -138,7 +251,7 @@ export default function CheckoutPage() {
       }] : cart.map(item => ({
         productId: item.id as Id<'products'>,
         name: item.name,
-        price: item.category === 'Pre-Order' ? 100 : item.price,
+        price: isPreOrderItem(item) ? (item.bookingAdvance ?? 100) : item.price,
         image: item.image,
         category: item.category || '',
         brand: item.brand || '',
@@ -160,6 +273,15 @@ export default function CheckoutPage() {
         shippingDetails: checkoutDetails || undefined,
       });
 
+      // Consume reservation (stock already decremented) instead of releasing
+      if (reservedRef.current) {
+        await consumeReservation({
+          userId: user.convexUserId,
+          sessionId: sessionIdRef.current,
+        });
+        reservedRef.current = false;
+      }
+
       trackEvent('payment_submitted', { orderId, total: cartTotal + shippingCharges, paymentMethod: 'UPI' });
 
       if (balancePaymentItem) {
@@ -171,9 +293,16 @@ export default function CheckoutPage() {
         ? `/order-success?orderId=${orderId}&preOrder=true`
         : `/order-success?orderId=${orderId}`;
       router.push(successUrl);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Checkout error:', err);
-      setError('An unexpected error occurred. Please try again.');
+      const msg = err?.message || '';
+      if (msg.includes('Insufficient stock') || msg.includes('stock')) {
+        setError('Some items are no longer in stock. Please update your cart and try again.');
+      } else if (msg.includes('Unauthorized') || msg.includes('log in')) {
+        setError('Please log in to complete your order.');
+      } else {
+        setError('Something went wrong. Please try again or contact us on WhatsApp.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -187,12 +316,38 @@ export default function CheckoutPage() {
     );
   }
 
+  // Show reservation error
+  if (reservationError) {
+    return (
+      <main className="min-h-screen bg-[#050505] pt-32 pb-20 px-6">
+        <div className="max-w-lg mx-auto text-center space-y-6">
+          <div className="glass p-12 border border-red-500/20 space-y-4">
+            <h2 className="text-2xl font-display font-bold uppercase">Stock Unavailable</h2>
+            <p className="text-white/40 text-sm uppercase tracking-widest">{reservationError}</p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-accent text-xs font-bold uppercase tracking-widest hover:text-white transition-colors"
+            >
+              <ArrowLeft size={14} /> Return to Store
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#050505] pt-32 pb-20 px-6">
       <div className="max-w-4xl mx-auto">
-        <Link href="/" className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-8 uppercase tracking-widest text-[10px] font-bold">
-          <ArrowLeft size={14} /> Back to Store
-        </Link>
+        <div className="flex items-center justify-between mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors uppercase tracking-widest text-[10px] font-bold">
+            <ArrowLeft size={14} /> Back to Store
+          </Link>
+          {/* Countdown Timer */}
+          {expiresAt && hasInStockItems && (
+            <CountdownTimer expiresAt={expiresAt} onExpired={handleExpired} />
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Order Summary */}
@@ -239,7 +394,7 @@ export default function CheckoutPage() {
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xs font-bold uppercase tracking-tight truncate">{item.name}</h3>
                       <p className="text-[10px] text-white/40 uppercase tracking-widest">{item.brand} | Qty: {item.quantity}</p>
-                      <p className="text-xs font-bold text-accent mt-1">₹{((item.category === 'Pre-Order' ? 100 : item.price) * item.quantity).toLocaleString()}</p>
+                      <p className="text-xs font-bold text-accent mt-1">₹{((isPreOrderItem(item) ? (item.bookingAdvance ?? 100) : item.price) * item.quantity).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -272,6 +427,15 @@ export default function CheckoutPage() {
                   <Info size={18} className="text-blue-400 flex-shrink-0" />
                   <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">
                     This is a deposit payment. You&apos;ll pay shipping (₹100) when your item arrives.
+                  </p>
+                </div>
+              )}
+
+              {hasInStockItems && expiresAt && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-sm flex gap-3">
+                  <Clock size={18} className="text-yellow-400 flex-shrink-0" />
+                  <p className="text-[10px] text-yellow-400 font-bold uppercase tracking-widest leading-relaxed">
+                    Stock is reserved for 5 minutes. Complete your payment before the timer runs out.
                   </p>
                 </div>
               )}

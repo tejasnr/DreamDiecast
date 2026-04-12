@@ -168,6 +168,61 @@ export const updateStatus = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
     await ctx.db.patch(args.preOrderId, { status: args.status });
+
+    // Send pre-order confirmation email when deposit is verified
+    if (args.status === "deposit_verified") {
+      try {
+        await ctx.scheduler.runAfter(0, internal.emails.sendPreOrderConfirmation, {
+          preOrderId: args.preOrderId,
+        });
+      } catch {
+        // Don't fail status update if email fails
+      }
+    }
+  },
+});
+
+// Admin sends arrival notification — updates status + sends email
+export const sendArrivalNotification = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    preOrderId: v.id("preOrders"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const po = await ctx.db.get(args.preOrderId);
+    if (!po) throw new Error("Pre-order not found");
+
+    const totalPrice = po.totalPrice ?? po.price ?? 0;
+    const depositPaid = po.depositPaid ?? po.depositAmount ?? 0;
+    const balanceAmount = totalPrice - depositPaid + 100; // +100 shipping
+
+    await ctx.db.patch(args.preOrderId, {
+      status: "stock_arrived",
+      balanceAmount,
+      shippingCharges: 100,
+    });
+
+    // Update garage item if exists
+    if (po.userId) {
+      const garageItem = await ctx.db
+        .query("garageItems")
+        .withIndex("by_userId", (q) => q.eq("userId", po.userId!))
+        .filter((q) => q.eq(q.field("productId"), po.productId))
+        .first();
+      if (garageItem) {
+        await ctx.db.patch(garageItem._id, { status: "arrived" });
+      }
+    }
+
+    // Send arrival email
+    try {
+      await ctx.scheduler.runAfter(0, internal.emails.sendPreOrderArrival, {
+        preOrderId: args.preOrderId,
+      });
+    } catch {
+      // Don't fail if email fails
+    }
   },
 });
 
@@ -358,17 +413,7 @@ export const submitBalancePayment = action({
       shippingAddress: args.shippingAddress,
     });
 
-    // Schedule admin email notification for balance payment
-    try {
-      await ctx.scheduler.runAfter(0, internal.emails.notifyAdminsBalancePayment, {
-        preOrderId: args.preOrderId,
-        productName: po.productName,
-        customerName: po.customerName,
-        balanceAmount,
-      });
-    } catch {
-      // Don't fail the payment if email fails
-    }
+    // Admin email notifications removed — admin sees submissions in dashboard
   },
 });
 

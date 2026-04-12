@@ -25,13 +25,13 @@ export const create = mutation({
     rating: v.optional(v.number()),
     details: v.optional(
       v.object({
-        material: v.optional(v.string()),
+        type: v.optional(v.string()),
         features: v.optional(v.array(v.string())),
       })
     ),
     sku: v.optional(v.string()),
     condition: v.optional(v.string()),
-    material: v.optional(v.string()),
+    type: v.optional(v.string()),
     specialFeatures: v.optional(v.string()),
     listingType: v.optional(v.string()),
     status: v.optional(v.string()),
@@ -67,13 +67,13 @@ export const update = mutation({
     rating: v.optional(v.number()),
     details: v.optional(
       v.object({
-        material: v.optional(v.string()),
+        type: v.optional(v.string()),
         features: v.optional(v.array(v.string())),
       })
     ),
     sku: v.optional(v.string()),
     condition: v.optional(v.string()),
-    material: v.optional(v.string()),
+    type: v.optional(v.string()),
     specialFeatures: v.optional(v.string()),
     listingType: v.optional(v.string()),
     status: v.optional(v.string()),

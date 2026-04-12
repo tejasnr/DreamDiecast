@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product } from '@/lib/data';
+import { Product, isPreOrderItem } from '@/lib/data';
 import Toast from '@/components/Toast';
 import { trackEvent } from '@/lib/posthog';
 
@@ -66,7 +66,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = (product: Product) => {
     // Check stock
-    if (product.stock !== undefined && product.stock <= 0 && product.category !== 'Pre-Order') {
+    if (product.stock !== undefined && product.stock <= 0 && !isPreOrderItem(product)) {
       setToast({
         isVisible: true,
         message: `${product.name} is out of stock`,
@@ -118,7 +118,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       prevCart.map(item => {
         if (item.id === productId) {
           // Check stock limit
-          if (item.stock !== undefined && quantity > item.stock && item.category !== 'Pre-Order') {
+          if (item.stock !== undefined && quantity > item.stock && !isPreOrderItem(item)) {
             setToast({
               isVisible: true,
               message: `Only ${item.stock} units available for ${item.name}`,
@@ -159,7 +159,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const cartTotal = balancePaymentItem 
     ? (balancePaymentItem.fullPrice - 100) 
     : cart.reduce((total, item) => {
-        const price = item.category === 'Pre-Order' ? 100 : item.price;
+        const price = isPreOrderItem(item) ? (item.bookingAdvance ?? 100) : item.price;
         return total + (price * item.quantity);
       }, 0);
 

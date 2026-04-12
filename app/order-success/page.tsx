@@ -63,7 +63,7 @@ function OrderSuccessContent() {
         <a
           href={isPreOrder
             ? "https://chat.whatsapp.com/BvgtaCooKYpJpsfDo978Fy?mode=gi_t"
-            : `https://wa.me/919876543210?text=Hello, I just placed an order with ID: ${orderId}. Please verify my payment.`
+            : `https://wa.me/919148724708?text=Hello, I just placed an order with ID: ${orderId}. Please verify my payment.`
           }
           target="_blank"
           rel="noopener noreferrer"

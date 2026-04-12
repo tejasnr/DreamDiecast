@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
-import { Product } from '@/lib/data';
+import { Product, isPreOrderItem } from '@/lib/data';
 import { ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
@@ -15,8 +15,9 @@ interface ProductCardProps {
 export default function ProductCard({ product, onClick }: ProductCardProps) {
   const { addToCart } = useCart();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const isOutOfStock = product.stock !== undefined && product.stock <= 0 && product.category !== 'Pre-Order';
-  const isLowStock = product.stock !== undefined && product.stock > 0 && product.stock <= 5 && product.category !== 'Pre-Order';
+  const isPO = isPreOrderItem(product);
+  const isOutOfStock = product.stock !== undefined && product.stock <= 0 && !isPO;
+  const isLowStock = product.stock !== undefined && product.stock > 0 && product.stock <= 5 && !isPO;
 
   const galleryImages = product.images?.length ? product.images : product.image ? [product.image] : [];
   const hasMultiple = galleryImages.length > 1;
@@ -87,10 +88,10 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         {/* Category Badge */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           <span className={`text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-1 ${
-            product.category === 'Pre-Order' ? 'bg-accent text-white' :
+            isPO ? 'bg-accent text-white' :
             product.category === 'New Arrival' ? 'bg-white text-black' : 'bg-white/10 text-white'
           }`}>
-            {product.category}
+            {isPO ? 'Pre-Order' : product.category}
           </span>
           {isOutOfStock && (
             <span className="bg-red-600 text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-1">
@@ -138,9 +139,9 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
           </div>
           <div className="flex flex-col items-end">
             <span className="text-sm font-display font-bold text-white">
-              ₹{product.category === 'Pre-Order' ? '100' : product.price.toLocaleString()}
+              ₹{isPO ? (product.bookingAdvance ?? 100).toLocaleString() : product.price.toLocaleString()}
             </span>
-            {product.category === 'Pre-Order' && (
+            {isPO && (
               <span className="text-[8px] text-accent font-bold uppercase tracking-widest">
                 Booking Price
               </span>

@@ -19,14 +19,14 @@ export interface Product {
   rating?: number;
   reviews?: Review[];
   details?: {
-    material: string;
+    type: string;
     features: string[];
   };
   createdAt?: number;
   // New fields
   sku?: string;
   condition?: string;
-  material?: string;
+  type?: string;
   specialFeatures?: string;
   listingType?: string;
   status?: string;
@@ -34,6 +34,11 @@ export interface Product {
   bookingAdvance?: number;
   totalFinalPrice?: number;
   eta?: string;
+}
+
+/** Check if a product or cart item is a pre-order (works with any object that has these optional fields) */
+export function isPreOrderItem(item: { category?: string; listingType?: string; isPreorder?: boolean }): boolean {
+  return item.listingType === 'pre-order' || item.category === 'Pre-Order' || item.isPreorder === true;
 }
 
 export const products: Product[] = [];

@@ -12,7 +12,7 @@ import {
   SCALES,
   CATEGORIES,
   CONDITIONS,
-  MATERIALS,
+  TYPE_OPTIONS,
   LISTING_TYPES,
 } from '@/lib/constants';
 import ImageDropzone from './ImageDropzone';
@@ -30,7 +30,7 @@ interface ProductFormProps {
 function resolveListingType(product: any): 'in-stock' | 'pre-order' {
   if (product.listingType === 'pre-order') return 'pre-order';
   if (product.listingType === 'in-stock') return 'in-stock';
-  if (product.category === 'Pre-Order' || product.isPreorder) return 'pre-order';
+  if (product.listingType === 'pre-order' || product.category === 'Pre-Order' || product.isPreorder) return 'pre-order';
   return 'in-stock';
 }
 
@@ -41,7 +41,7 @@ const INITIAL_FORM = {
   scale: SCALES[0] as string,
   category: CATEGORIES[0] as string,
   condition: CONDITIONS[0] as string,
-  material: MATERIALS[0] as string,
+  type: TYPE_OPTIONS[0] as string,
   price: '',
   stock: '0',
   bookingAdvance: '',
@@ -85,11 +85,11 @@ export default function ProductForm({
           editProduct.category && CATEGORIES.includes(editProduct.category as any)
             ? editProduct.category
             : editProduct.category || CATEGORIES[0],
-        condition: editProduct.condition || editProduct.details?.material ? CONDITIONS[0] : CONDITIONS[0],
-        material:
-          editProduct.material ||
-          editProduct.details?.material ||
-          MATERIALS[0],
+        condition: editProduct.condition || CONDITIONS[0],
+        type:
+          editProduct.type ||
+          editProduct.details?.type ||
+          TYPE_OPTIONS[0],
         price: editProduct.price?.toString() || '',
         stock: (editProduct.stock || 0).toString(),
         bookingAdvance: (editProduct.bookingAdvance || editProduct.price || '').toString(),
@@ -179,7 +179,7 @@ export default function ProductForm({
         description: form.description || undefined,
         sku: form.sku || undefined,
         condition: form.condition,
-        material: form.material,
+        type: form.type,
         specialFeatures: form.specialFeatures || undefined,
         listingType,
         isPreorder: isPreOrder,
@@ -391,21 +391,21 @@ export default function ProductForm({
                 </select>
               </div>
 
-              {/* Material */}
+              {/* Type */}
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
-                  Material
+                  Type
                 </label>
                 <select
-                  value={form.material}
+                  value={form.type}
                   onChange={(e) =>
-                    setForm({ ...form, material: e.target.value })
+                    setForm({ ...form, type: e.target.value })
                   }
                   className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors appearance-none"
                 >
-                  {MATERIALS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
+                  {TYPE_OPTIONS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
                     </option>
                   ))}
                 </select>

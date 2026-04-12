@@ -19,7 +19,7 @@ export function useProducts() {
     stock: p.stock,
     rating: p.rating,
     details: p.details ? {
-      material: p.details.material ?? '',
+      type: p.details.type ?? '',
       features: p.details.features ?? [],
     } : undefined,
     reviews: p.reviews?.map((r: any) => ({
@@ -32,6 +32,14 @@ export function useProducts() {
     listingType: p.listingType,
     status: p.status,
     isPreorder: p.isPreorder,
+    images: p.images,
+    sku: p.sku,
+    condition: p.condition,
+    type: p.type,
+    specialFeatures: p.specialFeatures,
+    bookingAdvance: p.bookingAdvance,
+    totalFinalPrice: p.totalFinalPrice,
+    eta: p.eta,
   }));
 
   return {

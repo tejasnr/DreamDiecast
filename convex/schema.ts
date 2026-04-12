@@ -19,7 +19,7 @@ export default defineSchema({
     rating: v.optional(v.number()),
     details: v.optional(
       v.object({
-        material: v.optional(v.string()),
+        type: v.optional(v.string()),
         features: v.optional(v.array(v.string())),
       })
     ),
@@ -35,7 +35,8 @@ export default defineSchema({
     // New fields
     sku: v.optional(v.string()),
     condition: v.optional(v.string()),
-    material: v.optional(v.string()),
+    type: v.optional(v.string()),
+    material: v.optional(v.string()), // deprecated — replaced by `type`, kept for existing data
     specialFeatures: v.optional(v.string()),
     listingType: v.optional(v.string()),
     status: v.optional(v.string()),
@@ -85,11 +86,13 @@ export default defineSchema({
     ),
     orderStatus: v.union(
       v.literal("pending"),
-      v.literal("processing"),
+      v.literal("verified"),
+      v.literal("processing"), // backward compat
       v.literal("shipped"),
       v.literal("completed"),
       v.literal("cancelled")
     ),
+    orderType: v.optional(v.union(v.literal("order"), v.literal("pre-order"))),
     shippingDetails: v.optional(
       v.object({
         name: v.string(),
@@ -204,6 +207,17 @@ export default defineSchema({
     brandPostercars: v.optional(v.string()),
     brandMatchbox: v.optional(v.string()),
   }).index("by_key", ["key"]),
+
+  stockReservations: defineTable({
+    userId: v.string(),
+    productId: v.id("products"),
+    quantity: v.number(),
+    expiresAt: v.number(),
+    sessionId: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_productId", ["productId"])
+    .index("by_expiresAt", ["expiresAt"]),
 
   assets: defineTable({
     name: v.string(),

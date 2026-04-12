@@ -27,7 +27,8 @@ export interface Order {
   payment_proof_url: string;
   payment_method: string;
   payment_status: 'submitted' | 'verified' | 'rejected';
-  order_status: 'pending' | 'processing' | 'shipped' | 'completed' | 'cancelled';
+  order_status: 'pending' | 'verified' | 'processing' | 'shipped' | 'completed' | 'cancelled';
+  order_type: 'order' | 'pre-order';
   shipping_details?: {
     name: string;
     phone: string;
@@ -67,6 +68,7 @@ export function useOrders() {
     payment_method: o.paymentMethod,
     payment_status: o.paymentStatus,
     order_status: o.orderStatus,
+    order_type: o.orderType || (o.items?.some((i: any) => i.category === 'Pre-Order') ? 'pre-order' : 'order'),
     shipping_details: o.shippingDetails,
     createdAt: new Date(o._creationTime),
   }));
