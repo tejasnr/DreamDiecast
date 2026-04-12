@@ -12,6 +12,7 @@ export function useProducts() {
     name: p.name,
     price: p.price,
     image: p.image,
+    images: p.images,
     category: p.category,
     brand: p.brand,
     scale: p.scale,
@@ -29,9 +30,16 @@ export function useProducts() {
       date: '',
     })),
     createdAt: p._creationTime,
+    sku: p.sku,
+    condition: p.condition,
+    material: p.material,
+    specialFeatures: p.specialFeatures,
     listingType: p.listingType,
     status: p.status,
     isPreorder: p.isPreorder,
+    bookingAdvance: p.bookingAdvance,
+    totalFinalPrice: p.totalFinalPrice,
+    eta: p.eta,
   }));
 
   return {

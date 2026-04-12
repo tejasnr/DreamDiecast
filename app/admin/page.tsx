@@ -32,6 +32,7 @@ import ProductForm from '@/components/admin/ProductForm';
 import PreOrderTable from '@/components/admin/PreOrderTable';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { WHATSAPP_COMMUNITY_LINK } from '@/lib/constants';
+import { formatEta } from '@/lib/format';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -443,7 +444,7 @@ export default function AdminPage() {
                           )}
                           {product.eta && (
                             <span className="text-white/20">
-                              ETA: {product.eta}
+                              ETA: {formatEta(product.eta)}
                             </span>
                           )}
                           {product.sku && (
