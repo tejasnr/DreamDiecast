@@ -93,7 +93,7 @@ export default function Navbar() {
                           Purchases
                         </Link>
                         <Link
-                          href="/garage/pre-orders"
+                          href="/garage?tab=pre-orders"
                           className="flex items-center gap-3 px-4 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors rounded-sm"
                           onClick={() => setIsProfileOpen(false)}
                         >
@@ -174,7 +174,7 @@ export default function Navbar() {
                   <Link href="/garage" className="text-lg font-display uppercase text-accent flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Package size={18} /> Purchases
                   </Link>
-                  <Link href="/garage/pre-orders" className="text-lg font-display uppercase text-accent flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/garage?tab=pre-orders" className="text-lg font-display uppercase text-accent flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Clock size={18} /> My Pre-orders
                   </Link>
                   <button

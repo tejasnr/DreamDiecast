@@ -72,7 +72,7 @@ function OrderSuccessContent() {
           <MessageCircle size={20} /> {isPreOrder ? 'Join our WhatsApp Community' : 'Contact us on WhatsApp'}
         </a>
         <Link
-          href={isPreOrder ? "/garage/pre-orders" : "/garage"}
+          href={isPreOrder ? "/garage?tab=pre-orders" : "/garage"}
           className="bg-white/5 text-white px-8 py-5 font-display font-bold uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-white/10"
         >
           <ShoppingBag size={20} /> {isPreOrder ? 'View Pre-Orders' : 'View My Garage'}
