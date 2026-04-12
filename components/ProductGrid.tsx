@@ -5,6 +5,7 @@ import { useProducts } from '@/hooks/useProducts';
 import ProductCard from './ProductCard';
 import ProductDetailModal from './ProductDetailModal';
 import { Product } from '@/lib/data';
+import Link from 'next/link';
 
 export default function ProductGrid() {
   const { products, loading } = useProducts();
@@ -113,9 +114,12 @@ export default function ProductGrid() {
         />
         
         <div className="mt-16 flex justify-center">
-          <button className="border border-white/10 hover:border-white px-12 py-4 font-display font-bold uppercase tracking-widest transition-all">
+          <Link
+            href="/products"
+            className="border border-white/10 hover:border-white px-12 py-4 font-display font-bold uppercase tracking-widest transition-all"
+          >
             View All Products
-          </button>
+          </Link>
         </div>
       </div>
     </section>

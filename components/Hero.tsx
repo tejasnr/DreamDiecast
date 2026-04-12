@@ -10,11 +10,11 @@ export default function Hero() {
   const settings = useSettings();
 
   const handleGarageClick = () => {
-    router.push('/garage');
+    router.push('/products');
   };
 
   const handlePreOrdersClick = () => {
-    router.push('/garage?filter=pre-order');
+    router.push('/pre-orders');
   };
 
   return (
