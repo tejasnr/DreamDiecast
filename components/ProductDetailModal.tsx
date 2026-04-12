@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { trackEvent } from '@/lib/posthog';
+import { formatEta } from '@/lib/format';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -268,9 +269,9 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   </p>
                   <div className="space-y-1 text-sm text-white/60">
                     {product.totalFinalPrice && (
-                      <p>Price — ₹{product.totalFinalPrice.toLocaleString()} shipped</p>
+                      <p>Final Price — ₹{product.totalFinalPrice.toLocaleString()}</p>
                     )}
-                    {product.eta && <p>ETA — {product.eta}</p>}
+                    {product.eta && <p>ETA — {formatEta(product.eta)}</p>}
                   </div>
                 </div>
               )}
