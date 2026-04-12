@@ -9,6 +9,7 @@ export interface OrderItem {
   id: string;
   name: string;
   price: number;
+  category: string;
   image: string;
   brand: string;
   scale: string;
@@ -55,6 +56,7 @@ export function useOrders() {
       id: item.productId,
       name: item.name,
       price: item.price,
+      category: item.category,
       image: item.image,
       brand: item.brand,
       scale: item.scale,
