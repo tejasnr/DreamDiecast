@@ -24,6 +24,7 @@ export default function ProductGrid() {
     };
 
     return products
+      .filter(product => product.status !== 'unlisted')
       .filter(product => {
         if (activeFilter === 'All') return true;
 
