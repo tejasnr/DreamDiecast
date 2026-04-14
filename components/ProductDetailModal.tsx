@@ -271,9 +271,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 {/* Auto-generated description from structured data */}
                 {isPreOrder && (
                   <div className="space-y-3 bg-accent/5 border border-accent/20 p-4 rounded-sm">
-                    <p className="text-xs text-accent/80 italic">
-                      Check the product description for the final pricing and ETA of the chosen models.
-                    </p>
                     <div className="space-y-1 text-sm text-white/60">
                       {product.totalFinalPrice && (
                         <p>Final Price — ₹{product.totalFinalPrice.toLocaleString()}</p>
