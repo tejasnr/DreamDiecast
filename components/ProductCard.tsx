@@ -54,7 +54,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
                 e.stopPropagation();
                 setActiveImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
               }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-md hover:bg-accent"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity backdrop-blur-md hover:bg-accent"
             >
               <ChevronLeft size={16} />
             </button>
@@ -63,7 +63,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
                 e.stopPropagation();
                 setActiveImageIndex((prev) => (prev + 1) % galleryImages.length);
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-md hover:bg-accent"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity backdrop-blur-md hover:bg-accent"
             >
               <ChevronRight size={16} />
             </button>
