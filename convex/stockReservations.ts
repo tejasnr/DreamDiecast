@@ -24,13 +24,23 @@ export const reserveStock = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .collect();
 
-    // If same session already has reservations, return existing expiry
+    // If same session already has reservations, return existing expiry (idempotent)
     const sameSession = existing.filter((r) => r.sessionId === args.sessionId);
     if (sameSession.length > 0) {
       return { expiresAt: sameSession[0].expiresAt };
     }
 
-    // Release any old reservations from different sessions
+    const now = Date.now();
+
+    // Check for active reservations from different sessions
+    for (const old of existing) {
+      if (old.sessionId !== args.sessionId && old.expiresAt > now) {
+        // Non-expired reservation on a different session — block multi-device
+        throw new Error("You already have an active checkout session. Complete or cancel it first.");
+      }
+    }
+
+    // Release any expired reservations from different sessions
     for (const old of existing) {
       const product = await ctx.db.get(old.productId);
       if (product?.stock !== undefined) {
@@ -48,6 +58,28 @@ export const reserveStock = mutation({
     for (const item of inStockItems) {
       const product = await ctx.db.get(item.productId);
       if (!product) throw new Error(`Product not found: ${item.productId}`);
+
+      // Hype product validation
+      if (product.isHype === true) {
+        if (item.quantity > 1) {
+          throw new Error("Hyped models are limited to 1 per person");
+        }
+        // Check if user already has a non-cancelled order for this hype product
+        const userOrders = await ctx.db
+          .query("orders")
+          .withIndex("by_userId", (q) => q.eq("userId", args.userId as any))
+          .collect();
+        const alreadyOrdered = userOrders.some(
+          (order) =>
+            order.orderStatus !== "cancelled" &&
+            order.paymentStatus !== "rejected" &&
+            order.items.some((oi) => oi.productId === item.productId)
+        );
+        if (alreadyOrdered) {
+          throw new Error("You already have an order for this hyped model");
+        }
+      }
+
       if (product.stock === undefined || product.stock < item.quantity) {
         // Rollback any reservations we already made in this loop
         const justCreated = await ctx.db

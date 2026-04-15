@@ -67,6 +67,7 @@ export default function ProductForm({
   );
   const [form, setForm] = useState(INITIAL_FORM);
   const [images, setImages] = useState<string[]>([]);
+  const [isHype, setIsHype] = useState(false);
   const [saving, setSaving] = useState(false);
   const [assetPickerOpen, setAssetPickerOpen] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -107,10 +108,12 @@ export default function ProductForm({
           ? [editProduct.image]
           : [];
       setImages(existingImages);
+      setIsHype(editProduct.isHype === true);
     } else {
       setForm(INITIAL_FORM);
       setImages([]);
       setListingType('in-stock');
+      setIsHype(false);
     }
     setValidationError('');
   }, [editProduct, isOpen]);
@@ -184,6 +187,7 @@ export default function ProductForm({
         listingType,
         isPreorder: isPreOrder,
         status: isPreOrder ? 'Pre-Order' : 'In Stock',
+        isHype: !isPreOrder && isHype ? true : false,
       };
 
       if (isPreOrder) {
@@ -447,6 +451,29 @@ export default function ProductForm({
                       className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors"
                       placeholder="10"
                     />
+                  </div>
+
+                  {/* Hype Toggle */}
+                  <div className="space-y-2 md:col-span-2">
+                    <label
+                      className="flex items-center gap-3 cursor-pointer select-none"
+                      onClick={() => setIsHype(!isHype)}
+                    >
+                      <div
+                        className={`relative w-11 h-6 rounded-full transition-colors ${
+                          isHype ? 'bg-accent' : 'bg-white/10'
+                        }`}
+                      >
+                        <div
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                            isHype ? 'translate-x-5' : ''
+                          }`}
+                        />
+                      </div>
+                      <span className="text-[10px] uppercase tracking-widest text-white/60 font-mono font-bold">
+                        HYPE DROP (1 per person)
+                      </span>
+                    </label>
                   </div>
                 </>
               ) : (

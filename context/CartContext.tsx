@@ -20,7 +20,7 @@ interface CheckoutDetails {
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -42,10 +42,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [checkoutDetails, setCheckoutDetails] = useState<CheckoutDetails | null>(null);
   const [shippingCharges, setShippingCharges] = useState<number>(0);
   const [balancePaymentItem, setBalancePaymentItem] = useState<{ id: string; name: string; fullPrice: number; image: string; garageItemId: string } | null>(null);
-  const [toast, setToast] = useState<{ isVisible: boolean; message: string; image?: string }>({
+  const [toast, setToast] = useState<{ isVisible: boolean; message: string; image?: string; type?: 'success' | 'warning' }>({
     isVisible: false,
     message: '',
   });
+
+  const showToast = (message: string, image?: string, type: 'success' | 'warning' = 'success') => {
+    setToast({ isVisible: true, message, image, type });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, isVisible: false }));
+    }, 3000);
+  };
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -64,43 +71,56 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('dream_diecast_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: Product) => {
-    // Check stock
-    if (product.stock !== undefined && product.stock <= 0 && !isPreOrderItem(product)) {
-      setToast({
-        isVisible: true,
-        message: `${product.name} is out of stock`,
-        image: product.image
-      });
-      setTimeout(() => {
-        setToast(prev => ({ ...prev, isVisible: false }));
-      }, 3000);
+  const addToCart = (product: Product, qty: number = 1) => {
+    const isPO = isPreOrderItem(product);
+
+    // Check stock — block if stock is 0 or undefined for non-pre-order
+    if (!isPO && product.stock !== undefined && product.stock <= 0) {
+      showToast(`${product.name} is out of stock`, product.image, 'warning');
       return;
+    }
+
+    // Hype product: limit to 1 per person
+    if (product.isHype) {
+      if (qty > 1) {
+        showToast('Hyped models are limited to 1 per person', product.image, 'warning');
+        return;
+      }
+      const alreadyInCart = cart.find(item => item.id === product.id);
+      if (alreadyInCart) {
+        showToast('Hyped models are limited to 1 per person', product.image, 'warning');
+        return;
+      }
+    }
+
+    // Check if adding qty would exceed available stock
+    if (!isPO && product.stock !== undefined) {
+      const existingInCart = cart.find(item => item.id === product.id);
+      const currentQty = existingInCart ? existingInCart.quantity : 0;
+      if (currentQty + qty > product.stock) {
+        showToast(`Only ${product.stock} available`, product.image, 'warning');
+        return;
+      }
     }
 
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
       if (existingItem) {
+        if (existingItem.isHype) return prevCart;
+        const newQty = existingItem.quantity + qty;
+        if (!isPO && product.stock !== undefined && newQty > product.stock) {
+          return prevCart;
+        }
         return prevCart.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id ? { ...item, quantity: newQty } : item
         );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      return [...prevCart, { ...product, quantity: qty }];
     });
 
     trackEvent('add_to_cart', { productId: product.id, name: product.name, price: product.price, category: product.category });
 
-    // Show toast
-    setToast({
-      isVisible: true,
-      message: product.name,
-      image: product.image
-    });
-
-    // Auto hide toast
-    setTimeout(() => {
-      setToast(prev => ({ ...prev, isVisible: false }));
-    }, 3000);
+    showToast(product.name, product.image);
   };
 
   const removeFromCart = (productId: string) => {
@@ -113,21 +133,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeFromCart(productId);
       return;
     }
-    
+
     setCart(prevCart =>
       prevCart.map(item => {
         if (item.id === productId) {
+          // Hype product: clamp to 1
+          if (item.isHype && quantity > 1) {
+            showToast('Hyped models are limited to 1 per person', item.image, 'warning');
+            return { ...item, quantity: 1 };
+          }
           // Check stock limit
           if (item.stock !== undefined && quantity > item.stock && !isPreOrderItem(item)) {
-            setToast({
-              isVisible: true,
-              message: `Only ${item.stock} units available for ${item.name}`,
-              image: item.image
-            });
-            setTimeout(() => {
-              setToast(prev => ({ ...prev, isVisible: false }));
-            }, 3000);
-            return item; // Don't update if exceeds stock
+            showToast(`Only ${item.stock} available`, item.image, 'warning');
+            return item;
           }
           return { ...item, quantity };
         }
@@ -181,10 +199,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clearBalancePayment
     }}>
       {children}
-      <Toast 
+      <Toast
         isVisible={toast.isVisible}
         message={toast.message}
         productImage={toast.image}
+        type={toast.type}
         onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
       />
     </CartContext.Provider>

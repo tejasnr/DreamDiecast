@@ -72,7 +72,6 @@ export default function CheckoutPage() {
   const createOrder = useAction(api.orders.create);
   const reserveStock = useMutation(api.stockReservations.reserveStock);
   const releaseStock = useMutation(api.stockReservations.releaseStock);
-  const consumeReservation = useMutation(api.stockReservations.consumeReservation);
 
   const [transactionId, setTransactionId] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
@@ -122,6 +121,12 @@ export default function CheckoutPage() {
         const msg = err.message || '';
         if (msg.includes('Insufficient stock')) {
           setReservationError('One or more items in your cart are no longer available. Please go back and try again.');
+        } else if (msg.includes('active checkout session')) {
+          setReservationError('You have another checkout in progress. Complete or cancel it first.');
+        } else if (msg.includes('Hyped models') || msg.includes('limited to 1')) {
+          setReservationError('Hyped models are limited to 1 per person.');
+        } else if (msg.includes('already have an order') || msg.includes('hyped model')) {
+          setReservationError('You already have an order for this hyped model.');
         } else {
           setReservationError('Unable to reserve your items. Please try again.');
         }
@@ -287,16 +292,11 @@ export default function CheckoutPage() {
         paymentProofDataUrl,
         paymentMethod: 'UPI',
         shippingDetails: checkoutDetails || undefined,
+        sessionId: sessionIdRef.current,
       });
 
-      // Consume reservation (stock already decremented) instead of releasing
-      if (reservedRef.current) {
-        await consumeReservation({
-          userId: user.convexUserId,
-          sessionId: sessionIdRef.current,
-        });
-        reservedRef.current = false;
-      }
+      // Reservation is now consumed atomically inside insertOrder
+      reservedRef.current = false;
 
       trackEvent('payment_submitted', { orderId, total: cartTotal + effectiveShippingCharges, paymentMethod: 'UPI' });
 
@@ -312,7 +312,13 @@ export default function CheckoutPage() {
     } catch (err: any) {
       console.error('Checkout error:', err);
       const msg = err?.message || '';
-      if (msg.includes('Insufficient stock') || msg.includes('stock')) {
+      if (msg.includes('reservation expired') || msg.includes('Reservation expired') || msg.includes('not found')) {
+        setError('Your stock reservation has expired. Please go back and try again.');
+      } else if (msg.includes('Hyped models') || msg.includes('limited to 1')) {
+        setError('Hyped models are limited to 1 per person.');
+      } else if (msg.includes('already have an order') || msg.includes('hyped model')) {
+        setError('You already have an order for this hyped model.');
+      } else if (msg.includes('Insufficient stock') || msg.includes('stock')) {
         setError('Some items are no longer in stock. Please update your cart and try again.');
       } else if (msg.includes('Unauthorized') || msg.includes('log in')) {
         setError('Please log in to complete your order.');

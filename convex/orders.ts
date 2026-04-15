@@ -56,6 +56,7 @@ export const insertOrder = internalMutation({
     paymentProofUrl: v.string(),
     paymentMethod: v.string(),
     shippingDetails: v.optional(shippingDetailsValidator),
+    sessionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -73,6 +74,69 @@ export const insertOrder = internalMutation({
         item.category === "Pre-Order"
       );
     });
+
+    const now = Date.now();
+
+    // Validate reservations and hype limits for each in-stock item
+    for (let i = 0; i < args.items.length; i++) {
+      const item = args.items[i];
+      const product = products[i];
+      const isPreOrder = preOrderFlags[i];
+      if (isPreOrder || item.category === "Balance Payment") continue;
+
+      // Hype product check: reject if user already purchased this hype product
+      if (product?.isHype === true) {
+        const userOrders = await ctx.db
+          .query("orders")
+          .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+          .collect();
+        const alreadyOrdered = userOrders.some(
+          (order) =>
+            order.orderStatus !== "cancelled" &&
+            order.paymentStatus !== "rejected" &&
+            order.items.some((oi) => oi.productId === item.productId)
+        );
+        if (alreadyOrdered) {
+          throw new Error(
+            "Hyped models are limited to 1 per person. You already have an order for this product."
+          );
+        }
+      }
+
+      // Reservation validation: require a valid, non-expired reservation
+      if (args.sessionId) {
+        const reservation = await ctx.db
+          .query("stockReservations")
+          .withIndex("by_userId", (q) => q.eq("userId", args.userId as string))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field("sessionId"), args.sessionId!),
+              q.eq(q.field("productId"), item.productId)
+            )
+          )
+          .first();
+
+        if (!reservation) {
+          throw new Error(
+            "Stock reservation expired or not found. Please try again."
+          );
+        }
+        if (reservation.expiresAt < now) {
+          // Restore stock, delete expired reservation
+          if (product?.stock !== undefined) {
+            await ctx.db.patch(item.productId, {
+              stock: product.stock + reservation.quantity,
+            });
+          }
+          await ctx.db.delete(reservation._id);
+          throw new Error(
+            "Your stock reservation has expired. Please try again."
+          );
+        }
+        // Valid reservation — consume it (delete without restoring stock)
+        await ctx.db.delete(reservation._id);
+      }
+    }
 
     const orderType = preOrderFlags.some(Boolean)
       ? ("pre-order" as const)
@@ -157,6 +221,7 @@ export const create = action({
     paymentProofDataUrl: v.string(),
     paymentMethod: v.string(),
     shippingDetails: v.optional(shippingDetailsValidator),
+    sessionId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
     if (!args.workosUserId) throw new Error("Unauthorized: please log in");
@@ -181,6 +246,7 @@ export const create = action({
       paymentProofUrl,
       paymentMethod: args.paymentMethod,
       shippingDetails: args.shippingDetails,
+      sessionId: args.sessionId,
     });
   },
 });

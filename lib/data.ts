@@ -34,6 +34,7 @@ export interface Product {
   bookingAdvance?: number;
   totalFinalPrice?: number;
   eta?: string;
+  isHype?: boolean;
 }
 
 /** Check if a product or cart item is a pre-order (works with any object that has these optional fields) */

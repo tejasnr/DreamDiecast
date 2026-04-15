@@ -43,6 +43,7 @@ export default defineSchema({
     bookingAdvance: v.optional(v.number()),
     totalFinalPrice: v.optional(v.number()),
     eta: v.optional(v.string()),
+    isHype: v.optional(v.boolean()),
   })
     .index("by_category", ["category"])
     .index("by_brand", ["brand"]),
@@ -103,6 +104,7 @@ export default defineSchema({
         pincode: v.string(),
       })
     ),
+    sessionId: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
     .index("by_orderStatus", ["orderStatus"]),

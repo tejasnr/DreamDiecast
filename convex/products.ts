@@ -39,6 +39,7 @@ export const create = mutation({
     bookingAdvance: v.optional(v.number()),
     totalFinalPrice: v.optional(v.number()),
     eta: v.optional(v.string()),
+    isHype: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
@@ -81,6 +82,7 @@ export const update = mutation({
     bookingAdvance: v.optional(v.number()),
     totalFinalPrice: v.optional(v.number()),
     eta: v.optional(v.string()),
+    isHype: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);

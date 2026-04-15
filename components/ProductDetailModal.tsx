@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Star, Package, ShieldCheck, Truck, ArrowRight, ShoppingCart, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { X, Star, Package, ShieldCheck, Truck, ArrowRight, ShoppingCart, ChevronLeft, ChevronRight, Check, Flame, Minus, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { Product } from '@/lib/data';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 import { trackEvent } from '@/lib/posthog';
 import { formatEta } from '@/lib/format';
 import AuthModal from './AuthModal';
@@ -18,18 +21,26 @@ interface ProductDetailModalProps {
 }
 
 export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
-  const { addToCart } = useCart();
+  const { addToCart, cart } = useCart();
   const router = useRouter();
   const { user } = useAuth();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [selectedQty, setSelectedQty] = useState(1);
+
+  // Fetch user orders to check hype purchase history
+  const userOrders = useQuery(
+    api.orders.byUser,
+    user ? { userId: user.convexUserId as Id<'users'> } : "skip"
+  );
 
   useEffect(() => {
     if (product) {
       trackEvent('product_viewed', { productId: product.id, name: product.name, category: product.category });
       setActiveImageIndex(0);
       setAddedFeedback(false);
+      setSelectedQty(1);
     }
   }, [product?.id]);
 
@@ -46,13 +57,25 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
   const isPreOrder = product.listingType === 'pre-order' || product.category === 'Pre-Order' || product.isPreorder;
   const isOutOfStock = product.stock !== undefined && product.stock <= 0 && !isPreOrder;
+  const isHype = product.isHype === true;
+  const isInCart = cart.some(item => item.id === product.id);
+  const hypeOrdersLoading = isHype && user && userOrders === undefined;
+  const alreadyPurchasedHype = isHype && userOrders?.some(
+    order =>
+      order.orderStatus !== 'cancelled' &&
+      order.paymentStatus !== 'rejected' &&
+      order.items.some(oi => oi.productId === product.id)
+  );
+  const cannotAdd = isOutOfStock || !!alreadyPurchasedHype || (isHype && isInCart) || !!hypeOrdersLoading;
+  const cartQty = cart.find(item => item.id === product.id)?.quantity ?? 0;
+  const maxQty = isHype ? 1 : (!isPreOrder && product.stock !== undefined ? Math.max(0, product.stock - cartQty) : 99);
   const resolvedType = product.type || product.details?.type;
   const resolvedCondition = product.condition;
   const resolvedFeatures = product.specialFeatures || product.details?.features?.join(', ');
 
   const handleAddToCart = () => {
-    if (isOutOfStock) return;
-    addToCart(product);
+    if (cannotAdd || selectedQty < 1) return;
+    addToCart(product, selectedQty);
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 1500);
   };
@@ -60,8 +83,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isOutOfStock) return;
-    addToCart(product);
+    if (cannotAdd || selectedQty < 1) return;
+    addToCart(product, selectedQty);
     if (!user) {
       setIsAuthModalOpen(true);
       return;
@@ -184,6 +207,15 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     {product.name}
                   </h2>
 
+                  {isHype && (
+                    <div className="flex items-center gap-2 mb-4 px-3 py-1.5 bg-red-600/10 border border-red-600/20 rounded-sm w-fit">
+                      <Flame size={14} className="text-red-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">
+                        HYPE DROP — 1 PER PERSON
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center text-accent">
                       {[...Array(5)].map((_, i) => (
@@ -230,18 +262,50 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                       </span>
                     )}
                   </div>
+                  {/* Quantity Selector */}
+                  {!cannotAdd && (
+                    <div className="flex items-center gap-4">
+                      <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Qty</span>
+                      <div className="flex items-center border border-white/10 rounded-sm">
+                        <button
+                          onClick={() => setSelectedQty(q => Math.max(1, q - 1))}
+                          disabled={selectedQty <= 1}
+                          className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="w-12 h-10 flex items-center justify-center text-sm font-mono font-bold text-white border-x border-white/10">
+                          {selectedQty}
+                        </span>
+                        <button
+                          onClick={() => setSelectedQty(q => Math.min(maxQty, q + 1))}
+                          disabled={selectedQty >= maxQty}
+                          className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row gap-3 w-full">
                     {/* Add to Cart */}
                     <button
                       onClick={handleAddToCart}
-                      disabled={isOutOfStock}
+                      disabled={cannotAdd}
                       className={`flex-1 px-8 py-4 font-display font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                        isOutOfStock
+                        cannotAdd
                           ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'
                           : 'border border-white/10 bg-white/5 text-white hover:bg-white/10'
                       }`}
                     >
-                      {addedFeedback ? (
+                      {alreadyPurchasedHype ? (
+                        <><Check size={18} /> Already Purchased</>
+                      ) : isHype && isInCart ? (
+                        <><Check size={18} /> Already in Cart</>
+                      ) : hypeOrdersLoading ? (
+                        <>Loading...</>
+                      ) : addedFeedback ? (
                         <><Check size={18} /> Added!</>
                       ) : isOutOfStock ? (
                         <><X size={18} /> Out of Stock</>
@@ -253,7 +317,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     </button>
 
                     {/* Buy Now / Checkout */}
-                    {!isOutOfStock && (
+                    {!cannotAdd && (
                       <button
                         onClick={handleBuyNow}
                         className="flex-1 px-8 py-4 font-display font-bold uppercase tracking-wider bg-accent text-white hover:bg-white hover:text-black transition-all glow-orange flex items-center justify-center gap-2"

@@ -93,6 +93,11 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
           }`}>
             {isPO ? 'Pre-Order' : product.category}
           </span>
+          {product.isHype && (
+            <span className="bg-red-600 text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-1">
+              HYPE
+            </span>
+          )}
           {isOutOfStock && (
             <span className="bg-red-600 text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-1">
               Out of Stock
@@ -113,8 +118,8 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
           </div>
         </div>
 
-        {/* Quick Add Button */}
-        {!isOutOfStock && (
+        {/* Quick Add Button — hidden for hype products (must use modal for purchase-history check) */}
+        {!isOutOfStock && !isPO && !product.isHype && (
           <button
             onClick={(e) => {
               e.stopPropagation();

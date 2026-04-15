@@ -8,10 +8,11 @@ interface ToastProps {
   isVisible: boolean;
   message: string;
   productImage?: string;
+  type?: 'success' | 'warning';
   onClose: () => void;
 }
 
-export default function Toast({ isVisible, message, productImage, onClose }: ToastProps) {
+export default function Toast({ isVisible, message, productImage, type = 'success', onClose }: ToastProps) {
   return (
     <AnimatePresence>
       {isVisible && (
@@ -27,7 +28,7 @@ export default function Toast({ isVisible, message, productImage, onClose }: Toa
               initial={{ width: '100%' }}
               animate={{ width: 0 }}
               transition={{ duration: 3, ease: 'linear' }}
-              className="absolute bottom-0 left-0 h-0.5 bg-accent"
+              className={`absolute bottom-0 left-0 h-0.5 ${type === 'warning' ? 'bg-orange-400' : 'bg-accent'}`}
             />
 
             {productImage ? (
@@ -47,12 +48,14 @@ export default function Toast({ isVisible, message, productImage, onClose }: Toa
             )}
 
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-display font-bold uppercase tracking-wider text-white truncate">
+              <p className={`text-xs font-display font-bold uppercase tracking-wider ${type === 'warning' ? 'text-orange-400' : 'text-white'}`}>
                 {message}
               </p>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">
-                Added to your collection
-              </p>
+              {type === 'success' && (
+                <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">
+                  Added to your collection
+                </p>
+              )}
             </div>
 
             <button 
