@@ -81,7 +81,18 @@ export const create = mutation({
     // Get product for enriched data
     const product = await ctx.db.get(args.productId);
 
-    return await ctx.db.insert("preOrders", {
+    // Stock overflow check: reject if allocation is full
+    if (
+      product &&
+      product.allocatedStock !== undefined &&
+      (product.unitsSold ?? 0) >= product.allocatedStock
+    ) {
+      throw new Error(
+        "This pre-order campaign is fully allocated. Please join the waitlist."
+      );
+    }
+
+    const preOrderId = await ctx.db.insert("preOrders", {
       userId: args.userId,
       productId: args.productId,
       name: args.name,
@@ -103,6 +114,15 @@ export const create = mutation({
       source: "website",
       createdAt: Date.now(),
     });
+
+    // Increment unitsSold on the product
+    if (product) {
+      await ctx.db.patch(args.productId, {
+        unitsSold: (product.unitsSold ?? 0) + 1,
+      });
+    }
+
+    return preOrderId;
   },
 });
 
@@ -122,6 +142,16 @@ export const createManual = mutation({
     const product = await ctx.db.get(args.productId);
     if (!product) throw new Error("Product not found");
 
+    // Stock overflow check
+    if (
+      product.allocatedStock !== undefined &&
+      (product.unitsSold ?? 0) >= product.allocatedStock
+    ) {
+      throw new Error(
+        "This pre-order campaign is fully allocated. Cannot add more orders."
+      );
+    }
+
     const totalPrice = product.totalFinalPrice ?? product.price;
     const depositPaid = args.depositPaid;
 
@@ -129,7 +159,7 @@ export const createManual = mutation({
     const status =
       depositPaid >= totalPrice ? "fully_paid_shipped" : "deposit_verified";
 
-    return await ctx.db.insert("preOrders", {
+    const preOrderId = await ctx.db.insert("preOrders", {
       customerName: args.customerName,
       customerPhone: args.customerPhone,
       customerEmail: args.customerEmail,
@@ -144,6 +174,24 @@ export const createManual = mutation({
       notes: args.notes,
       createdAt: Date.now(),
     });
+
+    // Increment unitsSold on the product
+    await ctx.db.patch(args.productId, {
+      unitsSold: (product.unitsSold ?? 0) + 1,
+    });
+
+    // If manual order is deposit_verified, update rollups immediately
+    if (status === "deposit_verified") {
+      const balanceAmount = totalPrice - depositPaid;
+      await ctx.db.patch(args.productId, {
+        totalDepositsCollected:
+          (product.totalDepositsCollected ?? 0) + depositPaid,
+        totalLockedBalances:
+          (product.totalLockedBalances ?? 0) + balanceAmount,
+      });
+    }
+
+    return preOrderId;
   },
 });
 
@@ -167,14 +215,67 @@ export const updateStatus = mutation({
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
+    const preOrder = await ctx.db.get(args.preOrderId);
+    if (!preOrder) throw new Error("Pre-order not found");
+
     await ctx.db.patch(args.preOrderId, { status: args.status });
+
+    const product = await ctx.db.get(preOrder.productId);
+
+    // Update financial rollups on deposit verification
+    if (args.status === "deposit_verified" && product) {
+      const depositAmount =
+        preOrder.depositPaid ?? preOrder.depositAmount ?? 0;
+      const totalPrice = preOrder.totalPrice ?? preOrder.price ?? 0;
+      const balanceAmount = totalPrice - depositAmount;
+      await ctx.db.patch(preOrder.productId, {
+        totalDepositsCollected:
+          (product.totalDepositsCollected ?? 0) + depositAmount,
+        totalLockedBalances:
+          (product.totalLockedBalances ?? 0) + balanceAmount,
+      });
+    }
+
+    // Decrement rollups on cancellation
+    if (args.status === "cancelled" && product) {
+      const wasVerified =
+        preOrder.status === "deposit_verified" ||
+        preOrder.status === "stock_arrived" ||
+        preOrder.status === "balance_submitted" ||
+        preOrder.status === "balance_verified";
+      if (wasVerified) {
+        const depositAmount =
+          preOrder.depositPaid ?? preOrder.depositAmount ?? 0;
+        const balanceAmount =
+          preOrder.balanceAmount ??
+          (preOrder.totalPrice ?? preOrder.price ?? 0) - depositAmount;
+        await ctx.db.patch(preOrder.productId, {
+          totalDepositsCollected: Math.max(
+            0,
+            (product.totalDepositsCollected ?? 0) - depositAmount
+          ),
+          totalLockedBalances: Math.max(
+            0,
+            (product.totalLockedBalances ?? 0) - balanceAmount
+          ),
+          unitsSold: Math.max(0, (product.unitsSold ?? 0) - 1),
+        });
+      } else {
+        // Not yet deposit-verified, just decrement unitsSold
+        await ctx.db.patch(preOrder.productId, {
+          unitsSold: Math.max(0, (product.unitsSold ?? 0) - 1),
+        });
+      }
+    }
 
     // Send pre-order confirmation email when deposit is verified
     if (args.status === "deposit_verified") {
       try {
-        await ctx.scheduler.runAfter(0, internal.emails.sendPreOrderConfirmation, {
-          preOrderId: args.preOrderId,
-        });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.emails.sendPreOrderConfirmation,
+          { preOrderId: args.preOrderId }
+        );
       } catch {
         // Don't fail status update if email fails
       }
@@ -435,6 +536,45 @@ export const getForPaymentInternal = internalQuery({
   },
 });
 
+// Fulfillment status update for pre-orders (Kanban drag)
+export const updateFulfillmentStatus = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    preOrderId: v.id("preOrders"),
+    newStatus: v.union(
+      v.literal("balance_verified"),
+      v.literal("shipped"),
+      v.literal("delivered")
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const po = await ctx.db.get(args.preOrderId);
+    if (!po) throw new Error("Pre-order not found");
+
+    const statusOrder = ["balance_verified", "shipped", "delivered"];
+    const currentIdx = statusOrder.indexOf(po.status);
+    const newIdx = statusOrder.indexOf(args.newStatus);
+    if (newIdx <= currentIdx) {
+      throw new Error("Can only move pre-orders forward in fulfillment pipeline");
+    }
+
+    await ctx.db.patch(args.preOrderId, { status: args.newStatus });
+
+    // If delivered, update garage item
+    if (args.newStatus === "delivered" && po.userId) {
+      const garageItem = await ctx.db
+        .query("garageItems")
+        .withIndex("by_userId", (q) => q.eq("userId", po.userId!))
+        .filter((q) => q.eq(q.field("productId"), po.productId))
+        .first();
+      if (garageItem) {
+        await ctx.db.patch(garageItem._id, { status: "owned" });
+      }
+    }
+  },
+});
+
 // Admin verifies or rejects balance payment
 export const updateBalancePaymentStatus = mutation({
   args: {
@@ -452,6 +592,18 @@ export const updateBalancePaymentStatus = mutation({
         balancePaymentStatus: "verified",
         status: "balance_verified",
       });
+
+      // Balance verified — reduce locked balances
+      const product = await ctx.db.get(po.productId);
+      if (product) {
+        const balanceAmount = po.balanceAmount ?? 0;
+        await ctx.db.patch(po.productId, {
+          totalLockedBalances: Math.max(
+            0,
+            (product.totalLockedBalances ?? 0) - balanceAmount
+          ),
+        });
+      }
     } else {
       await ctx.db.patch(args.preOrderId, {
         balancePaymentStatus: "rejected",

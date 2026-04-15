@@ -40,6 +40,7 @@ export const create = mutation({
     totalFinalPrice: v.optional(v.number()),
     eta: v.optional(v.string()),
     isHype: v.optional(v.boolean()),
+    allocatedStock: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
@@ -83,6 +84,7 @@ export const update = mutation({
     totalFinalPrice: v.optional(v.number()),
     eta: v.optional(v.string()),
     isHype: v.optional(v.boolean()),
+    allocatedStock: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
@@ -132,6 +134,123 @@ export const markArrived = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
     await ctx.db.patch(args.id, { category: "Current Stock" });
+  },
+});
+
+const TERMINAL_STATUSES = new Set([
+  "cancelled",
+  "delivered",
+  "fully_paid_shipped",
+]);
+
+export const updateCampaignStage = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    productId: v.id("products"),
+    newStage: v.union(
+      v.literal("brand_ordered"),
+      v.literal("international_transit"),
+      v.literal("customs_processing"),
+      v.literal("inventory_ready")
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+
+    const product = await ctx.db.get(args.productId);
+    if (!product) throw new Error("Product not found");
+    if (
+      product.listingType !== "pre-order" &&
+      product.category !== "Pre-Order" &&
+      !product.isPreorder
+    ) {
+      throw new Error("Product is not a pre-order listing");
+    }
+
+    // Update product procurement stage
+    const productPatch: Record<string, any> = {
+      procurementStage: args.newStage,
+    };
+    if (args.newStage === "inventory_ready") {
+      productPatch.balanceRequestsSent = false;
+    }
+    await ctx.db.patch(args.productId, productPatch);
+
+    // Map procurement stage to pre-order status
+    const mappedStatus =
+      args.newStage === "inventory_ready"
+        ? "stock_arrived"
+        : "waiting_for_stock";
+
+    // Batch-update all active pre-orders for this product
+    const preOrders = await ctx.db
+      .query("preOrders")
+      .withIndex("by_productId", (q) => q.eq("productId", args.productId))
+      .collect();
+
+    let updatedCount = 0;
+    for (const po of preOrders) {
+      if (!TERMINAL_STATUSES.has(po.status)) {
+        await ctx.db.patch(po._id, { status: mappedStatus as any });
+        updatedCount++;
+      }
+    }
+
+    return { updatedCount };
+  },
+});
+
+export const bulkUpdateStatus = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    productIds: v.array(v.id("products")),
+    status: v.union(v.literal("active"), v.literal("unlisted")),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    let updated = 0;
+    for (const id of args.productIds) {
+      const product = await ctx.db.get(id);
+      if (product) {
+        await ctx.db.patch(id, { status: args.status });
+        updated++;
+      }
+    }
+    return { updated };
+  },
+});
+
+export const bulkDelete = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    productIds: v.array(v.id("products")),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    let deleted = 0;
+    let skipped = 0;
+    for (const id of args.productIds) {
+      const product = await ctx.db.get(id);
+      if (!product) continue;
+      // Check for active pre-orders
+      const activePreOrders = await ctx.db
+        .query("preOrders")
+        .withIndex("by_productId", (q) => q.eq("productId", id))
+        .collect();
+      const hasActive = activePreOrders.some(
+        (po) =>
+          po.status !== "cancelled" &&
+          po.status !== "delivered" &&
+          po.status !== "fully_paid_shipped"
+      );
+      if (hasActive) {
+        skipped++;
+        continue;
+      }
+      await ctx.db.delete(id);
+      deleted++;
+    }
+    return { deleted, skipped };
   },
 });
 

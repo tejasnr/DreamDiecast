@@ -1,60 +1,30 @@
 'use client';
 
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import {
-  Loader2,
-  ArrowLeft,
-  CheckCircle,
-  Package,
-  User,
-  MapPin,
-  Phone,
-  Truck,
-  ShoppingBag
-} from 'lucide-react';
-import Image from 'next/image';
+import { Loader2, ArrowLeft, Truck } from 'lucide-react';
 import Link from 'next/link';
+import FulfillmentBoard from '@/components/admin/FulfillmentBoard';
+import CommandPalette from '@/components/admin/CommandPalette';
 
 export default function FulfillmentPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const orders = useQuery(
-    api.orders.listForFulfillment,
+  const board = useQuery(
+    api.orders.listFulfillmentBoard,
     user?.role === 'admin' ? { workosUserId: user.workosUserId } : 'skip'
   );
-  const markShipped = useMutation(api.orders.markShipped);
-  const markCompleted = useMutation(api.orders.markCompleted);
 
   const isAdmin = user?.role === 'admin';
-  const loading = authLoading || (isAdmin && orders === undefined);
+  const loading = authLoading || (isAdmin && board === undefined);
 
   if (!authLoading && (!user || !isAdmin)) {
     router.push('/');
     return null;
   }
-
-  const handleMarkShipped = async (orderId: string) => {
-    try {
-      await markShipped({ workosUserId: user!.workosUserId, orderId: orderId as Id<'orders'> });
-    } catch (err) {
-      console.error('Error marking shipped:', err);
-      alert('Failed to update order status.');
-    }
-  };
-
-  const handleMarkCompleted = async (orderId: string) => {
-    try {
-      await markCompleted({ workosUserId: user!.workosUserId, orderId: orderId as Id<'orders'> });
-    } catch (err) {
-      console.error('Error marking completed:', err);
-      alert('Failed to update order status.');
-    }
-  };
 
   if (loading) {
     return (
@@ -64,179 +34,41 @@ export default function FulfillmentPage() {
     );
   }
 
-  if (!isAdmin) return null;
+  if (!isAdmin || !board) return null;
 
-  const orderList = orders ?? [];
-  const readyToShip = orderList.filter((o: any) => o.orderStatus === 'verified' || o.orderStatus === 'processing');
-  const shipped = orderList.filter((o: any) => o.orderStatus === 'shipped');
-
-  const renderOrderCard = (order: any, actionType: 'ship' | 'complete') => {
-    const orderId = order._id as string;
-    return (
-      <div key={orderId} className="glass p-8 border border-white/10 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-3xl rounded-full -mr-32 -mt-32 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative">
-          {/* Order Info */}
-          <div className="space-y-4">
-            <div>
-              <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-1">Order ID</p>
-              <p className="text-sm font-mono font-bold text-white tracking-widest">#{orderId.slice(-8)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-1">Customer</p>
-              <div className="flex items-center gap-2 text-white/60">
-                <User size={14} className="text-accent" />
-                <span className="text-xs font-bold truncate">{order.userEmail}</span>
-              </div>
-            </div>
-            <div className="pt-4">
-              <span className={`px-3 py-1 text-[8px] font-bold uppercase tracking-widest rounded-full border ${
-                actionType === 'ship'
-                  ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                  : 'bg-orange-500/10 border-orange-500/20 text-orange-400'
-              }`}>
-                {actionType === 'ship' ? 'Ready to Ship' : 'Shipped'}
-              </span>
-            </div>
-          </div>
-
-          {/* Shipping Details */}
-          <div className="lg:col-span-2 space-y-4 bg-white/5 p-6 border border-white/5 rounded-sm">
-            <p className="text-[10px] text-accent uppercase tracking-widest font-bold mb-1 flex items-center gap-2">
-              <MapPin size={12} /> Shipping Label Information
-            </p>
-            {order.shippingDetails ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[8px] text-white/20 uppercase tracking-widest mb-1">Recipient Name</p>
-                    <p className="text-sm font-bold text-white uppercase">{order.shippingDetails.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-[8px] text-white/20 uppercase tracking-widest mb-1">Contact Number</p>
-                    <p className="text-sm font-bold text-white flex items-center gap-2">
-                      <Phone size={14} className="text-accent" /> {order.shippingDetails.phone}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[8px] text-white/20 uppercase tracking-widest mb-1">Full Address</p>
-                  <p className="text-sm text-white/80 leading-relaxed uppercase">
-                    {order.shippingDetails.address}<br />
-                    {order.shippingDetails.city}, {order.shippingDetails.state} - {order.shippingDetails.pincode}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-red-500 font-bold uppercase tracking-widest">Missing Shipping Details!</p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col gap-3 justify-center">
-            {actionType === 'ship' ? (
-              <button
-                onClick={() => handleMarkShipped(orderId)}
-                className="w-full bg-accent text-white py-5 font-display font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all glow-orange flex items-center justify-center gap-2"
-              >
-                <Truck size={18} /> Mark as Shipped
-              </button>
-            ) : (
-              <button
-                onClick={() => handleMarkCompleted(orderId)}
-                className="w-full bg-green-500 text-white py-5 font-display font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
-              >
-                <CheckCircle size={18} /> Mark as Completed
-              </button>
-            )}
-            <p className="text-[8px] text-white/20 text-center uppercase tracking-widest">
-              {actionType === 'ship'
-                ? 'This will update order status to "Shipped"'
-                : 'This will mark as delivered & add to garage'}
-            </p>
-          </div>
-        </div>
-
-        {/* Items to Pack */}
-        <div className="mt-8 pt-6 border-t border-white/5">
-          <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold mb-4 flex items-center gap-2">
-            <ShoppingBag size={12} /> Items to Pack ({order.items.length})
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {order.items.map((item: any, idx: any) => (
-              <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-sm border border-white/5 group/item">
-                <div className="relative w-16 h-12 bg-black rounded-sm overflow-hidden flex-shrink-0">
-                  <Image src={item.image} alt={item.name} fill className="object-cover" referrerPolicy="no-referrer" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-white uppercase truncate">{item.name}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[8px] text-accent font-bold uppercase tracking-widest bg-accent/10 px-2 py-0.5">Qty: {item.quantity}</span>
-                    <span className="text-[8px] text-white/40 uppercase tracking-widest">{item.scale}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const totalOrders =
+    board.toPack.length +
+    board.labelGenerated.length +
+    board.inTransit.length +
+    board.delivered.length;
 
   return (
     <main className="min-h-screen bg-[#050505] pt-32 pb-20 px-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div>
-            <Link href="/admin" className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-4 uppercase tracking-widest text-[10px] font-bold">
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-4 uppercase tracking-widest text-[10px] font-bold"
+            >
               <ArrowLeft size={14} /> Back to Dashboard
             </Link>
             <h1 className="text-5xl md:text-8xl font-display font-bold uppercase tracking-tighter leading-none">
               Order <span className="text-white/20">Fulfillment</span>
             </h1>
             <p className="text-accent text-[10px] font-bold uppercase tracking-widest mt-4 flex items-center gap-2">
-              <Truck size={14} /> {orderList.length} Orders in Pipeline
+              <Truck size={14} /> {totalOrders} Orders in Pipeline
             </p>
+          </div>
+          <div className="text-[10px] text-white/20 uppercase tracking-widest font-bold">
+            Drag cards forward to update status
           </div>
         </div>
 
-        {orderList.length === 0 ? (
-          <div className="text-center py-24 border border-white/5 carbon-pattern">
-            <Package className="mx-auto text-white/10 mb-6" size={48} />
-            <p className="text-white/40 uppercase tracking-widest font-mono">No orders pending fulfillment.</p>
-            <Link href="/admin/orders" className="text-accent text-[10px] font-bold uppercase tracking-widest mt-4 inline-block hover:underline">
-              Check all orders
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-12">
-            {/* Ready to Ship */}
-            {readyToShip.length > 0 && (
-              <div>
-                <h2 className="text-lg font-display font-bold uppercase tracking-widest text-blue-400 mb-6 flex items-center gap-3">
-                  <Package size={18} /> Ready to Ship ({readyToShip.length})
-                </h2>
-                <div className="grid grid-cols-1 gap-6">
-                  {readyToShip.map((order: any) => renderOrderCard(order, 'ship'))}
-                </div>
-              </div>
-            )}
-
-            {/* Shipped - Awaiting Delivery */}
-            {shipped.length > 0 && (
-              <div>
-                <h2 className="text-lg font-display font-bold uppercase tracking-widest text-orange-400 mb-6 flex items-center gap-3">
-                  <Truck size={18} /> Shipped - Awaiting Delivery ({shipped.length})
-                </h2>
-                <div className="grid grid-cols-1 gap-6">
-                  {shipped.map((order: any) => renderOrderCard(order, 'complete'))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        <FulfillmentBoard data={board} workosUserId={user!.workosUserId} />
       </div>
+
+      <CommandPalette />
     </main>
   );
 }

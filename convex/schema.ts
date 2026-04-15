@@ -44,9 +44,25 @@ export default defineSchema({
     totalFinalPrice: v.optional(v.number()),
     eta: v.optional(v.string()),
     isHype: v.optional(v.boolean()),
+
+    // Campaign fields (relevant when listingType === "pre-order")
+    allocatedStock: v.optional(v.number()),
+    unitsSold: v.optional(v.number()),
+    procurementStage: v.optional(
+      v.union(
+        v.literal("brand_ordered"),
+        v.literal("international_transit"),
+        v.literal("customs_processing"),
+        v.literal("inventory_ready")
+      )
+    ),
+    totalDepositsCollected: v.optional(v.number()),
+    totalLockedBalances: v.optional(v.number()),
+    balanceRequestsSent: v.optional(v.boolean()),
   })
     .index("by_category", ["category"])
-    .index("by_brand", ["brand"]),
+    .index("by_brand", ["brand"])
+    .index("by_listingType", ["listingType"]),
 
   users: defineTable({
     email: v.string(),
@@ -220,6 +236,16 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_productId", ["productId"])
     .index("by_expiresAt", ["expiresAt"]),
+
+  waitlist: defineTable({
+    email: v.string(),
+    productId: v.id("products"),
+    createdAt: v.number(),
+    notified: v.optional(v.boolean()),
+  })
+    .index("by_productId", ["productId"])
+    .index("by_email", ["email"])
+    .index("by_productId_email", ["productId", "email"]),
 
   assets: defineTable({
     name: v.string(),
