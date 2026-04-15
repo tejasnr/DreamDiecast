@@ -5,7 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { motion } from 'motion/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   Plus,
@@ -19,10 +19,10 @@ import {
   Image as ImageIcon,
   ShoppingBag,
   Truck,
-  CheckCircle,
-  MessageCircle,
   EyeOff,
   Eye,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 
 import Image from 'next/image';
@@ -31,11 +31,14 @@ import AssetManager from '@/components/AssetManager';
 import ProductForm from '@/components/admin/ProductForm';
 import PreOrderTable from '@/components/admin/PreOrderTable';
 import ConfirmModal from '@/components/admin/ConfirmModal';
-import { WHATSAPP_COMMUNITY_LINK } from '@/lib/constants';
+import DashboardHub from '@/components/admin/DashboardHub';
+import CommandPalette from '@/components/admin/CommandPalette';
+import BulkActionBar from '@/components/admin/BulkActionBar';
 import { formatEta } from '@/lib/format';
 
 export default function AdminPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, logout } = useAuth();
 
   const products = useQuery(api.products.list);
@@ -50,16 +53,18 @@ export default function AdminPage() {
   const pendingOrdersCount = useQuery(api.orders.countPendingVerification) ?? 0;
 
   const removeProduct = useMutation(api.products.remove);
-  const markProductArrived = useMutation(api.products.markArrived);
-  const markPreOrdersArrived = useMutation(api.preOrders.markArrivedByProduct);
   const updateProduct = useMutation(api.products.update);
 
-  const [activeTab, setActiveTab] = useState<'products' | 'pre-orders'>(
-    'products'
+  const tabParam = searchParams.get('tab');
+  const initialTab =
+    tabParam === 'products' || tabParam === 'pre-orders' ? tabParam : 'dashboard';
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'pre-orders'>(
+    initialTab
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
   const [isAssetManagerOpen, setIsAssetManagerOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<Id<'products'>>>(new Set());
   const [confirmModal, setConfirmModal] = useState<{
     title: string;
     message: string;
@@ -76,6 +81,30 @@ export default function AdminPage() {
   }
 
   const pendingFulfillmentCount = fulfillmentOrders?.length ?? 0;
+
+  const switchTab = (tab: 'dashboard' | 'products' | 'pre-orders') => {
+    setSelectedIds(new Set());
+    setActiveTab(tab);
+  };
+
+  const toggleSelect = (id: Id<'products'>) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (products: any[]) => {
+    const allIds = products.map((p: any) => p.id as Id<'products'>);
+    const allSelected = allIds.every((id) => selectedIds.has(id));
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allIds));
+    }
+  };
 
   const showConfirm = (title: string, message: string, variant: 'danger' | 'default', onConfirm: () => void) => {
     setConfirmModal({ title, message, variant, onConfirm });
@@ -113,35 +142,6 @@ export default function AdminPage() {
           });
         } catch (err) {
           console.error(`Error updating product status:`, err);
-        }
-      }
-    );
-  };
-
-  const handleArrived = (product: any) => {
-    showConfirm(
-      'Mark as Arrived',
-      `Mark "${product.name}" as arrived? This will convert it to in-stock and notify all pre-order customers.`,
-      'default',
-      async () => {
-        try {
-          await markProductArrived({
-            workosUserId: user!.workosUserId,
-            id: product.id as Id<'products'>,
-          });
-          await markPreOrdersArrived({
-            workosUserId: user!.workosUserId,
-            productId: product.id as Id<'products'>,
-          });
-          const message = `🚗 *${product.name}* has arrived!\n\nPlease make your remaining payments here:\nhttps://dreamdiecast.in/pre-orders`;
-          if (WHATSAPP_COMMUNITY_LINK) {
-            navigator.clipboard.writeText(message);
-            window.open(WHATSAPP_COMMUNITY_LINK, '_blank');
-          } else {
-            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-          }
-        } catch (err) {
-          console.error('Error marking product as arrived:', err);
         }
       }
     );
@@ -207,7 +207,17 @@ export default function AdminPage() {
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex bg-white/5 p-1 rounded-sm border border-white/10 mr-4">
               <button
-                onClick={() => setActiveTab('products')}
+                onClick={() => switchTab('dashboard')}
+                className={`px-6 py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  activeTab === 'dashboard'
+                    ? 'bg-white text-black'
+                    : 'text-white/40 hover:text-white'
+                }`}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => switchTab('products')}
                 className={`px-6 py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
                   activeTab === 'products'
                     ? 'bg-white text-black'
@@ -217,7 +227,7 @@ export default function AdminPage() {
                 Products
               </button>
               <button
-                onClick={() => setActiveTab('pre-orders')}
+                onClick={() => switchTab('pre-orders')}
                 className={`px-6 py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
                   activeTab === 'pre-orders'
                     ? 'bg-white text-black'
@@ -283,9 +293,33 @@ export default function AdminPage() {
           skuSuggestions={skuSuggestions}
         />
 
-        {/* Product List */}
-        {activeTab === 'products' ? (
+        {/* Dashboard */}
+        {activeTab === 'dashboard' && (
+          <DashboardHub workosUserId={user!.workosUserId} />
+        )}
+
+        {/* Product List / Pre-Orders */}
+        {activeTab === 'dashboard' ? null : activeTab === 'products' ? (
           <div className="grid grid-cols-1 gap-4">
+            {/* Select All header */}
+            {inStockProducts.length > 0 && (
+              <div className="flex items-center gap-3 px-6 py-2">
+                <button
+                  onClick={() => toggleSelectAll(inStockProducts)}
+                  className="text-white/30 hover:text-white transition-colors"
+                >
+                  {inStockProducts.length > 0 &&
+                  inStockProducts.every((p: any) => selectedIds.has(p.id as Id<'products'>)) ? (
+                    <CheckSquare size={18} className="text-accent" />
+                  ) : (
+                    <Square size={18} />
+                  )}
+                </button>
+                <span className="text-[10px] text-white/30 uppercase tracking-widest font-bold">
+                  Select All ({inStockProducts.length})
+                </span>
+              </div>
+            )}
             {inStockProducts.length === 0 ? (
               <div className="text-center py-24 border border-white/5 carbon-pattern">
                 <p className="text-white/40 uppercase tracking-widest font-mono">
@@ -296,8 +330,19 @@ export default function AdminPage() {
               inStockProducts.map((product: any) => (
                 <div
                   key={product.id}
-                  className={`glass p-6 flex flex-col md:flex-row items-center gap-8 group ${product.status === 'unlisted' ? 'opacity-50' : ''}`}
+                  className={`glass p-6 flex flex-col md:flex-row items-center gap-8 group ${product.status === 'unlisted' ? 'opacity-50' : ''} ${selectedIds.has(product.id as Id<'products'>) ? 'ring-1 ring-accent/40' : ''}`}
                 >
+                  {/* Checkbox */}
+                  <button
+                    onClick={() => toggleSelect(product.id as Id<'products'>)}
+                    className="text-white/30 hover:text-white transition-colors flex-shrink-0"
+                  >
+                    {selectedIds.has(product.id as Id<'products'>) ? (
+                      <CheckSquare size={20} className="text-accent" />
+                    ) : (
+                      <Square size={20} />
+                    )}
+                  </button>
                   <div className="relative w-32 h-20 bg-white/5 overflow-hidden">
                     {product.image && (
                       <Image
@@ -455,16 +500,6 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        {/* Arrived + WA — always visible for PO products (hidden if already converted to Current Stock) */}
-                        {product.category !== 'Current Stock' && (
-                          <button
-                            onClick={() => handleArrived(product)}
-                            className="bg-white text-black px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center gap-2"
-                          >
-                            <CheckCircle size={14} /> <MessageCircle size={14} /> Arrived + WA
-                          </button>
-                        )}
-
                         {/* Toggle unlist / re-list */}
                         {product.status === 'unlisted' ? (
                           <button
@@ -515,6 +550,16 @@ export default function AdminPage() {
         onConfirm={() => confirmModal?.onConfirm()}
         onCancel={() => setConfirmModal(null)}
       />
+
+      <CommandPalette onAddProduct={startAdd} />
+
+      {activeTab === 'products' && (
+        <BulkActionBar
+          selectedIds={selectedIds}
+          onClear={() => setSelectedIds(new Set())}
+          workosUserId={user!.workosUserId}
+        />
+      )}
     </div>
   );
 }

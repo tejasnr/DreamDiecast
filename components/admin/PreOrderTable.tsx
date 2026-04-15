@@ -5,7 +5,6 @@ import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
-  MessageCircle,
   Mail,
   ChevronDown,
   Plus,
@@ -14,7 +13,6 @@ import {
   Link2,
   Check,
   X,
-  ExternalLink,
   Eye,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -96,41 +94,11 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
     }
   };
 
-  const generatePaymentLink = (po: any) => {
-    return `https://dreamdiecast.in/pay/${po._id}`;
-  };
-
-  const handleSendPaymentLink = (po: any) => {
-    const paymentUrl = generatePaymentLink(po);
-    const balanceDue = (po.totalPrice || 0) - (po.depositPaid || 0);
-    const total = balanceDue + 100;
-    const phone = (po.customerPhone || '').replace(/[^0-9]/g, '');
-
-    const message = encodeURIComponent(
-      `Hi ${po.customerName}! 🚗\n\nGreat news — your *${po.productName}* has arrived at DreamDiecast!\n\nBalance Due: ₹${balanceDue.toLocaleString()}\nShipping: ₹100\nTotal to Pay: ₹${total.toLocaleString()}\n\nPay here: ${paymentUrl}\n\nThank you for your patience! 🙏`
-    );
-
-    // Copy payment link to clipboard
+  const handleCopyPaymentLink = (po: any) => {
+    const paymentUrl = `https://dreamdiecast.in/pay/${po._id}`;
     navigator.clipboard.writeText(paymentUrl);
     setCopiedId(po._id);
     setTimeout(() => setCopiedId(null), 3000);
-
-    // Open WhatsApp
-    if (phone) {
-      window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-    } else {
-      window.open(`https://wa.me/?text=${message}`, '_blank');
-    }
-  };
-
-  const generateMailtoLink = (po: any) => {
-    const balanceDue = (po.totalPrice || 0) - (po.depositPaid || 0);
-    const paymentUrl = generatePaymentLink(po);
-    const subject = encodeURIComponent(`Your ${po.productName} Pre-Order - Balance Due`);
-    const body = encodeURIComponent(
-      `Hi ${po.customerName},\n\nYour ${po.productName} has arrived! Please pay the remaining balance of ₹${balanceDue.toLocaleString()} + ₹100 shipping.\n\nPay here: ${paymentUrl}\n\nThank you,\nDream Diecast`
-    );
-    return `mailto:${po.customerEmail || ''}?subject=${subject}&body=${body}`;
   };
 
   const balancePendingOrders = preOrders.filter(
@@ -213,7 +181,6 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
                   PO_STATUS_DISPLAY[po.normalizedStatus] ||
                   PO_STATUS_DISPLAY['waiting_for_stock'];
                 const balanceDue = (po.totalPrice || 0) - (po.depositPaid || 0);
-                const hasPhone = !!po.customerPhone;
                 const hasEmail = !!po.customerEmail;
                 const isStockArrived = po.normalizedStatus === 'stock_arrived';
                 const isBalanceSubmitted = po.normalizedStatus === 'balance_submitted' || po.balancePaymentStatus === 'submitted';
@@ -338,15 +305,15 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
                           </>
                         )}
 
-                        {/* Send Payment Link button for stock_arrived */}
+                        {/* Copy Payment Link button for stock_arrived */}
                         {isStockArrived && !isBalanceSubmitted && (
                           <button
-                            onClick={() => handleSendPaymentLink(po)}
+                            onClick={() => handleCopyPaymentLink(po)}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/30 text-green-400 text-[9px] font-bold uppercase tracking-widest rounded-sm transition-all"
-                            title="Send payment link via WhatsApp"
+                            title="Copy payment link"
                           >
                             <Link2 size={12} />
-                            {copiedId === po._id ? 'Copied!' : 'Payment Link'}
+                            {copiedId === po._id ? 'Copied!' : 'Copy Link'}
                           </button>
                         )}
 
@@ -361,38 +328,15 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
                           </button>
                         )}
 
-                        {/* WhatsApp / Email buttons for other statuses */}
-                        {!isStockArrived && !isBalanceSubmitted && po.normalizedStatus !== 'deposit_verified' && po.normalizedStatus !== 'waiting_for_stock' && (
-                          <>
-                            {hasPhone ? (
-                              <a
-                                href={`https://wa.me/${(po.customerPhone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${po.customerName}, update regarding your ${po.productName} pre-order from DreamDiecast.`)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 bg-green-500/10 hover:bg-green-500/30 text-green-400 rounded-sm transition-all"
-                                title="Notify via WhatsApp"
-                              >
-                                <MessageCircle size={14} />
-                              </a>
-                            ) : (
-                              <div className="p-2 bg-white/5 text-white/10 rounded-sm cursor-not-allowed" title="No phone number">
-                                <MessageCircle size={14} />
-                              </div>
-                            )}
-                            {hasEmail ? (
-                              <a
-                                href={generateMailtoLink(po)}
-                                className="p-2 bg-blue-500/10 hover:bg-blue-500/30 text-blue-400 rounded-sm transition-all"
-                                title="Notify via Email"
-                              >
-                                <Mail size={14} />
-                              </a>
-                            ) : (
-                              <div className="p-2 bg-white/5 text-white/10 rounded-sm cursor-not-allowed" title="No email">
-                                <Mail size={14} />
-                              </div>
-                            )}
-                          </>
+                        {/* Email contact for other statuses */}
+                        {!isStockArrived && !isBalanceSubmitted && po.normalizedStatus !== 'deposit_verified' && po.normalizedStatus !== 'waiting_for_stock' && hasEmail && (
+                          <a
+                            href={`mailto:${po.customerEmail}`}
+                            className="p-2 bg-blue-500/10 hover:bg-blue-500/30 text-blue-400 rounded-sm transition-all"
+                            title="Email customer"
+                          >
+                            <Mail size={14} />
+                          </a>
                         )}
                       </div>
                     </td>

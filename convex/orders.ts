@@ -414,3 +414,125 @@ export const listForFulfillment = query({
     );
   },
 });
+
+// Kanban board query — groups orders + pre-orders by fulfillment status
+export const listFulfillmentBoard = query({
+  args: { workosUserId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+
+    // Regular orders (verified payment only)
+    const allOrders = await ctx.db.query("orders").collect();
+    const fulfillableOrders = allOrders.filter(
+      (o) =>
+        o.paymentStatus === "verified" &&
+        (o.orderStatus === "verified" ||
+          o.orderStatus === "processing" ||
+          o.orderStatus === "shipped" ||
+          o.orderStatus === "completed")
+    );
+
+    // Pre-orders at fulfillment-relevant stages
+    const allPreOrders = await ctx.db.query("preOrders").collect();
+    const fulfillablePreOrders = allPreOrders.filter(
+      (po) =>
+        po.status === "balance_verified" ||
+        po.status === "shipped" ||
+        po.status === "delivered"
+    );
+
+    // Map pre-orders to a uniform shape
+    const preOrderCards = fulfillablePreOrders.map((po) => ({
+      _id: po._id,
+      type: "pre-order" as const,
+      userEmail: po.customerEmail || "N/A",
+      items: [
+        {
+          name: po.productName || po.name || "Product",
+          image: po.productImage || po.image || "",
+          quantity: 1,
+        },
+      ],
+      shippingDetails: po.shippingAddress || null,
+      totalAmount: (po.totalPrice ?? po.price ?? 0),
+      _creationTime: po.createdAt || po._creationTime,
+      orderStatus: po.status === "balance_verified"
+        ? "verified"
+        : po.status === "shipped"
+          ? "shipped"
+          : "completed",
+    }));
+
+    // Map regular orders to a uniform shape
+    const orderCards = fulfillableOrders.map((o) => ({
+      _id: o._id,
+      type: "order" as const,
+      userEmail: o.userEmail,
+      items: o.items.map((i) => ({
+        name: i.name,
+        image: i.image,
+        quantity: i.quantity,
+      })),
+      shippingDetails: o.shippingDetails || null,
+      totalAmount: o.totalAmount,
+      _creationTime: o._creationTime,
+      orderStatus: o.orderStatus,
+    }));
+
+    const all = [...orderCards, ...preOrderCards];
+
+    return {
+      toPack: all.filter((c) => c.orderStatus === "verified"),
+      labelGenerated: all.filter((c) => c.orderStatus === "processing"),
+      inTransit: all.filter((c) => c.orderStatus === "shipped"),
+      delivered: all.filter((c) => c.orderStatus === "completed"),
+    };
+  },
+});
+
+// Unified fulfillment status update for regular orders (Kanban drag)
+export const updateFulfillmentStatus = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    orderId: v.id("orders"),
+    newStatus: v.union(
+      v.literal("verified"),
+      v.literal("processing"),
+      v.literal("shipped"),
+      v.literal("completed")
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+
+    const statusOrder = ["verified", "processing", "shipped", "completed"];
+    const currentIdx = statusOrder.indexOf(order.orderStatus);
+    const newIdx = statusOrder.indexOf(args.newStatus);
+    if (newIdx <= currentIdx) {
+      throw new Error("Can only move orders forward in fulfillment pipeline");
+    }
+
+    await ctx.db.patch(args.orderId, { orderStatus: args.newStatus });
+
+    // If completing, auto-create garage items (same logic as markCompleted)
+    if (args.newStatus === "completed") {
+      for (const item of order.items) {
+        await ctx.db.insert("garageItems", {
+          userId: order.userId,
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          originalPrice: item.originalPrice,
+          image: item.image,
+          category: item.category,
+          brand: item.brand,
+          scale: item.scale,
+          purchasedAt: Date.now(),
+          status: "owned",
+        });
+      }
+    }
+  },
+});
