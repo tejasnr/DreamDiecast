@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function ProductsPage() {
   const { products, loading } = useProducts();
-  const listedProducts = products.filter((product) => product.status !== 'unlisted');
+  const listedProducts = products.filter((product) => product.status !== 'unlisted' && product.listingType !== 'pre-order' && product.category !== 'Pre-Order');
 
   if (loading) {
     return (

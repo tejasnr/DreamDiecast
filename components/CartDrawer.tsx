@@ -101,21 +101,27 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center border border-white/10 rounded-sm">
-                            <button 
+                            <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
                               className="p-1.5 hover:bg-white/5 text-white/40 hover:text-white transition-colors"
                             >
                               <Minus size={12} />
                             </button>
                             <span className="w-8 text-center text-xs font-mono font-bold">{item.quantity}</span>
-                            <button 
+                            <button
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-1.5 hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+                              disabled={item.isHype || (!isPreOrderItem(item) && item.stock !== undefined && item.quantity >= item.stock)}
+                              className="p-1.5 hover:bg-white/5 text-white/40 hover:text-white transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                             >
                               <Plus size={12} />
                             </button>
                           </div>
-                          {item.stock !== undefined && item.quantity >= item.stock && !isPreOrderItem(item) && (
+                          {item.isHype && (
+                            <span className="text-[8px] text-red-500 font-bold uppercase tracking-widest">
+                              Limit 1 Per Person
+                            </span>
+                          )}
+                          {!item.isHype && item.stock !== undefined && item.quantity >= item.stock && !isPreOrderItem(item) && (
                             <span className="text-[8px] text-orange-500 font-bold uppercase tracking-widest">
                               Max Stock Reached
                             </span>

@@ -90,15 +90,7 @@ export default function Navbar() {
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <Package size={14} className="text-accent" />
-                          Purchases
-                        </Link>
-                        <Link
-                          href="/garage?tab=pre-orders"
-                          className="flex items-center gap-3 px-4 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors rounded-sm"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <Clock size={14} className="text-accent" />
-                          My Pre-orders
+                          My Purchases
                         </Link>
                         <button
                           onClick={() => { logout(); setIsProfileOpen(false); }}

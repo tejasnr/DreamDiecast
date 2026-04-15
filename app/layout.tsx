@@ -8,6 +8,8 @@ import { CartProvider } from '@/context/CartContext';
 import { AuthProvider } from '@/context/AuthContext';
 import PostHogProvider from '@/components/PostHogProvider';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -36,6 +38,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Navbar />
                 {children}
                 <Footer />
+                <Analytics />
+                <SpeedInsights />
               </CartProvider>
             </AuthProvider>
           </PostHogProvider>
