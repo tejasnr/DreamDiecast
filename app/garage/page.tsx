@@ -56,27 +56,23 @@ export default function GaragePage() {
   const preOrderItems = items.filter(item => item.status === 'pre-ordered' || item.status === 'arrived');
   const orderTypeLabel = (order: typeof orders[number]) => {
     if (order.items.some((item) => item.category === 'Balance Payment')) return 'Balance Payment';
-    if (order.items.some((item) => item.category === 'Pre-Order')) return 'Pre-Order Deposit';
+    if (order.order_type === 'pre-order' || order.items.some((item) => item.category === 'Pre-Order')) return 'Pre-Order Deposit';
     return 'Order';
   };
+  const isPreOrderOrder = (order: typeof orders[number]) =>
+    order.order_type === 'pre-order' || order.items.some((item) => item.category === 'Pre-Order');
+  const isBalanceOrder = (order: typeof orders[number]) =>
+    order.items.some((item) => item.category === 'Balance Payment');
   const regularOrdersCount = orders.filter(
-    (order) => !order.items.some((item) => item.category === 'Pre-Order' || item.category === 'Balance Payment')
+    (order) => !isPreOrderOrder(order) && !isBalanceOrder(order)
   ).length;
-  const preOrderOrdersCount = orders.filter((order) =>
-    order.items.some((item) => item.category === 'Pre-Order')
-  ).length;
-  const balanceOrdersCount = orders.filter((order) =>
-    order.items.some((item) => item.category === 'Balance Payment')
-  ).length;
+  const preOrderOrdersCount = orders.filter((order) => isPreOrderOrder(order)).length;
+  const balanceOrdersCount = orders.filter((order) => isBalanceOrder(order)).length;
   const filteredOrders = orders.filter((order) => {
     if (ordersFilter === 'all') return true;
-    if (ordersFilter === 'pre-order') {
-      return order.items.some((item) => item.category === 'Pre-Order');
-    }
-    if (ordersFilter === 'balance') {
-      return order.items.some((item) => item.category === 'Balance Payment');
-    }
-    return !order.items.some((item) => item.category === 'Pre-Order' || item.category === 'Balance Payment');
+    if (ordersFilter === 'pre-order') return isPreOrderOrder(order);
+    if (ordersFilter === 'balance') return isBalanceOrder(order);
+    return !isPreOrderOrder(order) && !isBalanceOrder(order);
   });
 
   if (authLoading) {
@@ -148,9 +144,9 @@ export default function GaragePage() {
                   </Link>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10 border border-white/10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {ownedItems.map((item) => (
-                    <div key={item.id} className="bg-[#050505] p-8 group">
+                    <div key={item.id} className="bg-[#050505] p-8 group border border-white/10">
                       <div className="relative aspect-[16/9] mb-8 overflow-hidden bg-white/5">
                         <Image 
                           src={item.image} 
@@ -204,9 +200,9 @@ export default function GaragePage() {
                   </Link>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10 border border-white/10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {preOrderItems.map((item) => (
-                    <div key={item.id} className="bg-[#050505] p-8 group">
+                    <div key={item.id} className="bg-[#050505] p-8 group border border-white/10">
                       <div className="relative aspect-[16/9] mb-8 overflow-hidden bg-white/5">
                         <Image 
                           src={item.image} 
