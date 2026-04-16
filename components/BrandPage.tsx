@@ -64,9 +64,32 @@ export default function BrandPage({ brand }: BrandPageProps) {
 
   const filteredProducts = useMemo(() => {
     if (activeFilter === 'All') return products;
+
     if (activeFilter === 'In Stock') {
-      return products.filter((p) => p.category === 'In Stock' || p.category === 'Current Stock');
+      return products.filter((p) =>
+        p.listingType === 'in-stock'
+        || p.category === 'In Stock'
+        || p.category === 'Current Stock'
+        || p.status === 'In Stock'
+      );
     }
+
+    if (activeFilter === 'Pre-Order') {
+      return products.filter((p) =>
+        p.listingType === 'pre-order'
+        || p.category === 'Pre-Order'
+        || p.isPreorder === true
+      );
+    }
+
+    if (activeFilter === 'New Arrival') {
+      const twoWeeksAgo = Date.now() - (14 * 24 * 60 * 60 * 1000);
+      return products.filter((p) => {
+        const createdAt = typeof p.createdAt === 'number' ? p.createdAt : 0;
+        return createdAt > twoWeeksAgo;
+      });
+    }
+
     return products.filter((p) => p.category === activeFilter);
   }, [products, activeFilter]);
 
