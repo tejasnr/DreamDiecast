@@ -5,6 +5,7 @@ export interface Brand {
   logo: string;
   description: string;
   tagline: string;
+  invertLogo?: boolean;
 }
 
 export const BRANDS: Brand[] = [
@@ -41,12 +42,13 @@ export const BRANDS: Brand[] = [
     tagline: 'Limited Runs',
   },
   {
-    name: 'Poster Cars',
-    slug: 'postercars',
-    accentColor: '#AB47BC',
-    logo: '/assets/PosterCars.png',
-    description: 'Where art meets diecast.',
-    tagline: 'Collector Art',
+    name: 'Tarmac Works',
+    slug: 'tarmacworks',
+    accentColor: '#C0C0C0',
+    logo: '/assets/tarmac-works.png',
+    description: 'High-detail motorsport-inspired diecast.',
+    tagline: 'Track Legends',
+    invertLogo: true,
   },
   {
     name: 'Matchbox',
@@ -71,6 +73,6 @@ export const BRAND_IMAGE_KEYS: Record<string, string> = {
   bburago: 'brandBburago',
   minigt: 'brandMinigt',
   poprace: 'brandPoprace',
-  postercars: 'brandPostercars',
+  tarmacworks: 'brandTarmacworks',
   matchbox: 'brandMatchbox',
 };

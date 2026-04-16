@@ -51,7 +51,7 @@ export default function BrandCard({
             alt={`${brand.name} logo`}
             width={isCompact ? 100 : 140}
             height={isCompact ? 60 : 80}
-            className="object-contain opacity-70 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110"
+            className={`object-contain opacity-70 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110 ${brand.invertLogo ? 'invert brightness-200' : ''}`}
           />
         </div>
 
