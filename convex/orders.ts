@@ -57,6 +57,9 @@ export const insertOrder = internalMutation({
     paymentMethod: v.string(),
     shippingDetails: v.optional(shippingDetailsValidator),
     sessionId: v.optional(v.string()),
+    couponCode: v.optional(v.string()),
+    couponDiscount: v.optional(v.number()),
+    couponShippingWaived: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -150,6 +153,41 @@ export const insertOrder = internalMutation({
       }
     }
 
+    // ── Coupon re-validation at order time ──
+    let validatedCouponId: any = null;
+    if (args.couponCode) {
+      const coupon = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", args.couponCode!))
+        .unique();
+
+      if (!coupon || !coupon.isActive) {
+        throw new Error("Coupon is no longer valid, please try again");
+      }
+      const now = Date.now();
+      if (coupon.validFrom && now < coupon.validFrom) {
+        throw new Error("Coupon is no longer valid, please try again");
+      }
+      if (coupon.validUntil && now > coupon.validUntil) {
+        throw new Error("Coupon is no longer valid, please try again");
+      }
+      if (coupon.usageLimit !== undefined && coupon.timesUsed >= coupon.usageLimit) {
+        throw new Error("Coupon is no longer valid, please try again");
+      }
+      if (coupon.perUserLimit !== undefined) {
+        const userRedemptions = await ctx.db
+          .query("couponRedemptions")
+          .withIndex("by_userId_couponId", (q) =>
+            q.eq("userId", args.userId).eq("couponId", coupon._id)
+          )
+          .collect();
+        if (userRedemptions.length >= coupon.perUserLimit) {
+          throw new Error("Coupon is no longer valid, please try again");
+        }
+      }
+      validatedCouponId = coupon._id;
+    }
+
     const orderType = preOrderFlags.some(Boolean)
       ? ("pre-order" as const)
       : ("order" as const);
@@ -160,6 +198,27 @@ export const insertOrder = internalMutation({
       orderStatus: "pending",
       orderType,
     });
+
+    // Record coupon redemption
+    if (validatedCouponId && args.couponCode) {
+      const couponForUpdate = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", args.couponCode!))
+        .unique();
+
+      await ctx.db.insert("couponRedemptions", {
+        couponId: validatedCouponId,
+        userId: args.userId,
+        orderId,
+        code: args.couponCode,
+        discountApplied: args.couponDiscount ?? 0,
+        shippingWaived: args.couponShippingWaived,
+        redeemedAt: Date.now(),
+      });
+      if (couponForUpdate) {
+        await ctx.db.patch(couponForUpdate._id, { timesUsed: couponForUpdate.timesUsed + 1 });
+      }
+    }
 
     if (preOrderFlags.some(Boolean)) {
       const now = Date.now();
@@ -234,6 +293,9 @@ export const create = action({
     paymentMethod: v.string(),
     shippingDetails: v.optional(shippingDetailsValidator),
     sessionId: v.optional(v.string()),
+    couponCode: v.optional(v.string()),
+    couponDiscount: v.optional(v.number()),
+    couponShippingWaived: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<string> => {
     if (!args.workosUserId) throw new Error("Unauthorized: please log in");
@@ -259,6 +321,9 @@ export const create = action({
       paymentMethod: args.paymentMethod,
       shippingDetails: args.shippingDetails,
       sessionId: args.sessionId,
+      couponCode: args.couponCode,
+      couponDiscount: args.couponDiscount,
+      couponShippingWaived: args.couponShippingWaived,
     });
   },
 });

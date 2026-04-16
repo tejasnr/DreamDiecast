@@ -13,6 +13,7 @@ import type * as _utils from "../_utils.js";
 import type * as analytics from "../analytics.js";
 import type * as assets from "../assets.js";
 import type * as campaigns from "../campaigns.js";
+import type * as coupons from "../coupons.js";
 import type * as crons from "../crons.js";
 import type * as emails from "../emails.js";
 import type * as garage from "../garage.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   assets: typeof assets;
   campaigns: typeof campaigns;
+  coupons: typeof coupons;
   crons: typeof crons;
   emails: typeof emails;
   garage: typeof garage;

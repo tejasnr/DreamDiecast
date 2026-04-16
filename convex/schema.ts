@@ -121,6 +121,9 @@ export default defineSchema({
       })
     ),
     sessionId: v.optional(v.string()),
+    couponCode: v.optional(v.string()),
+    couponDiscount: v.optional(v.number()),
+    couponShippingWaived: v.optional(v.boolean()),
   })
     .index("by_userId", ["userId"])
     .index("by_orderStatus", ["orderStatus"]),
@@ -246,6 +249,45 @@ export default defineSchema({
     .index("by_productId", ["productId"])
     .index("by_email", ["email"])
     .index("by_productId_email", ["productId", "email"]),
+
+  coupons: defineTable({
+    code: v.string(),
+    description: v.optional(v.string()),
+    discountType: v.union(
+      v.literal("percentage"),
+      v.literal("flat"),
+      v.literal("free_shipping")
+    ),
+    discountValue: v.optional(v.number()),
+    minOrderAmount: v.optional(v.number()),
+    maxDiscountAmount: v.optional(v.number()),
+    usageLimit: v.optional(v.number()),
+    perUserLimit: v.optional(v.number()),
+    timesUsed: v.number(),
+    validFrom: v.optional(v.number()),
+    validUntil: v.optional(v.number()),
+    applicableBrands: v.optional(v.array(v.string())),
+    applicableCategories: v.optional(v.array(v.string())),
+    applicableListingTypes: v.optional(
+      v.array(v.union(v.literal("in-stock"), v.literal("pre-order")))
+    ),
+    isActive: v.boolean(),
+  })
+    .index("by_code", ["code"])
+    .index("by_isActive", ["isActive"]),
+
+  couponRedemptions: defineTable({
+    couponId: v.id("coupons"),
+    userId: v.id("users"),
+    orderId: v.id("orders"),
+    code: v.string(),
+    discountApplied: v.number(),
+    shippingWaived: v.optional(v.boolean()),
+    redeemedAt: v.number(),
+  })
+    .index("by_couponId", ["couponId"])
+    .index("by_userId", ["userId"])
+    .index("by_userId_couponId", ["userId", "couponId"]),
 
   assets: defineTable({
     name: v.string(),

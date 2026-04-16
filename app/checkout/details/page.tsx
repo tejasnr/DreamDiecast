@@ -21,9 +21,10 @@ import NextImage from 'next/image';
 import { trackEvent } from '@/lib/posthog';
 import { FLAT_SHIPPING_RATE, PO_SHIPPING_NOTE } from '@/lib/constants';
 import { isPreOrderItem } from '@/lib/data';
+import CouponInput from '@/components/checkout/CouponInput';
 
 export default function CheckoutDetailsPage() {
-  const { cart, cartTotal, setCheckoutDetails, setShippingCharges, balancePaymentItem } = useCart();
+  const { cart, cartTotal, setCheckoutDetails, setShippingCharges, balancePaymentItem, appliedCoupon } = useCart();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -270,17 +271,38 @@ export default function CheckoutDetailsPage() {
                   <span>Subtotal</span>
                   <span>₹{cartTotal.toLocaleString()}</span>
                 </div>
+                {appliedCoupon && appliedCoupon.discountAmount > 0 && (
+                  <div className="flex justify-between text-xs uppercase tracking-widest text-green-400">
+                    <span>Coupon ({appliedCoupon.code})</span>
+                    <span>-₹{appliedCoupon.discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs uppercase tracking-widest text-white/40">
                   <span>Shipping</span>
-                  <span>{shippingInfo ? (shippingInfo.cost === 0 ? 'FREE' : `₹${shippingInfo.cost}`) : '--'}</span>
+                  <span>
+                    {shippingInfo
+                      ? appliedCoupon?.shippingWaived
+                        ? 'FREE (coupon)'
+                        : shippingInfo.cost === 0
+                          ? 'FREE'
+                          : `₹${shippingInfo.cost}`
+                      : '--'}
+                  </span>
                 </div>
                 <div className="pt-4 border-t border-white/5 flex justify-between items-end">
                   <span className="text-sm font-bold uppercase tracking-widest">Total</span>
                   <span className="text-4xl font-display font-bold text-white">
-                    ₹{(cartTotal + (shippingInfo?.cost || 0)).toLocaleString()}
+                    ₹{(cartTotal - (appliedCoupon?.discountAmount || 0) + (appliedCoupon?.shippingWaived ? 0 : (shippingInfo?.cost || 0))).toLocaleString()}
                   </span>
                 </div>
               </div>
+
+              {/* Coupon Input */}
+              {!balancePaymentItem && (
+                <div className="mb-6">
+                  <CouponInput />
+                </div>
+              )}
 
               <div className="space-y-4">
                 {cart.map((item) => (

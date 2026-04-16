@@ -22,6 +22,15 @@ interface CheckoutDetails {
   pincode: string;
 }
 
+export interface AppliedCoupon {
+  code: string;
+  couponId: string;
+  discountType: 'percentage' | 'flat' | 'free_shipping';
+  discountAmount: number;
+  shippingWaived: boolean;
+  message: string;
+}
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number) => Promise<void>;
@@ -37,6 +46,9 @@ interface CartContextType {
   balancePaymentItem: { id: string; name: string; fullPrice: number; image: string; garageItemId: string } | null;
   initiateBalancePayment: (item: { id: string; name: string; price: number; image: string; garageItemId: string }) => void;
   clearBalancePayment: () => void;
+  appliedCoupon: AppliedCoupon | null;
+  setCoupon: (coupon: AppliedCoupon) => void;
+  clearCoupon: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -46,6 +58,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [checkoutDetails, setCheckoutDetails] = useState<CheckoutDetails | null>(null);
   const [shippingCharges, setShippingCharges] = useState<number>(0);
   const [balancePaymentItem, setBalancePaymentItem] = useState<{ id: string; name: string; fullPrice: number; image: string; garageItemId: string } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [toast, setToast] = useState<{ isVisible: boolean; message: string; image?: string; type?: 'success' | 'warning' }>({
     isVisible: false,
     message: '',
@@ -58,7 +71,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, 3000);
   }, []);
 
-  // Load cart from localStorage on mount
+  // Load cart + coupon from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('dream_diecast_cart');
     if (savedCart) {
@@ -68,12 +81,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to parse cart', e);
       }
     }
+    const savedCoupon = localStorage.getItem('dream_diecast_coupon');
+    if (savedCoupon) {
+      try {
+        setAppliedCoupon(JSON.parse(savedCoupon));
+      } catch (e) {
+        console.error('Failed to parse coupon', e);
+      }
+    }
   }, []);
 
   // Save cart to localStorage on change
   useEffect(() => {
     localStorage.setItem('dream_diecast_cart', JSON.stringify(cart));
   }, [cart]);
+
+  // Save coupon to localStorage on change
+  useEffect(() => {
+    if (appliedCoupon) {
+      localStorage.setItem('dream_diecast_coupon', JSON.stringify(appliedCoupon));
+    } else {
+      localStorage.removeItem('dream_diecast_coupon');
+    }
+  }, [appliedCoupon]);
 
   const addToCart = useCallback(async (product: Product, qty: number = 1) => {
     const isPO = isPreOrderItem(product);
@@ -170,8 +200,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const setCoupon = useCallback((coupon: AppliedCoupon) => {
+    setAppliedCoupon(coupon);
+  }, []);
+
+  const clearCoupon = useCallback(() => {
+    setAppliedCoupon(null);
+  }, []);
+
   const clearCart = () => {
     setCart([]);
+    setAppliedCoupon(null);
   };
 
   const initiateBalancePayment = (item: { id: string; name: string; price: number; image: string; garageItemId: string }) => {
@@ -212,7 +251,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setShippingCharges,
       balancePaymentItem,
       initiateBalancePayment,
-      clearBalancePayment
+      clearBalancePayment,
+      appliedCoupon,
+      setCoupon,
+      clearCoupon
     }}>
       {children}
       <Toast

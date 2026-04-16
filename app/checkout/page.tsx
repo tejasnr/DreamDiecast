@@ -65,7 +65,9 @@ export default function CheckoutPage() {
     shippingCharges,
     setShippingCharges,
     balancePaymentItem,
-    clearBalancePayment
+    clearBalancePayment,
+    appliedCoupon,
+    clearCoupon
   } = useCart();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -90,7 +92,8 @@ export default function CheckoutPage() {
   const upiId = 'sujithsaravanan2004@okaxis';
   const isAllPreOrder = !balancePaymentItem && cart.length > 0 && cart.every(item => isPreOrderItem(item));
   const hasInStockItems = !balancePaymentItem && cart.some(item => !isPreOrderItem(item));
-  const effectiveShippingCharges = isAllPreOrder ? 0 : shippingCharges;
+  const effectiveShippingCharges = isAllPreOrder ? 0 : (appliedCoupon?.shippingWaived ? 0 : shippingCharges);
+  const couponDiscount = appliedCoupon?.discountAmount || 0;
 
   useEffect(() => {
     if (isAllPreOrder && shippingCharges !== 0) {
@@ -287,18 +290,21 @@ export default function CheckoutPage() {
         items,
         subtotal: cartTotal,
         shippingCharges: effectiveShippingCharges,
-        totalAmount: cartTotal + effectiveShippingCharges,
+        totalAmount: cartTotal - couponDiscount + effectiveShippingCharges,
         transactionId,
         paymentProofDataUrl,
         paymentMethod: 'UPI',
         shippingDetails: checkoutDetails || undefined,
         sessionId: sessionIdRef.current,
+        couponCode: appliedCoupon?.code,
+        couponDiscount: couponDiscount || undefined,
+        couponShippingWaived: appliedCoupon?.shippingWaived || undefined,
       });
 
       // Reservation is now consumed atomically inside insertOrder
       reservedRef.current = false;
 
-      trackEvent('payment_submitted', { orderId, total: cartTotal + effectiveShippingCharges, paymentMethod: 'UPI' });
+      trackEvent('payment_submitted', { orderId, total: cartTotal - couponDiscount + effectiveShippingCharges, paymentMethod: 'UPI' });
 
       if (balancePaymentItem) {
         clearBalancePayment();
@@ -427,13 +433,25 @@ export default function CheckoutPage() {
                   <span>Subtotal</span>
                   <span>₹{cartTotal.toLocaleString()}</span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-[10px] uppercase tracking-widest text-green-400">
+                    <span>Coupon ({appliedCoupon?.code})</span>
+                    <span>-₹{couponDiscount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-[10px] uppercase tracking-widest text-white/40">
                   <span>Shipping</span>
-                  <span>{effectiveShippingCharges > 0 ? `₹${effectiveShippingCharges.toLocaleString()}` : 'FREE'}</span>
+                  <span>
+                    {appliedCoupon?.shippingWaived
+                      ? 'FREE (coupon)'
+                      : effectiveShippingCharges > 0
+                        ? `₹${effectiveShippingCharges.toLocaleString()}`
+                        : 'FREE'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-end pt-4">
                   <span className="text-xs font-bold uppercase tracking-widest">Total Amount</span>
-                  <span className="text-3xl font-display font-bold text-white">₹{(cartTotal + effectiveShippingCharges).toLocaleString()}</span>
+                  <span className="text-3xl font-display font-bold text-white">₹{(cartTotal - couponDiscount + effectiveShippingCharges).toLocaleString()}</span>
                 </div>
               </div>
 

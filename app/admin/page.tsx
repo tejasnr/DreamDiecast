@@ -34,6 +34,7 @@ import ConfirmModal from '@/components/admin/ConfirmModal';
 import DashboardHub from '@/components/admin/DashboardHub';
 import CommandPalette from '@/components/admin/CommandPalette';
 import BulkActionBar from '@/components/admin/BulkActionBar';
+import CouponManager from '@/components/admin/CouponManager';
 import { formatEta } from '@/lib/format';
 
 export default function AdminPage() {
@@ -57,9 +58,9 @@ export default function AdminPage() {
 
   const tabParam = searchParams.get('tab');
   const initialTab =
-    tabParam === 'products' || tabParam === 'pre-orders' ? tabParam : 'dashboard';
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'pre-orders'>(
-    initialTab
+    tabParam === 'products' || tabParam === 'pre-orders' || tabParam === 'coupons' ? tabParam : 'dashboard';
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'pre-orders' | 'coupons'>(
+    initialTab as any
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
@@ -82,7 +83,7 @@ export default function AdminPage() {
 
   const pendingFulfillmentCount = fulfillmentOrders?.length ?? 0;
 
-  const switchTab = (tab: 'dashboard' | 'products' | 'pre-orders') => {
+  const switchTab = (tab: 'dashboard' | 'products' | 'pre-orders' | 'coupons') => {
     setSelectedIds(new Set());
     setActiveTab(tab);
   };
@@ -237,6 +238,16 @@ export default function AdminPage() {
                 Pre-Orders (
                 {preOrderProducts.length + preOrderList.length})
               </button>
+              <button
+                onClick={() => switchTab('coupons')}
+                className={`px-6 py-2 text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+                  activeTab === 'coupons'
+                    ? 'bg-white text-black'
+                    : 'text-white/40 hover:text-white'
+                }`}
+              >
+                <Tag size={12} /> Coupons
+              </button>
             </div>
             <Link
               href="/admin/orders"
@@ -298,8 +309,13 @@ export default function AdminPage() {
           <DashboardHub workosUserId={user!.workosUserId} />
         )}
 
+        {/* Coupons Tab */}
+        {activeTab === 'coupons' && (
+          <CouponManager workosUserId={user!.workosUserId} />
+        )}
+
         {/* Product List / Pre-Orders */}
-        {activeTab === 'dashboard' ? null : activeTab === 'products' ? (
+        {activeTab === 'dashboard' ? null : activeTab === 'coupons' ? null : activeTab === 'products' ? (
           <div className="grid grid-cols-1 gap-4">
             {/* Select All header */}
             {inStockProducts.length > 0 && (
