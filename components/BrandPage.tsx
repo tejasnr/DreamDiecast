@@ -66,12 +66,10 @@ export default function BrandPage({ brand }: BrandPageProps) {
     if (activeFilter === 'All') return products;
 
     if (activeFilter === 'In Stock') {
-      return products.filter((p) =>
-        p.listingType === 'in-stock'
-        || p.category === 'In Stock'
-        || p.category === 'Current Stock'
-        || p.status === 'In Stock'
-      );
+      return products.filter((p) => {
+        const isPO = p.listingType === 'pre-order' || p.category === 'Pre-Order' || p.isPreorder === true;
+        return !isPO;
+      });
     }
 
     if (activeFilter === 'Pre-Order') {

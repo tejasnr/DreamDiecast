@@ -18,6 +18,7 @@ import {
 import ImageDropzone from './ImageDropzone';
 import AssetPickerModal from './AssetPickerModal';
 import AutocompleteInput from './AutocompleteInput';
+import CustomSelect from './CustomSelect';
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -301,27 +302,15 @@ export default function ProductForm({
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
                   Brand *
                 </label>
-                <select
+                <CustomSelect
+                  value={form.brand}
+                  onChange={(val) => setForm({ ...form, brand: val })}
+                  options={BRANDS}
                   required
-                  value={
-                    BRANDS.includes(form.brand as any)
-                      ? form.brand
-                      : ''
-                  }
-                  onChange={(e) =>
-                    setForm({ ...form, brand: e.target.value })
-                  }
-                  className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors appearance-none"
-                >
-                  {!BRANDS.includes(form.brand as any) && form.brand && (
-                    <option value={form.brand}>{form.brand}</option>
-                  )}
-                  {BRANDS.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select brand"
+                  allowCustom
+                  customLabel="Add Other Brand"
+                />
               </div>
 
               {/* Scale */}
@@ -329,23 +318,13 @@ export default function ProductForm({
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
                   Scale *
                 </label>
-                <select
-                  required
+                <CustomSelect
                   value={form.scale}
-                  onChange={(e) =>
-                    setForm({ ...form, scale: e.target.value })
-                  }
-                  className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors appearance-none"
-                >
-                  {!SCALES.includes(form.scale as any) && (
-                    <option value={form.scale}>{form.scale}</option>
-                  )}
-                  {SCALES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setForm({ ...form, scale: val })}
+                  options={SCALES}
+                  required
+                  placeholder="Select scale"
+                />
               </div>
 
               {/* Category */}
@@ -353,26 +332,13 @@ export default function ProductForm({
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
                   Category *
                 </label>
-                <select
-                  required
+                <CustomSelect
                   value={form.category}
-                  onChange={(e) =>
-                    setForm({ ...form, category: e.target.value })
-                  }
-                  className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors appearance-none"
-                >
-                  {!CATEGORIES.includes(form.category as any) &&
-                    form.category && (
-                      <option value={form.category}>
-                        {form.category} (legacy)
-                      </option>
-                    )}
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setForm({ ...form, category: val })}
+                  options={CATEGORIES}
+                  required
+                  placeholder="Select category"
+                />
               </div>
 
               {/* Condition */}
@@ -380,19 +346,12 @@ export default function ProductForm({
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
                   Condition
                 </label>
-                <select
+                <CustomSelect
                   value={form.condition}
-                  onChange={(e) =>
-                    setForm({ ...form, condition: e.target.value })
-                  }
-                  className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors appearance-none"
-                >
-                  {CONDITIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setForm({ ...form, condition: val })}
+                  options={CONDITIONS}
+                  placeholder="Select condition"
+                />
               </div>
 
               {/* Type */}
@@ -400,19 +359,12 @@ export default function ProductForm({
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
                   Type
                 </label>
-                <select
+                <CustomSelect
                   value={form.type}
-                  onChange={(e) =>
-                    setForm({ ...form, type: e.target.value })
-                  }
-                  className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none transition-colors appearance-none"
-                >
-                  {TYPE_OPTIONS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setForm({ ...form, type: val })}
+                  options={TYPE_OPTIONS}
+                  placeholder="Select type"
+                />
               </div>
 
               {/* Conditional pricing fields */}

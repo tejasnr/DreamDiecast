@@ -270,6 +270,33 @@ export const checkStock = query({
   },
 });
 
+// Main brand names that appear on the homepage
+const MAIN_BRANDS = ["Hot Wheels", "Bburago", "Mini GT", "Pop Race", "Tarmac Works", "Matchbox"];
+
+export const getOtherBrandsProducts = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    return products
+      .filter((p) => !MAIN_BRANDS.includes(p.brand))
+      .map((p) => ({ ...p, id: p._id }));
+  },
+});
+
+export const getOtherBrandNames = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    const brandSet = new Set<string>();
+    for (const p of products) {
+      if (!MAIN_BRANDS.includes(p.brand)) {
+        brandSet.add(p.brand);
+      }
+    }
+    return Array.from(brandSet).sort();
+  },
+});
+
 export const listPreOrderProducts = query({
   args: {},
   handler: async (ctx) => {

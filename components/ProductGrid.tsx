@@ -29,10 +29,8 @@ export default function ProductGrid() {
         if (activeFilter === 'All') return true;
 
         if (activeFilter === 'In Stock') {
-          return product.listingType === 'in-stock'
-            || product.category === 'In Stock'
-            || product.category === 'Current Stock'
-            || product.status === 'In Stock';
+          const isPO = product.listingType === 'pre-order' || product.category === 'Pre-Order' || product.isPreorder === true;
+          return !isPO;
         }
 
         if (activeFilter === 'Pre-Order') {
