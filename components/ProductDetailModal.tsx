@@ -73,18 +73,18 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
   const resolvedCondition = product.condition;
   const resolvedFeatures = product.specialFeatures || product.details?.features?.join(', ');
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (cannotAdd || selectedQty < 1) return;
-    addToCart(product, selectedQty);
+    await addToCart(product, selectedQty);
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 1500);
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
+  const handleBuyNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (cannotAdd || selectedQty < 1) return;
-    addToCart(product, selectedQty);
+    await addToCart(product, selectedQty);
     if (!user) {
       setIsAuthModalOpen(true);
       return;

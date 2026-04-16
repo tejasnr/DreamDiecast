@@ -103,7 +103,7 @@ export const insertOrder = internalMutation({
         }
       }
 
-      // Reservation validation: require a valid, non-expired reservation
+      // Try to consume an existing reservation; if missing/expired, do a direct stock check
       if (args.sessionId) {
         const reservation = await ctx.db
           .query("stockReservations")
@@ -116,25 +116,37 @@ export const insertOrder = internalMutation({
           )
           .first();
 
-        if (!reservation) {
-          throw new Error(
-            "Stock reservation expired or not found. Please try again."
-          );
-        }
-        if (reservation.expiresAt < now) {
-          // Restore stock, delete expired reservation
-          if (product?.stock !== undefined) {
-            await ctx.db.patch(item.productId, {
-              stock: product.stock + reservation.quantity,
-            });
-          }
+        if (reservation && reservation.expiresAt >= now) {
+          // Valid reservation — consume it (delete without restoring stock, already decremented)
           await ctx.db.delete(reservation._id);
+        } else {
+          // Reservation expired or not found — clean up if expired, then do direct stock check
+          if (reservation) {
+            await ctx.db.delete(reservation._id);
+            // Stock was already restored by the expiry cron/scheduler, so just check current stock
+          }
+          // Direct stock validation and decrement
+          const freshProduct = await ctx.db.get(item.productId);
+          if (!freshProduct || freshProduct.stock === undefined || freshProduct.stock < item.quantity) {
+            throw new Error(
+              `Insufficient stock for ${product?.name || "product"}. Please remove it from your cart and try again.`
+            );
+          }
+          await ctx.db.patch(item.productId, {
+            stock: freshProduct.stock - item.quantity,
+          });
+        }
+      } else {
+        // No sessionId — direct stock check and decrement
+        const freshProduct = await ctx.db.get(item.productId);
+        if (!freshProduct || freshProduct.stock === undefined || freshProduct.stock < item.quantity) {
           throw new Error(
-            "Your stock reservation has expired. Please try again."
+            `Insufficient stock for ${product?.name || "product"}. Please remove it from your cart and try again.`
           );
         }
-        // Valid reservation — consume it (delete without restoring stock)
-        await ctx.db.delete(reservation._id);
+        await ctx.db.patch(item.productId, {
+          stock: freshProduct.stock - item.quantity,
+        });
       }
     }
 

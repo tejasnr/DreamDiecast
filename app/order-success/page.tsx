@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
-import { CheckCircle, MessageCircle, ArrowRight, ShoppingBag } from 'lucide-react';
+import { CheckCircle, MessageCircle, ArrowRight, ShoppingBag, Clock, Bell, Package } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useEffect } from 'react';
 import { trackEvent } from '@/lib/posthog';
@@ -39,11 +39,49 @@ function OrderSuccessContent() {
             <>Order <span className="text-accent">Placed</span></>
           )}
         </h1>
-        <p className="text-white/40 uppercase tracking-widest text-xs font-bold max-w-md mx-auto leading-relaxed">
-          {isPreOrder
-            ? "Your deposit has been submitted. We'll notify you via WhatsApp when your item arrives."
-            : "Your order has been submitted successfully. We are now waiting for payment verification."}
-        </p>
+      </div>
+
+      {/* Detailed info */}
+      <div className="glass p-8 border border-white/10 max-w-lg mx-auto">
+        {isPreOrder ? (
+          <div className="space-y-4 text-sm text-white/50 leading-relaxed">
+            <div className="flex items-start gap-3 text-left">
+              <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
+              <span>Your pre-order deposit has been submitted successfully.</span>
+            </div>
+            <div className="flex items-start gap-3 text-left">
+              <Bell size={16} className="text-accent mt-0.5 shrink-0" />
+              <span>We'll verify your payment and notify you once the stock arrives in hand.</span>
+            </div>
+            <div className="flex items-start gap-3 text-left">
+              <Package size={16} className="text-accent mt-0.5 shrink-0" />
+              <span>You'll be notified when it's time to pay the remaining balance before shipping.</span>
+            </div>
+            <div className="flex items-start gap-3 text-left">
+              <ShoppingBag size={16} className="text-accent mt-0.5 shrink-0" />
+              <span>You can track your pre-order anytime in <Link href="/garage" className="text-white font-bold underline underline-offset-2 hover:text-accent transition-colors">My Purchases</Link>.</span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 text-sm text-white/50 leading-relaxed">
+            <div className="flex items-start gap-3 text-left">
+              <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
+              <span>Your order has been placed successfully!</span>
+            </div>
+            <div className="flex items-start gap-3 text-left">
+              <Clock size={16} className="text-accent mt-0.5 shrink-0" />
+              <span>Your payment will be verified shortly, and your order will be packed and shipped.</span>
+            </div>
+            <div className="flex items-start gap-3 text-left">
+              <Bell size={16} className="text-accent mt-0.5 shrink-0" />
+              <span>You'll receive updates on WhatsApp as your order progresses.</span>
+            </div>
+            <div className="flex items-start gap-3 text-left">
+              <ShoppingBag size={16} className="text-accent mt-0.5 shrink-0" />
+              <span>You can track your order anytime in <Link href="/garage" className="text-white font-bold underline underline-offset-2 hover:text-accent transition-colors">My Purchases</Link>.</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {isPreOrder && (

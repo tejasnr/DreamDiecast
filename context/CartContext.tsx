@@ -1,9 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Product, isPreOrderItem } from '@/lib/data';
 import Toast from '@/components/Toast';
 import { trackEvent } from '@/lib/posthog';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+
+const convexClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 interface CartItem extends Product {
   quantity: number;
@@ -20,7 +24,7 @@ interface CheckoutDetails {
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product, quantity?: number) => Promise<void>;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -47,12 +51,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     message: '',
   });
 
-  const showToast = (message: string, image?: string, type: 'success' | 'warning' = 'success') => {
+  const showToast = useCallback((message: string, image?: string, type: 'success' | 'warning' = 'success') => {
     setToast({ isVisible: true, message, image, type });
     setTimeout(() => {
       setToast(prev => ({ ...prev, isVisible: false }));
     }, 3000);
-  };
+  }, []);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -71,14 +75,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('dream_diecast_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: Product, qty: number = 1) => {
+  const addToCart = useCallback(async (product: Product, qty: number = 1) => {
     const isPO = isPreOrderItem(product);
-
-    // Check stock — block if stock is 0 or undefined for non-pre-order
-    if (!isPO && product.stock !== undefined && product.stock <= 0) {
-      showToast(`${product.name} is out of stock`, product.image, 'warning');
-      return;
-    }
 
     // Hype product: limit to 1 per person
     if (product.isHype) {
@@ -93,13 +91,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Check if adding qty would exceed available stock
-    if (!isPO && product.stock !== undefined) {
-      const existingInCart = cart.find(item => item.id === product.id);
-      const currentQty = existingInCart ? existingInCart.quantity : 0;
-      if (currentQty + qty > product.stock) {
-        showToast(`Only ${product.stock} available`, product.image, 'warning');
-        return;
+    // Real-time stock validation for in-stock items
+    if (!isPO) {
+      try {
+        const stockInfo = await convexClient.query(api.products.checkStock, {
+          productId: product.id as any,
+        });
+        if (!stockInfo.available) {
+          showToast(`${product.name} is out of stock`, product.image, 'warning');
+          return;
+        }
+        const existingInCart = cart.find(item => item.id === product.id);
+        const currentQty = existingInCart ? existingInCart.quantity : 0;
+        if (currentQty + qty > stockInfo.stock) {
+          showToast(`Only ${stockInfo.stock - currentQty} left in stock`, product.image, 'warning');
+          return;
+        }
+      } catch (err) {
+        // If stock check fails, fall back to local product data
+        if (product.stock !== undefined && product.stock <= 0) {
+          showToast(`${product.name} is out of stock`, product.image, 'warning');
+          return;
+        }
+        const existingInCart = cart.find(item => item.id === product.id);
+        const currentQty = existingInCart ? existingInCart.quantity : 0;
+        if (product.stock !== undefined && currentQty + qty > product.stock) {
+          showToast(`Only ${product.stock} available`, product.image, 'warning');
+          return;
+        }
       }
     }
 
@@ -108,9 +127,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (existingItem) {
         if (existingItem.isHype) return prevCart;
         const newQty = existingItem.quantity + qty;
-        if (!isPO && product.stock !== undefined && newQty > product.stock) {
-          return prevCart;
-        }
         return prevCart.map(item =>
           item.id === product.id ? { ...item, quantity: newQty } : item
         );
@@ -121,7 +137,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     trackEvent('add_to_cart', { productId: product.id, name: product.name, price: product.price, category: product.category });
 
     showToast(product.name, product.image);
-  };
+  }, [cart, showToast]);
 
   const removeFromCart = (productId: string) => {
     trackEvent('remove_from_cart', { productId });

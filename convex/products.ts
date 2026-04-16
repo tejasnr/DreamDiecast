@@ -254,6 +254,22 @@ export const bulkDelete = mutation({
   },
 });
 
+// Real-time stock check for add-to-cart validation
+export const checkStock = query({
+  args: {
+    productId: v.id("products"),
+  },
+  handler: async (ctx, args) => {
+    const product = await ctx.db.get(args.productId);
+    if (!product) return { available: false, stock: 0 };
+    return {
+      available: product.stock === undefined || product.stock > 0,
+      stock: product.stock ?? 0,
+      isHype: product.isHype ?? false,
+    };
+  },
+});
+
 export const listPreOrderProducts = query({
   args: {},
   handler: async (ctx) => {
