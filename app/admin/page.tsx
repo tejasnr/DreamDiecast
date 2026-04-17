@@ -540,6 +540,12 @@ export default function AdminPage() {
                         >
                           <Edit2 size={18} />
                         </button>
+                        <button
+                          onClick={() => handleDelete(product)}
+                          className="p-3 bg-white/5 hover:bg-red-500 hover:text-white transition-all rounded-full"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
                     </div>
                   ))
