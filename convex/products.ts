@@ -10,6 +10,15 @@ export const list = query({
   },
 });
 
+export const getById = query({
+  args: { id: v.id("products") },
+  handler: async (ctx, args) => {
+    const product = await ctx.db.get(args.id);
+    if (!product) return null;
+    return { ...product, id: product._id };
+  },
+});
+
 export const create = mutation({
   args: {
     workosUserId: v.optional(v.string()),

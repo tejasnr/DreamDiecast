@@ -1,27 +1,30 @@
-'use client';
+import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/seo';
+import { BreadcrumbJsonLd, CollectionPageJsonLd } from '@/components/JsonLd';
+import BundlesClient from './BundlesClient';
 
-import { useProducts } from '@/hooks/useProducts';
-import ProductPage from '@/components/ProductPage';
-import { Loader2 } from 'lucide-react';
+export const metadata: Metadata = {
+  title: 'Diecast Collector Bundles',
+  description:
+    'Save with exclusive diecast bundle deals. Curated sets of premium 1/64 scale models at special prices from DreamDiecast India.',
+  alternates: { canonical: '/bundles' },
+};
 
 export default function BundlesPage() {
-  const { products, loading } = useProducts();
-  const bundleProducts = products.filter(p => p.category === 'Bundle');
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <Loader2 className="animate-spin text-accent" size={48} />
-      </div>
-    );
-  }
-
   return (
-    <ProductPage
-      title="Collector Sets"
-      subtitle="Exclusive Bundles"
-      products={bundleProducts}
-      bannerImage="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?q=80&w=1920&auto=format&fit=crop"
-    />
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'Bundles', url: `${SITE_URL}/bundles` },
+        ]}
+      />
+      <CollectionPageJsonLd
+        name="Diecast Collector Bundles"
+        description="Save with curated diecast model bundles and multi-pack deals at DreamDiecast India."
+        url={`${SITE_URL}/bundles`}
+      />
+      <BundlesClient />
+    </>
   );
 }

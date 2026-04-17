@@ -1,30 +1,30 @@
-'use client';
+import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/seo';
+import { BreadcrumbJsonLd, CollectionPageJsonLd } from '@/components/JsonLd';
+import PreOrdersClient from './PreOrdersClient';
 
-import { useProducts } from '@/hooks/useProducts';
-import ProductPage from '@/components/ProductPage';
-import { Loader2 } from 'lucide-react';
+export const metadata: Metadata = {
+  title: 'Pre-Order Upcoming Diecast Models',
+  description:
+    'Reserve upcoming diecast releases before they sell out. Pre-order the latest 1/64 scale models from top brands at DreamDiecast India.',
+  alternates: { canonical: '/pre-orders' },
+};
 
 export default function PreOrdersPage() {
-  const { products, loading } = useProducts();
-  const preOrderProducts = products.filter(
-    p => (p.listingType === 'pre-order' || p.category === 'Pre-Order' || p.isPreorder === true)
-      && p.status !== 'unlisted'
-  );
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <Loader2 className="animate-spin text-accent" size={48} />
-      </div>
-    );
-  }
-
   return (
-    <ProductPage
-      title="The Vault"
-      subtitle="Upcoming Releases"
-      products={preOrderProducts}
-      bannerImage="https://images.unsplash.com/photo-1594787318286-3d835c1d207f?q=80&w=1920&auto=format&fit=crop"
-    />
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'Pre-Orders', url: `${SITE_URL}/pre-orders` },
+        ]}
+      />
+      <CollectionPageJsonLd
+        name="Pre-Order Upcoming Diecast Models"
+        description="Reserve upcoming diecast releases before they sell out. Secure limited edition models at DreamDiecast India."
+        url={`${SITE_URL}/pre-orders`}
+      />
+      <PreOrdersClient />
+    </>
   );
 }

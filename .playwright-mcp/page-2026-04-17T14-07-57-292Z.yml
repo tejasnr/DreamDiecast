@@ -1,0 +1,240 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "DreamDiecast" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Brands" [ref=e6] [cursor=pointer]:
+          - /url: /brands
+        - link "New Arrivals" [ref=e7] [cursor=pointer]:
+          - /url: /new-arrivals
+        - link "Pre-Orders" [ref=e8] [cursor=pointer]:
+          - /url: /pre-orders
+        - link "Bundles" [ref=e9] [cursor=pointer]:
+          - /url: /bundles
+      - generic [ref=e10]:
+        - button [ref=e11]:
+          - img [ref=e12]
+        - button "Login" [ref=e16]
+        - button [ref=e17]:
+          - img [ref=e18]
+  - main [ref=e87]:
+    - generic [ref=e88]:
+      - img "All Models" [ref=e90]
+      - generic [ref=e93]:
+        - generic [ref=e96]: Available Inventory
+        - heading "All Models" [level=1] [ref=e97]
+    - generic [ref=e99]:
+      - generic [ref=e100] [cursor=pointer]:
+        - generic [ref=e101]:
+          - img "Mazda 787B" [ref=e102]
+          - button [ref=e103]:
+            - img [ref=e104]
+          - button [ref=e106]:
+            - img [ref=e107]
+          - generic [ref=e109]:
+            - button [ref=e110]
+            - button [ref=e111]
+            - button [ref=e112]
+            - button [ref=e113]
+          - generic [ref=e114]:
+            - generic [ref=e115]: Exotics & Hypercars
+            - generic [ref=e116]: Only Few Left
+          - generic [ref=e118]:
+            - generic [ref=e119]: Mint Condition
+            - generic [ref=e120]: Metal Chassis
+          - button [ref=e121]:
+            - img [ref=e122]
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - generic [ref=e128]:
+              - generic [ref=e129]: Pop Race
+              - generic [ref=e130]: Scale 1/64
+            - generic [ref=e132]: ₹1,799
+          - heading "Mazda 787B" [level=3] [ref=e133]
+      - generic [ref=e134] [cursor=pointer]:
+        - generic [ref=e135]:
+          - img "c" [ref=e136]
+          - generic [ref=e137]:
+            - generic [ref=e138]: JDM Legends
+            - generic [ref=e139]: Only Few Left
+          - generic [ref=e141]:
+            - generic [ref=e142]: Mint Condition
+            - generic [ref=e143]: Metal Chassis
+          - button [ref=e144]:
+            - img [ref=e145]
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e151]:
+              - generic [ref=e152]: Hot Wheels
+              - generic [ref=e153]: Scale 1/64
+            - generic [ref=e155]: ₹500
+          - heading "c" [level=3] [ref=e156]
+      - generic [ref=e157] [cursor=pointer]:
+        - generic [ref=e158]:
+          - img "q" [ref=e159]
+          - button [ref=e160]:
+            - img [ref=e161]
+          - button [ref=e163]:
+            - img [ref=e164]
+          - generic [ref=e166]:
+            - button [ref=e167]
+            - button [ref=e168]
+          - generic [ref=e169]:
+            - generic [ref=e170]: JDM Legends
+            - generic [ref=e171]: Only Few Left
+          - generic [ref=e173]:
+            - generic [ref=e174]: Mint Condition
+            - generic [ref=e175]: Metal Chassis
+          - button [ref=e176]:
+            - img [ref=e177]
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - generic [ref=e184]: Mini GT
+              - generic [ref=e185]: Scale 1/64
+            - generic [ref=e187]: ₹2,000
+          - heading "q" [level=3] [ref=e188]
+    - generic [ref=e191]:
+      - button [ref=e192]:
+        - img [ref=e193]
+      - generic [ref=e196]:
+        - generic [ref=e197]:
+          - img "Mazda 787B - Image 1" [ref=e198]
+          - button [ref=e199]:
+            - img [ref=e200]
+          - button [ref=e202]:
+            - img [ref=e203]
+        - generic [ref=e205]:
+          - button "Mazda 787B - Image 1" [ref=e206]:
+            - img "Mazda 787B - Image 1" [ref=e207]
+          - button "Mazda 787B - Image 2" [ref=e208]:
+            - img "Mazda 787B - Image 2" [ref=e209]
+          - button "Mazda 787B - Image 3" [ref=e210]:
+            - img "Mazda 787B - Image 3" [ref=e211]
+          - button "Mazda 787B - Image 4" [ref=e212]:
+            - img "Mazda 787B - Image 4" [ref=e213]
+      - generic [ref=e215]:
+        - generic [ref=e216]:
+          - generic [ref=e217]:
+            - generic [ref=e218]: Pop Race
+            - generic [ref=e220]: Scale 1/64
+          - heading "Mazda 787B" [level=2] [ref=e221]
+          - generic [ref=e222]:
+            - generic [ref=e223]:
+              - img [ref=e224]
+              - img [ref=e226]
+              - img [ref=e228]
+              - img [ref=e230]
+              - img [ref=e232]
+              - generic [ref=e234]: N/A
+            - generic [ref=e235]: 0 Reviews
+            - generic [ref=e236]: Only Few Left
+        - generic [ref=e237]:
+          - generic [ref=e238]:
+            - generic [ref=e239]: Price
+            - generic [ref=e240]: ₹1,799
+          - generic [ref=e241]:
+            - generic [ref=e242]: Qty
+            - generic [ref=e243]:
+              - button [disabled] [ref=e244]:
+                - img [ref=e245]
+              - generic [ref=e246]: "1"
+              - button [ref=e247]:
+                - img [ref=e248]
+          - generic [ref=e249]:
+            - button "Add to Cart" [ref=e250]:
+              - img [ref=e251]
+              - text: Add to Cart
+            - button "Buy Now" [ref=e255]:
+              - img [ref=e256]
+              - text: Buy Now
+        - generic [ref=e258]:
+          - heading "Special Features" [level=4] [ref=e259]
+          - paragraph [ref=e260]: Opening parts
+        - generic [ref=e261]:
+          - generic [ref=e262]:
+            - heading "Brand" [level=4] [ref=e263]
+            - paragraph [ref=e264]: Pop Race
+          - generic [ref=e265]:
+            - heading "Scale" [level=4] [ref=e266]
+            - paragraph [ref=e267]: 1/64
+          - generic [ref=e268]:
+            - heading "Condition" [level=4] [ref=e269]
+            - paragraph [ref=e270]: Mint / Sealed
+          - generic [ref=e271]:
+            - heading "Type" [level=4] [ref=e272]
+            - paragraph [ref=e273]: Box
+        - generic [ref=e274]:
+          - generic [ref=e275]:
+            - img [ref=e276]
+            - generic [ref=e280]: Secure Packing
+          - generic [ref=e281]:
+            - img [ref=e282]
+            - generic [ref=e285]: Authentic Model
+          - generic [ref=e286]:
+            - img [ref=e287]
+            - generic [ref=e292]: Global Shipping
+        - generic [ref=e293]:
+          - heading "Customer Reviews" [level=4] [ref=e294]
+          - paragraph [ref=e295]: No reviews yet. Be the first to review!
+  - contentinfo [ref=e25]:
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - heading "DreamDiecast" [level=2] [ref=e29]
+          - paragraph [ref=e30]: The ultimate destination for premium diecast car collectors. We bring you the most exclusive models from around the world.
+          - generic [ref=e31]:
+            - link [ref=e32] [cursor=pointer]:
+              - /url: https://www.instagram.com/dreamdiecastofficial/
+              - img [ref=e33]
+            - link [ref=e36] [cursor=pointer]:
+              - /url: https://wa.me/919148724708
+              - img [ref=e37]
+        - generic [ref=e39]:
+          - heading "Quick Links" [level=4] [ref=e40]
+          - list [ref=e41]:
+            - listitem [ref=e42]:
+              - link "Home" [ref=e43] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e44]:
+              - link "About Us" [ref=e45] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e46]:
+              - link "Shipping Policy" [ref=e47] [cursor=pointer]:
+                - /url: /shipping-policy
+            - listitem [ref=e48]:
+              - link "Returns & Refunds" [ref=e49] [cursor=pointer]:
+                - /url: /returns
+            - listitem [ref=e50]:
+              - link "Privacy Policy" [ref=e51] [cursor=pointer]:
+                - /url: /privacy
+        - generic [ref=e52]:
+          - heading "Collections" [level=4] [ref=e53]
+          - list [ref=e54]:
+            - listitem [ref=e55]:
+              - link "Brands" [ref=e56] [cursor=pointer]:
+                - /url: /brands
+            - listitem [ref=e57]:
+              - link "New Arrivals" [ref=e58] [cursor=pointer]:
+                - /url: /new-arrivals
+            - listitem [ref=e59]:
+              - link "Pre-Orders" [ref=e60] [cursor=pointer]:
+                - /url: /pre-orders
+            - listitem [ref=e61]:
+              - link "Bundles" [ref=e62] [cursor=pointer]:
+                - /url: /bundles
+        - generic [ref=e63]:
+          - heading "Contact" [level=4] [ref=e64]
+          - list [ref=e65]:
+            - listitem [ref=e66]:
+              - img [ref=e67]
+              - generic [ref=e70]: dreamdiecast@gmail.com
+            - listitem [ref=e71]:
+              - img [ref=e72]
+              - generic [ref=e74]: +91 91487 24708
+            - listitem [ref=e75]:
+              - img [ref=e76]
+              - generic [ref=e79]: Bangalore, Karnataka, India
+      - paragraph [ref=e81]: © 2026 DreamDiecast. All Rights Reserved.
+  - alert [ref=e86]

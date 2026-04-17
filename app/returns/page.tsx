@@ -1,3 +1,12 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Returns & Refunds',
+  description:
+    'DreamDiecast returns and refunds policy. All sales are final. Contact us within 48 hours for damaged or defective items.',
+  alternates: { canonical: '/returns' },
+};
+
 export default function ReturnsPage() {
   return (
     <main className="min-h-screen bg-[#050505] pt-32 pb-20 px-6">

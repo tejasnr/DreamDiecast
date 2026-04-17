@@ -1,33 +1,30 @@
-'use client';
+import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/seo';
+import { BreadcrumbJsonLd, CollectionPageJsonLd } from '@/components/JsonLd';
+import NewArrivalsClient from './NewArrivalsClient';
 
-import { useProducts } from '@/hooks/useProducts';
-import ProductPage from '@/components/ProductPage';
-import { Loader2 } from 'lucide-react';
+export const metadata: Metadata = {
+  title: 'New Diecast Arrivals',
+  description:
+    'Shop the latest diecast car arrivals at DreamDiecast. New 1/64 scale models from Hot Wheels, Mini GT, Tarmac Works, Pop Race and more.',
+  alternates: { canonical: '/new-arrivals' },
+};
 
 export default function NewArrivalsPage() {
-  const { products, loading } = useProducts();
-  const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
-  const newProducts = products.filter(p => {
-    const createdAt = p.createdAt
-      ? (typeof p.createdAt === 'number' ? p.createdAt : new Date(String(p.createdAt)).getTime())
-      : 0;
-    return createdAt > Date.now() - TWO_WEEKS_MS;
-  });
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <Loader2 className="animate-spin text-accent" size={48} />
-      </div>
-    );
-  }
-
   return (
-    <ProductPage
-      title="Fresh Drops"
-      subtitle="Just Landed"
-      products={newProducts}
-      bannerImage="https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=1920&auto=format&fit=crop"
-    />
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'New Arrivals', url: `${SITE_URL}/new-arrivals` },
+        ]}
+      />
+      <CollectionPageJsonLd
+        name="New Diecast Arrivals"
+        description="The latest diecast models just added to DreamDiecast. New drops from Hot Wheels, Mini GT, Tarmac Works and more."
+        url={`${SITE_URL}/new-arrivals`}
+      />
+      <NewArrivalsClient />
+    </>
   );
 }

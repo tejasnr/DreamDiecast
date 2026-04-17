@@ -1,3 +1,12 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Shipping Policy',
+  description:
+    'DreamDiecast shipping policy — free delivery on orders above \u20B92,000. Standard 5-7 day and express 2-3 day delivery across India. Secure packaging guaranteed.',
+  alternates: { canonical: '/shipping-policy' },
+};
+
 export default function ShippingPolicyPage() {
   return (
     <main className="min-h-screen bg-[#050505] pt-32 pb-20 px-6">

@@ -1,15 +1,12 @@
-'use client';
-
+import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import '@/app/globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { CartProvider } from '@/context/CartContext';
-import { AuthProvider } from '@/context/AuthContext';
-import PostHogProvider from '@/components/PostHogProvider';
-import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import Providers from './providers';
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/JsonLd';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -21,29 +18,59 @@ const spaceGrotesk = Space_Grotesk({
   variable: '--font-display',
 });
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+export const metadata: Metadata = {
+  title: {
+    default: 'DreamDiecast | Premium 1/64 Diecast Collectibles',
+    template: '%s | DreamDiecast',
+  },
+  description:
+    "India's premier destination for premium 1/64 scale diecast models. Shop Hot Wheels, Mini GT, Tarmac Works, Pop Race, Bburago & Matchbox.",
+  metadataBase: new URL('https://dreamdiecast.in'),
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: 'https://dreamdiecast.in',
+    siteName: 'DreamDiecast',
+    title: 'DreamDiecast | Premium 1/64 Diecast Collectibles',
+    description:
+      "India's premier destination for premium 1/64 scale diecast models. Shop Hot Wheels, Mini GT, Tarmac Works, Pop Race, Bburago & Matchbox.",
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DreamDiecast - Premium Diecast Collectibles',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DreamDiecast | Premium 1/64 Diecast Collectibles',
+    description:
+      "India's premier destination for premium 1/64 scale diecast models.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: 'https://dreamdiecast.in',
+  },
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <head>
-        <title>DreamDiecast | Premium Diecast Collectibles</title>
-        <meta name="description" content="Elevate your collection with exclusive diecast models from Pagani, Toyota, BMW and more." />
-      </head>
       <body className="bg-[#050505] text-white antialiased" suppressHydrationWarning>
-        <ConvexProvider client={convex}>
-          <PostHogProvider>
-            <AuthProvider>
-              <CartProvider>
-                <Navbar />
-                {children}
-                <Footer />
-                <Analytics />
-                <SpeedInsights />
-              </CartProvider>
-            </AuthProvider>
-          </PostHogProvider>
-        </ConvexProvider>
+        <OrganizationJsonLd />
+        <WebSiteJsonLd />
+        <Providers>
+          <Navbar />
+          {children}
+          <Footer />
+          <Analytics />
+          <SpeedInsights />
+        </Providers>
       </body>
     </html>
   );

@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Product, isPreOrderItem } from '@/lib/data';
 import { ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { productSlug } from '@/lib/slugify';
 
 interface ProductCardProps {
   product: Product;
@@ -23,19 +25,21 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
   const hasMultiple = galleryImages.length > 1;
   const currentImage = galleryImages[activeImageIndex] || product.image;
 
+  const slug = productSlug(product.name, product.id);
+  const href = `/products/${slug}`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className={`group relative cursor-pointer ${isOutOfStock ? 'opacity-75 grayscale-[0.5]' : ''}`}
-      onClick={() => !isOutOfStock && onClick?.(product)}
+      className={`group relative ${isOutOfStock ? 'opacity-75 grayscale-[0.5]' : ''}`}
     >
-      <div className="relative aspect-square overflow-hidden bg-surface rounded-sm border border-white/5">
+      <div className="relative z-[2] aspect-square overflow-hidden bg-surface rounded-sm border border-white/5">
         {currentImage ? (
           <Image
             src={currentImage}
-            alt={product.name}
+            alt={`${product.brand} ${product.name} ${product.scale} Scale Diecast Model`}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
             referrerPolicy="no-referrer"
@@ -131,6 +135,8 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
           </button>
         )}
       </div>
+
+      <Link href={href} className="absolute inset-0 z-[1]" aria-label={`View ${product.name}`} />
 
       <div className="mt-4 space-y-2">
         <div className="flex justify-between items-start">

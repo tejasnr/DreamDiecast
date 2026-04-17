@@ -1,0 +1,32 @@
+# AI Search Crawlers (Allow for visibility in ChatGPT, Google AI Overviews, Perplexity, etc.)
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Training-only crawlers (Block - no search benefit, only used for model training)
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+# Standard search crawlers (allow all)
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://dreamdiecast.in/sitemap.xml

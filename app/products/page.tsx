@@ -1,27 +1,30 @@
-'use client';
+import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/seo';
+import { BreadcrumbJsonLd, CollectionPageJsonLd } from '@/components/JsonLd';
+import ProductsClient from './ProductsClient';
 
-import { useProducts } from '@/hooks/useProducts';
-import ProductPage from '@/components/ProductPage';
-import { Loader2 } from 'lucide-react';
+export const metadata: Metadata = {
+  title: 'All Diecast Models',
+  description:
+    'Browse our complete collection of premium 1/64 scale diecast models. Hot Wheels, Mini GT, Tarmac Works, Pop Race, Bburago & Matchbox available in India.',
+  alternates: { canonical: '/products' },
+};
 
 export default function ProductsPage() {
-  const { products, loading } = useProducts();
-  const listedProducts = products.filter((product) => product.status !== 'unlisted' && product.listingType !== 'pre-order' && product.category !== 'Pre-Order');
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <Loader2 className="animate-spin text-accent" size={48} />
-      </div>
-    );
-  }
-
   return (
-    <ProductPage
-      title="All Models"
-      subtitle="Available Inventory"
-      products={listedProducts}
-      bannerImage="https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1920&auto=format&fit=crop"
-    />
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'All Diecast Models', url: `${SITE_URL}/products` },
+        ]}
+      />
+      <CollectionPageJsonLd
+        name="All Diecast Models"
+        description="Browse our complete collection of premium 1/64 scale diecast models from top brands worldwide."
+        url={`${SITE_URL}/products`}
+      />
+      <ProductsClient />
+    </>
   );
 }

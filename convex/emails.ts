@@ -32,18 +32,15 @@ export const sendOrderConfirmation = internalAction({
       from: "DreamDiecast <orders@dreamdiecast.in>",
       to: order.userEmail,
       subject: `Order Confirmed — #${(args.orderId as string).slice(-8)}`,
-      html: `
-        <h2>Your order has been confirmed!</h2>
-        <p>Hi ${order.shippingDetails?.name || "there"},</p>
-        <p>Your payment has been verified and your order is being processed.</p>
-        <p><strong>Order ID:</strong> #${(args.orderId as string).slice(-8)}</p>
-        <p><strong>Items:</strong> ${productList}</p>
-        <p><strong>Total:</strong> ₹${order.totalAmount.toLocaleString()}</p>
-        <br/>
-        <p>Questions? Reach us on <a href="https://wa.me/919148724708">WhatsApp</a>.</p>
-        <p>— DreamDiecast</p>
-      `,
-    });
+      templateId: "1073131e-7e0e-44ae-8686-632608f76d1b",
+      variables: {
+        customer_name: order.shippingDetails?.name || "there",
+        order_id: `#${(args.orderId as string).slice(-8)}`,
+        items: productList,
+        total: `₹${order.totalAmount.toLocaleString("en-IN")}`,
+        whatsapp_link: "https://wa.me/919148724708",
+      },
+    } as any);
   },
 });
 
@@ -63,16 +60,14 @@ export const sendPreOrderConfirmation = internalAction({
       from: "DreamDiecast <orders@dreamdiecast.in>",
       to: po.email,
       subject: `Pre-Order Confirmed — ${po.productName}`,
-      html: `
-        <h2>Your pre-order has been confirmed!</h2>
-        <p>Hi ${po.customerName},</p>
-        <p>Your deposit for <strong>${po.productName}</strong> has been verified.</p>
-        <p>We'll notify you as soon as the product arrives in stock.</p>
-        <br/>
-        <p>Questions? Reach us on <a href="https://wa.me/919148724708">WhatsApp</a>.</p>
-        <p>— DreamDiecast</p>
-      `,
-    });
+      templateId: "2305a82c-434a-40f3-8034-42bd9fa87f1c",
+      variables: {
+        customer_name: po.customerName,
+        product_name: po.productName,
+        deposit_amount: `₹${(po.depositPaid ?? 0).toLocaleString("en-IN")}`,
+        whatsapp_link: "https://wa.me/919148724708",
+      },
+    } as any);
   },
 });
 
@@ -91,23 +86,21 @@ export const sendPreOrderArrival = internalAction({
     const totalPrice = po.totalPrice ?? 0;
     const depositPaid = po.depositPaid ?? 0;
     const balanceDue = totalPrice - depositPaid + 100; // +100 shipping
+    const paymentLink = `https://dreamdiecast.in/pay/${args.preOrderId as string}`;
 
     await resend.emails.send({
       from: "DreamDiecast <orders@dreamdiecast.in>",
       to: po.email,
-      subject: `Your ${po.productName} Has Arrived! Pay Balance to Ship`,
-      html: `
-        <h2>Great news — your pre-order has arrived!</h2>
-        <p>Hi ${po.customerName},</p>
-        <p>Your <strong>${po.productName}</strong> is now in stock and ready to ship.</p>
-        <p><strong>Balance Due:</strong> ₹${balanceDue.toLocaleString()} (includes ₹100 shipping)</p>
-        <br/>
-        <p><a href="https://dreamdiecast.in/garage/pre-orders" style="background:#F97316;color:white;padding:12px 24px;text-decoration:none;font-weight:bold;display:inline-block;">Pay Balance Now</a></p>
-        <br/>
-        <p>Questions? Reach us on <a href="https://wa.me/919148724708">WhatsApp</a>.</p>
-        <p>— DreamDiecast</p>
-      `,
-    });
+      subject: `Your ${po.productName} Has Arrived! Complete Payment`,
+      templateId: "a2101521-81a4-4edc-9593-0063990df303",
+      variables: {
+        customer_name: po.customerName,
+        product_name: po.productName,
+        amount: balanceDue.toLocaleString("en-IN"),
+        link: paymentLink,
+        whatsapp_link: "https://wa.me/919148724708",
+      },
+    } as any);
   },
 });
 
