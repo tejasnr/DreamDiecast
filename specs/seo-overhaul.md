@@ -1179,13 +1179,256 @@ People searching for diecast products search very specifically:
 - AI engines can cite DreamDiecast when asked about diecast in India (GEO)
 - Product searches match against brand-specific keywords and descriptions
 
-### Future Phase 7 — Individual Product Pages (Biggest Remaining Opportunity)
+---
 
-The single biggest SEO opportunity is creating dedicated `/products/[slug]` pages for each product. This would:
-- Allow `Product` schema with price, availability, SKU
-- Enable product-specific titles: "Hot Wheels Nissan Skyline GT-R R34 | DreamDiecast"
-- Let Google index individual products for long-tail searches
-- Qualify for Google Shopping rich results
-- Add each product URL to sitemap
+## 14. Phase 7 — Product Page Navigation Fix + Final SEO Polish (FINAL PHASE)
 
-This is architecturally larger (requires Convex queries in metadata, ISR strategy) and is intentionally deferred to keep Phases 1-6 achievable without complexity.
+> **This is the final SEO phase. After Phase 7, SEO implementation is halted.**
+> The product detail pages (`/products/[slug]`) already exist with full SEO support (generateMetadata, Product JSON-LD, Breadcrumb JSON-LD), but **users cannot reach them** because product card clicks are intercepted by the modal pattern. This phase fixes that critical navigation gap and completes the remaining Phase 6 items.
+
+**Goal:** Make product detail pages reachable via normal navigation, so Google can crawl them via internal links and users land on SEO-optimized product URLs.
+**Score impact:** Content 50 -> 60 (+2.3 weighted), On-Page 82 -> 90 (+1.6 weighted), Schema 75 -> 85 (+1 weighted), Images 55 -> 65 (+0.5 weighted)
+**Estimated total after Phase 7: ~73/100** (up from ~68)
+
+### 7.1 Fix Product Card Navigation (CRITICAL)
+
+**Problem:** ProductCard has a `<Link>` element at `z-[1]`, but the image container sits at `z-[2]`, completely covering it. Additionally, every listing component passes `onClick={setSelectedProduct}` which opens a modal instead of navigating.
+
+**Root cause in `components/ProductCard.tsx`:**
+```tsx
+// Line 38-39: Image container at z-[2] covers the link
+<div className="relative z-[2] aspect-square overflow-hidden ...">
+
+// Line 139: Link at z-[1] is unreachable
+<Link href={href} className="absolute inset-0 z-[1]" ... />
+```
+
+**Components that pass modal-opening onClick:**
+- `components/ProductPage.tsx` (line 70): `onClick={setSelectedProduct}`
+- `components/ProductGrid.tsx` (line 100): `onClick={setSelectedProduct}`
+- `components/BrandPage.tsx` (line 191): `onClick={setSelectedProduct}`
+- `components/OtherBrandsPage.tsx`: `onClick={setSelectedProduct}`
+- `components/SearchModal.tsx`: `onClick={setSelectedProduct}`
+
+**Solution — Remove modal interception, let Link navigate directly:**
+
+1. **Remove `onClick` prop from ProductCard interface** — ProductCard should always navigate to the product page via its `<Link>`. No more modal interception.
+
+2. **Fix z-index layering in ProductCard:**
+   - Move the `<Link>` to wrap the entire card OR raise its z-index above the image container
+   - Recommended: Change the Link to `z-[3]` so it sits above the image container (`z-[2]`), keeping the existing layout intact
+   - Keep `e.stopPropagation()` on image gallery arrows and quick-add-to-cart button so they don't trigger navigation
+
+3. **Remove ProductDetailModal from listing pages:**
+   - Remove `selectedProduct` state and `ProductDetailModal` import from:
+     - `components/ProductPage.tsx`
+     - `components/ProductGrid.tsx`
+     - `components/BrandPage.tsx`
+     - `components/OtherBrandsPage.tsx`
+   - Keep `ProductDetailModal.tsx` file — it may still be used elsewhere (e.g., SearchModal)
+   - For `SearchModal.tsx`: convert product clicks to `<Link>` navigation to `/products/{slug}` instead of opening modal (closes the search modal and navigates)
+
+4. **Ensure all interactive elements inside the card prevent link propagation:**
+   - Image gallery arrows (already have `e.stopPropagation()` ✓)
+   - Quick add-to-cart button (already has `e.stopPropagation()` ✓)
+
+**Updated ProductCard structure:**
+```tsx
+// Remove onClick from interface
+interface ProductCardProps {
+  product: Product;
+  // onClick removed — always navigates via Link
+}
+
+// Fix z-index: Link at z-[3] above image container z-[2]
+<Link href={href} className="absolute inset-0 z-[3]" aria-label={`View ${product.name}`} />
+
+// Product info below image is now clickable via the Link overlay
+```
+
+### 7.2 Verify Product Page Route Works End-to-End
+
+The product detail page infrastructure already exists from Phases 1-3:
+- `app/products/[slug]/page.tsx` — Server component with `generateMetadata` + JSON-LD
+- `app/products/[slug]/ProductDetailClient.tsx` — Full product detail UI
+- `lib/slugify.ts` — `productSlug()` and `idFromSlug()` for slug ↔ ID conversion
+- `convex/products.ts` — `getById` query
+
+**Verification steps:**
+1. Click a product card → navigates to `/products/{slug}` (not modal)
+2. Product page renders with correct product data
+3. View page source → `<title>` contains product name and brand
+4. View page source → Product JSON-LD is present with price, availability, brand
+5. View page source → BreadcrumbList JSON-LD is present
+6. Breadcrumb nav is visible and functional
+7. Add to cart and Buy Now buttons work on the product page
+8. Back button returns to previous listing page
+
+**Potential slug/ID issues to validate:**
+- Convex IDs are alphanumeric (no hyphens), so `idFromSlug()` splitting on `-` and taking the last segment is correct
+- Products with very short names (single character) should still generate valid slugs
+- Test with products that have parentheses, slashes, or special characters in names
+
+### 7.3 Add Product URLs to Sitemap
+
+**Currently missing:** `app/sitemap.ts` only has static pages, brand pages, and theme pages. Product URLs are not included.
+
+**Update `app/sitemap.ts`:**
+```tsx
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+import { productSlug } from '@/lib/slugify';
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+export default async function sitemap(): MetadataRoute.Sitemap {
+  // ... existing static, brand, theme pages ...
+
+  // Fetch all products and generate URLs
+  let productPages: MetadataRoute.Sitemap = [];
+  try {
+    const products = await convex.query(api.products.list, {});
+    productPages = products.map((product) => ({
+      url: `${baseUrl}/products/${productSlug(product.name, product.id)}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+  } catch {
+    // Graceful fallback if Convex is unavailable at build time
+    productPages = [];
+  }
+
+  return [...staticPages, ...brandPages, ...themePages, ...productPages];
+}
+```
+
+**Note:** This makes the sitemap dynamic (requires Convex at build time). The `try/catch` ensures builds don't fail if Convex is temporarily unavailable.
+
+### 7.4 Create `public/og-image.png` (Remaining from Phase 6)
+
+**Status:** Referenced in `layout.tsx` metadata but file does not exist. Shows broken preview on social shares.
+
+**Requirements:**
+- Dimensions: 1200x630px
+- Content: DreamDiecast logo + tagline "Premium Diecast Collectibles" + dark background (#050505)
+- Format: PNG (referenced as `.png` in layout metadata — verify and align)
+- This requires design work — either manual creation or AI image generation
+
+**Metadata alignment check:**
+- `app/layout.tsx` references `/og-image.jpg` in some places and `/og-image.png` in others — standardize to one format
+
+### 7.5 Internal Link Density on Product Pages
+
+Product pages should link back to related content for crawl depth:
+
+1. **Breadcrumb links** (already present ✓): Home → Products → Brand → Product Name
+2. **"More from {Brand}" section** at bottom of product page — shows 4-6 related products from the same brand with links to their product pages
+3. **Brand name links** to the brand page (`/brands/{slug}`)
+
+**Implementation — Add "More from Brand" section to ProductDetailClient:**
+```tsx
+// After the reviews section, add:
+<section className="mt-12 pt-8 border-t border-white/5">
+  <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent mb-6">
+    More from {product.brand}
+  </h2>
+  {/* Query products by same brand, exclude current product, show 4-6 cards */}
+  {/* Each card links to /products/{slug} */}
+</section>
+```
+
+This requires a new Convex query: `products.getByBrand` that filters by brand name and excludes a given product ID.
+
+### 7.6 Update `llms.txt` with Product Page Info
+
+Update `public/llms.txt` to mention that individual product pages exist with pricing, availability, and detailed specs. This helps AI crawlers understand the site structure.
+
+Add section:
+```
+## Individual Product Pages
+Every product has a dedicated page at /products/{slug} with:
+- Full product details, specifications, and multiple images
+- Current pricing in INR and stock availability
+- Brand, scale, condition, and special features
+- Customer reviews when available
+```
+
+### Phase 7 Checklist
+
+#### Critical (Navigation Fix)
+- [ ] Remove `onClick` prop from ProductCard — always navigate via Link
+- [ ] Fix z-index: raise Link to `z-[3]` above image container `z-[2]`
+- [ ] Remove `selectedProduct` state + `ProductDetailModal` from ProductPage.tsx
+- [ ] Remove `selectedProduct` state + `ProductDetailModal` from ProductGrid.tsx
+- [ ] Remove `selectedProduct` state + `ProductDetailModal` from BrandPage.tsx
+- [ ] Remove `selectedProduct` state + `ProductDetailModal` from OtherBrandsPage.tsx
+- [ ] Convert SearchModal product clicks to Link navigation (close modal + navigate)
+- [ ] Verify product pages load correctly via card click navigation
+- [ ] Verify add-to-cart and buy-now buttons work on product detail page
+- [ ] Verify image gallery arrows still work (don't trigger navigation)
+- [ ] Verify quick-add-to-cart button on cards still works (doesn't trigger navigation)
+
+#### SEO Completions
+- [ ] Add product URLs to `app/sitemap.ts` (dynamic Convex fetch)
+- [ ] Create `public/og-image.png` (1200x630, branded design)
+- [ ] Standardize OG image reference in metadata (`.png` vs `.jpg`)
+- [ ] Add "More from {Brand}" related products section to ProductDetailClient
+- [ ] Create `convex/products.getByBrand` query for related products
+- [ ] Update `public/llms.txt` with product page info
+- [ ] Verify Product JSON-LD renders correctly in page source
+- [ ] Verify BreadcrumbList JSON-LD on product pages
+- [ ] Run final build — `next build` passes cleanly
+
+#### Post-Deploy Validation
+- [ ] Submit updated sitemap to Google Search Console
+- [ ] Test product page OG previews with https://www.opengraph.xyz/
+- [ ] Test structured data with Google Rich Results Test
+- [ ] Run Lighthouse SEO audit on 3 product pages — target >= 90
+
+### Phase 7 Score Estimate
+
+| Area | Before (Post Phase 6) | After Phase 7 | Change |
+|------|----------------------|---------------|--------|
+| Content Quality | 50 | 60 | +10 (product pages add unique content per product) |
+| Technical SEO | 85 | 90 | +5 (product URLs in sitemap, better crawl depth) |
+| On-Page SEO | 82 | 90 | +8 (product-specific titles/descriptions now reachable) |
+| Schema/Structured Data | 75 | 85 | +10 (Product schema now reachable + crawlable) |
+| Performance (CWV) | 68 | 68 | 0 (no change) |
+| GEO (AI Search) | 70 | 75 | +5 (updated llms.txt, more citable product content) |
+| Images | 55 | 65 | +10 (OG image created, product images have alt text on dedicated pages) |
+| **Weighted Total** | **~68** | **~73** | **+~5 points** |
+
+### Why This Is the Final Phase
+
+After Phase 7, the site will have:
+- Every product individually indexable by Google (long-tail keyword coverage)
+- Product schema with price/availability (Google Shopping eligibility)
+- Full internal link structure (Home → Category → Product → Related Products)
+- AI-readable content on every significant page
+- Estimated score: **~73/100**
+
+**To reach 80+** would require:
+- Blog/content marketing hub (high effort, ongoing)
+- Backlink building campaign (off-site, ongoing)
+- Google Merchant Center integration (requires business setup)
+- Product review system (requires user engagement)
+
+These are ongoing marketing/business efforts, not one-time technical implementations. The technical SEO foundation is complete after Phase 7.
+
+---
+
+## 15. Final Score Projection (Post Phase 7 — FINAL)
+
+| Area | Weight | Phase 0 | Phase 6 | Phase 7 (Final) |
+|------|--------|---------|---------|-----------------|
+| Content Quality | 23% | 10 | 50 | 60 |
+| Technical SEO | 22% | 0 | 85 | 90 |
+| On-Page SEO | 20% | 5 | 82 | 90 |
+| Schema/Structured Data | 10% | 0 | 75 | 85 |
+| Performance (CWV) | 10% | 60 | 68 | 68 |
+| GEO (AI Search) | 10% | 0 | 70 | 75 |
+| Images | 5% | 20 | 55 | 65 |
+| **Weighted Total** | **100%** | **~12** | **~68** | **~73** |
+
+> **SEO implementation halted after Phase 7.** Score of ~73/100 represents a solid foundation. Further improvements require content marketing, backlinks, and ongoing business efforts — not code changes.

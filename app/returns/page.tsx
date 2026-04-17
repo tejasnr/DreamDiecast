@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: 'Returns & Refunds',
   description:
     'DreamDiecast returns and refunds policy. All sales are final. Contact us within 48 hours for damaged or defective items.',
+  robots: { index: false, follow: false },
   alternates: { canonical: '/returns' },
 };
 

@@ -11,10 +11,9 @@ import { productSlug } from '@/lib/slugify';
 
 interface ProductCardProps {
   product: Product;
-  onClick?: (product: Product) => void;
 }
 
-export default function ProductCard({ product, onClick }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const isPO = isPreOrderItem(product);
@@ -35,7 +34,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
       viewport={{ once: true }}
       className={`group relative ${isOutOfStock ? 'opacity-75 grayscale-[0.5]' : ''}`}
     >
-      <div className="relative z-[2] aspect-square overflow-hidden bg-surface rounded-sm border border-white/5">
+      <div className="relative aspect-square overflow-hidden bg-surface rounded-sm border border-white/5">
         {currentImage ? (
           <Image
             src={currentImage}
@@ -58,7 +57,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
                 e.stopPropagation();
                 setActiveImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
               }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity backdrop-blur-md hover:bg-accent"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-[5] w-8 h-8 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity backdrop-blur-md hover:bg-accent"
             >
               <ChevronLeft size={16} />
             </button>
@@ -67,12 +66,12 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
                 e.stopPropagation();
                 setActiveImageIndex((prev) => (prev + 1) % galleryImages.length);
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity backdrop-blur-md hover:bg-accent"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-[5] w-8 h-8 bg-black/60 text-white flex items-center justify-center rounded-full border border-white/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity backdrop-blur-md hover:bg-accent"
             >
               <ChevronRight size={16} />
             </button>
             {/* Dot indicators */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[5] flex items-center gap-1.5">
               {galleryImages.map((_, idx) => (
                 <button
                   key={idx}
@@ -129,14 +128,14 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
               e.stopPropagation();
               addToCart(product);
             }}
-            className="absolute bottom-4 right-4 w-10 h-10 bg-white text-black flex items-center justify-center rounded-full opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-accent hover:text-white glow-orange"
+            className="absolute bottom-4 right-4 z-[5] w-10 h-10 bg-white text-black flex items-center justify-center rounded-full opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-accent hover:text-white glow-orange"
           >
             <ShoppingCart size={18} />
           </button>
         )}
       </div>
 
-      <Link href={href} className="absolute inset-0 z-[1]" aria-label={`View ${product.name}`} />
+      <Link href={href} className="absolute inset-0 z-[3]" aria-label={`View ${product.name}`} />
 
       <div className="mt-4 space-y-2">
         <div className="flex justify-between items-start">

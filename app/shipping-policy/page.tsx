@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: 'Shipping Policy',
   description:
     'DreamDiecast shipping policy — free delivery on orders above \u20B92,000. Standard 5-7 day and express 2-3 day delivery across India. Secure packaging guaranteed.',
+  robots: { index: false, follow: false },
   alternates: { canonical: '/shipping-policy' },
 };
 

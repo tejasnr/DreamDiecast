@@ -5,6 +5,9 @@ import ProductPage from '@/components/ProductPage';
 import { Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import { THEME_SEO, BRAND_SEO } from '@/lib/seo';
+import { BRANDS } from '@/lib/brands';
 
 const THEME_MAP: Record<string, { category: string; title: string; subtitle: string }> = {
   'jdm-legends': { category: 'JDM Legends', title: 'JDM Legends', subtitle: 'Skylines \u00b7 Supras \u00b7 NSXs' },
@@ -40,12 +43,42 @@ export default function ThemeClient() {
   }
 
   const themeProducts = products.filter(p => p.category === theme.category);
+  const seo = THEME_SEO[slug];
+  const relatedBrands = seo?.relatedBrands ?? [];
 
   return (
-    <ProductPage
-      title={theme.title}
-      subtitle={theme.subtitle}
-      products={themeProducts}
-    />
+    <>
+      <Breadcrumbs items={[
+        { name: 'Home', href: '/' },
+        { name: theme.title },
+      ]} />
+      <ProductPage
+        title={theme.title}
+        subtitle={theme.subtitle}
+        products={themeProducts}
+      />
+      {relatedBrands.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 pb-24 pt-12 border-t border-white/5">
+          <h2 className="text-xs font-mono uppercase tracking-[0.3em] text-white/40 mb-6">
+            Shop by Brand
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {relatedBrands.map((brandSlug) => {
+              const brand = BRANDS.find(b => b.slug === brandSlug);
+              if (!brand) return null;
+              return (
+                <Link
+                  key={brandSlug}
+                  href={`/brands/${brandSlug}`}
+                  className="px-5 py-3 border border-white/10 text-white/60 text-xs font-bold uppercase tracking-[0.15em] hover:border-white/30 hover:text-white transition-all"
+                >
+                  {brand.name}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </>
   );
 }

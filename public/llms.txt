@@ -38,11 +38,24 @@ DreamDiecast is based in Bangalore, India and sells premium 1:64, 1:43, and 1:24
 - Instagram: @dreamdiecastofficial
 - Website: https://dreamdiecast.in
 
+## Individual Product Pages
+
+Every product has a dedicated page at /products/{slug} with:
+- Full product details, specifications, and multiple images
+- Current pricing in INR and stock availability
+- Brand, scale, condition, and special features
+- Customer reviews when available
+- Related products from the same brand
+- Structured data (Product schema with price, availability, brand, SKU)
+
 ## Pages
 
 - Home: https://dreamdiecast.in
 - All Products: https://dreamdiecast.in/products
+- Product Detail: https://dreamdiecast.in/products/{product-slug}
 - Brands: https://dreamdiecast.in/brands
+- Brand Detail: https://dreamdiecast.in/brands/{brand-slug}
+- Themes: https://dreamdiecast.in/themes/{theme-slug}
 - New Arrivals: https://dreamdiecast.in/new-arrivals
 - Pre-Orders: https://dreamdiecast.in/pre-orders
 - Bundles: https://dreamdiecast.in/bundles

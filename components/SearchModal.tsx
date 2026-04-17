@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProducts } from '@/hooks/useProducts';
-import { Product } from '@/lib/data';
-import ProductDetailModal from './ProductDetailModal';
+import { productSlug } from '@/lib/slugify';
+import Link from 'next/link';
 import Image from 'next/image';
 
 interface SearchModalProps {
@@ -16,7 +16,6 @@ interface SearchModalProps {
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { products } = useProducts();
 
@@ -93,9 +92,10 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   )}
 
                   {results.map(product => (
-                    <button
+                    <Link
                       key={product.id}
-                      onClick={() => setSelectedProduct(product)}
+                      href={`/products/${productSlug(product.name, product.id)}`}
+                      onClick={onClose}
                       className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors text-left border-b border-white/5 last:border-b-0"
                     >
                       <div className="relative w-16 h-12 bg-white/5 shrink-0 overflow-hidden">
@@ -114,7 +114,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       <p className="text-white/60 font-display font-bold shrink-0">
                         {'\u20B9'}{product.price.toLocaleString()}
                       </p>
-                    </button>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -123,7 +123,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         )}
       </AnimatePresence>
 
-      <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
     </>
   );
 }

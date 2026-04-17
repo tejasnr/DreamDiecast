@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Product } from '@/lib/data';
 import ProductCard from './ProductCard';
-import ProductDetailModal from './ProductDetailModal';
 import { motion } from 'motion/react';
 import Image from 'next/image';
 import { trackEvent } from '@/lib/posthog';
@@ -16,8 +15,6 @@ interface ProductPageProps {
 }
 
 export default function ProductPage({ title, subtitle, products, bannerImage }: ProductPageProps) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
   useEffect(() => {
     trackEvent('category_viewed', { category: title, productCount: products.length });
   }, [title, products.length]);
@@ -60,14 +57,13 @@ export default function ProductPage({ title, subtitle, products, bannerImage }: 
       </div>
 
       {/* Product Grid */}
-      <div className="max-w-7xl mx-auto px-6">
+      <section className="max-w-7xl mx-auto px-6" aria-label="Product listings">
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
             {products.map((product) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                onClick={setSelectedProduct}
+              <ProductCard
+                key={product.id}
+                product={product}
               />
             ))}
           </div>
@@ -76,12 +72,8 @@ export default function ProductPage({ title, subtitle, products, bannerImage }: 
             <p className="text-white/40 uppercase tracking-widest font-mono">No models found in this category.</p>
           </div>
         )}
-      </div>
+      </section>
 
-      <ProductDetailModal 
-        product={selectedProduct} 
-        onClose={() => setSelectedProduct(null)} 
-      />
     </main>
   );
 }

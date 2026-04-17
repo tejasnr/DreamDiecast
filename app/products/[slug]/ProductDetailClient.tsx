@@ -14,7 +14,7 @@ import { trackEvent } from '@/lib/posthog';
 import { formatEta } from '@/lib/format';
 import AuthModal from '@/components/AuthModal';
 import { Loader2 } from 'lucide-react';
-import { idFromSlug } from '@/lib/slugify';
+import { idFromSlug, productSlug } from '@/lib/slugify';
 
 export default function ProductDetailClient({ slug }: { slug: string }) {
   const productId = idFromSlug(slug);
@@ -30,6 +30,11 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const userOrders = useQuery(
     api.orders.byUser,
     user ? { userId: user.convexUserId as Id<'users'> } : 'skip'
+  );
+
+  const brandProducts = useQuery(
+    api.products.getByBrand,
+    product ? { brand: product.brand } : 'skip'
   );
 
   useEffect(() => {
@@ -173,7 +178,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                     >
                       <Image
                         src={img}
-                        alt={`${product.name} - Image ${idx + 1}`}
+                        alt={`${product.name} - ${product.brand} diecast model view ${idx + 1}`}
                         fill
                         className="object-cover"
                         loading={idx === 0 ? 'eager' : 'lazy'}
@@ -418,6 +423,48 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
             </div>
           </div>
         </div>
+
+        {/* More from Brand */}
+        {(() => {
+          const related = (brandProducts ?? [])
+            .filter((p) => p.id !== product.id && p.status !== 'unlisted')
+            .slice(0, 6);
+          if (related.length === 0) return null;
+          return (
+            <section className="max-w-7xl mx-auto px-6 mt-16 pt-12 border-t border-white/5">
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent mb-8">
+                More from {product.brand}
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {related.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/products/${productSlug(p.name, p.id)}`}
+                    className="group/related block"
+                  >
+                    <div className="relative aspect-square bg-surface rounded-sm overflow-hidden border border-white/5">
+                      {p.image && (
+                        <Image
+                          src={p.image}
+                          alt={`${p.brand} ${p.name} ${p.scale} Scale Diecast Model`}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover/related:scale-110"
+                          referrerPolicy="no-referrer"
+                        />
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-white/60 group-hover/related:text-accent transition-colors line-clamp-1 uppercase tracking-tight font-medium">
+                      {p.name}
+                    </p>
+                    <p className="text-xs font-display font-bold text-white/80">
+                      ₹{p.price.toLocaleString()}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
       </main>
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </>

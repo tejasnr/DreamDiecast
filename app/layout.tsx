@@ -61,6 +61,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://convex.cloud" />
+        <link rel="preconnect" href="https://cdn.convex.cloud" />
+        <link rel="dns-prefetch" href="https://convex.cloud" />
+        <link rel="dns-prefetch" href="https://cdn.convex.cloud" />
+      </head>
       <body className="bg-[#050505] text-white antialiased" suppressHydrationWarning>
         <OrganizationJsonLd />
         <WebSiteJsonLd />

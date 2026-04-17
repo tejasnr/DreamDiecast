@@ -3,14 +3,11 @@
 import { useState, useMemo } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import ProductCard from './ProductCard';
-import ProductDetailModal from './ProductDetailModal';
-import { Product } from '@/lib/data';
 import Link from 'next/link';
 
 export default function ProductGrid() {
   const { products, loading } = useProducts();
   const [activeFilter, setActiveFilter] = useState('All');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const filteredProducts = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,10 +91,9 @@ export default function ProductGrid() {
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
             {filteredProducts.map((product) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                onClick={setSelectedProduct}
+              <ProductCard
+                key={product.id}
+                product={product}
               />
             ))}
           </div>
@@ -107,11 +103,6 @@ export default function ProductGrid() {
           </div>
         )}
 
-        <ProductDetailModal 
-          product={selectedProduct} 
-          onClose={() => setSelectedProduct(null)} 
-        />
-        
         <div className="mt-16 flex justify-center">
           <Link
             href="/products"

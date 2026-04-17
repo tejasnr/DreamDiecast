@@ -150,13 +150,13 @@ export default function CouponInput() {
           }}
           onKeyDown={(e) => e.key === 'Enter' && handleApply()}
           placeholder="Enter code..."
-          className="flex-1 bg-white/5 border border-white/10 px-4 py-3 text-sm font-mono uppercase focus:border-accent outline-none transition-colors rounded-sm"
+          className="min-w-0 flex-1 bg-white/5 border border-white/10 px-4 py-3 text-sm font-mono uppercase focus:border-accent outline-none transition-colors rounded-sm"
           disabled={isValidating}
         />
         <button
           onClick={handleApply}
           disabled={isValidating || !code.trim()}
-          className="bg-accent text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="shrink-0 bg-accent text-white px-4 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isValidating ? <Loader2 size={14} className="animate-spin" /> : 'Apply'}
         </button>

@@ -360,7 +360,7 @@ export const verifyPayment = mutation({
   },
 });
 
-// Admin rejects payment → order cancelled
+// Admin rejects payment → order cancelled, stock restored
 export const rejectPayment = mutation({
   args: {
     workosUserId: v.optional(v.string()),
@@ -368,6 +368,19 @@ export const rejectPayment = mutation({
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.workosUserId);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+
+    // Restore stock for each item in the order
+    for (const item of order.items) {
+      const product = await ctx.db.get(item.productId);
+      if (product) {
+        await ctx.db.patch(item.productId, {
+          stock: (product.stock ?? 0) + item.quantity,
+        });
+      }
+    }
+
     await ctx.db.patch(args.orderId, {
       paymentStatus: "rejected",
       orderStatus: "cancelled",

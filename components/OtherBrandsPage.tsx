@@ -5,7 +5,6 @@ import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Product } from '@/lib/data';
 import ProductCard from '@/components/ProductCard';
-import ProductDetailModal from '@/components/ProductDetailModal';
 import { BRANDS } from '@/lib/brands';
 import { Loader2, ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -17,7 +16,6 @@ type OrderFilter = typeof ORDER_FILTERS[number];
 export default function OtherBrandsPage() {
   const [activeBrand, setActiveBrand] = useState<string>('All');
   const [activeOrderFilter, setActiveOrderFilter] = useState<OrderFilter>('All');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
   const brandDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -233,7 +231,6 @@ export default function OtherBrandsPage() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onClick={setSelectedProduct}
               />
             ))}
           </div>
@@ -247,10 +244,6 @@ export default function OtherBrandsPage() {
         )}
       </div>
 
-      <ProductDetailModal
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-      />
     </main>
   );
 }

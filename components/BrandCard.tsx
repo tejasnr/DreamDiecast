@@ -48,7 +48,7 @@ export default function BrandCard({
         <div className={`absolute inset-0 flex items-center justify-center ${isCompact ? 'pb-14' : 'pb-20'}`}>
           <img
             src={brand.logo}
-            alt={`${brand.name} logo`}
+            alt={`${brand.name} diecast cars — shop ${brand.name} scale models at DreamDiecast`}
             width={isCompact ? 100 : 140}
             height={isCompact ? 60 : 80}
             className={`object-contain opacity-70 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110 ${brand.invertLogo ? 'invert brightness-200' : ''}`}

@@ -6,11 +6,12 @@ import { api } from '@/convex/_generated/api';
 import { Brand } from '@/lib/brands';
 import { Product } from '@/lib/data';
 import ProductCard from '@/components/ProductCard';
-import ProductDetailModal from '@/components/ProductDetailModal';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import { BRAND_SEO, THEME_SEO } from '@/lib/seo';
 
 interface BrandPageProps {
   brand: Brand;
@@ -22,7 +23,6 @@ type FilterKey = typeof FILTERS[number];
 
 export default function BrandPage({ brand }: BrandPageProps) {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const data = useQuery(api.products.getByBrand, { brand: brand.name });
 
   const products = useMemo((): Product[] => {
@@ -101,8 +101,17 @@ export default function BrandPage({ brand }: BrandPageProps) {
     );
   }
 
+  const seo = BRAND_SEO[brand.slug];
+  const relatedThemes = seo?.relatedThemes ?? [];
+
   return (
-    <main className="min-h-screen bg-[#050505] pt-32 pb-24" style={{ ['--brand-accent' as string]: brand.accentColor }}>
+    <main className="min-h-screen bg-[#050505] pb-24" style={{ ['--brand-accent' as string]: brand.accentColor }}>
+      <Breadcrumbs items={[
+        { name: 'Home', href: '/' },
+        { name: 'Brands', href: '/brands' },
+        { name: brand.name },
+      ]} />
+
       <div className="relative mb-12 md:mb-16 overflow-hidden">
         <div className="absolute inset-0 carbon-pattern opacity-30" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 pt-8 pb-10 md:pb-14">
@@ -114,7 +123,7 @@ export default function BrandPage({ brand }: BrandPageProps) {
           >
             <Image
               src={brand.logo}
-              alt={`${brand.name} logo`}
+              alt={`${brand.name} diecast model cars — official brand logo`}
               width={160}
               height={80}
               className="object-contain"
@@ -139,8 +148,16 @@ export default function BrandPage({ brand }: BrandPageProps) {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-white/5" />
       </div>
 
+      {seo?.intro && (
+        <article className="max-w-7xl mx-auto px-6 mb-12">
+          <p className="text-white/60 text-sm md:text-base leading-relaxed max-w-3xl">
+            {seo.intro}
+          </p>
+        </article>
+      )}
+
       <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-wrap gap-3 mb-10">
+        <aside aria-label="Product filters" className="flex flex-wrap gap-3 mb-10">
           {FILTERS.map((filter) => (
             <button
               key={filter}
@@ -154,7 +171,7 @@ export default function BrandPage({ brand }: BrandPageProps) {
               {filter}
             </button>
           ))}
-        </div>
+        </aside>
 
         {products.length === 0 ? (
           <div className="text-center py-24 border border-white/5 carbon-pattern">
@@ -169,7 +186,6 @@ export default function BrandPage({ brand }: BrandPageProps) {
               <ProductCard
                 key={product.id}
                 product={product}
-                onClick={setSelectedProduct}
               />
             ))}
           </div>
@@ -180,10 +196,35 @@ export default function BrandPage({ brand }: BrandPageProps) {
         )}
       </div>
 
-      <ProductDetailModal
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-      />
+      {relatedThemes.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 mt-20 pt-12 border-t border-white/5">
+          <h2 className="text-xs font-mono uppercase tracking-[0.3em] text-white/40 mb-6">
+            Explore Related Collections
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {relatedThemes.map((themeSlug) => {
+              const theme = THEME_SEO[themeSlug];
+              if (!theme) return null;
+              return (
+                <Link
+                  key={themeSlug}
+                  href={`/themes/${themeSlug}`}
+                  className="px-5 py-3 border border-white/10 text-white/60 text-xs font-bold uppercase tracking-[0.15em] hover:border-white/30 hover:text-white transition-all"
+                >
+                  {theme.title}
+                </Link>
+              );
+            })}
+            <Link
+              href="/brands"
+              className="px-5 py-3 border border-white/10 text-white/60 text-xs font-bold uppercase tracking-[0.15em] hover:border-white/30 hover:text-white transition-all"
+            >
+              All Brands
+            </Link>
+          </div>
+        </section>
+      )}
+
     </main>
   );
 }
