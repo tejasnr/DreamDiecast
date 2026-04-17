@@ -14,6 +14,7 @@ import {
   Check,
   X,
   Eye,
+  Trash2,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
@@ -42,6 +43,7 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
   const updateStatus = useMutation(api.preOrders.updateStatus);
   const updateBalancePaymentStatus = useMutation(api.preOrders.updateBalancePaymentStatus);
   const sendArrivalNotification = useMutation(api.preOrders.sendArrivalNotification);
+  const removePreOrder = useMutation(api.preOrders.remove);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'balance'>('all');
@@ -99,6 +101,25 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
     navigator.clipboard.writeText(paymentUrl);
     setCopiedId(po._id);
     setTimeout(() => setCopiedId(null), 3000);
+  };
+
+  const handleDeletePreOrder = async (preOrderId: string, productName?: string) => {
+    const confirmed = window.confirm(
+      `Delete pre-order${productName ? ` for "${productName}"` : ''}? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setUpdatingId(preOrderId);
+    try {
+      await removePreOrder({
+        workosUserId: user?.workosUserId,
+        preOrderId: preOrderId as Id<'preOrders'>,
+      });
+    } catch (err) {
+      console.error('Error deleting pre-order:', err);
+      alert('Failed to delete pre-order.');
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const balancePendingOrders = preOrders.filter(
@@ -338,6 +359,14 @@ export default function PreOrderTable({ preOrders }: PreOrderTableProps) {
                             <Mail size={14} />
                           </a>
                         )}
+
+                        <button
+                          onClick={() => handleDeletePreOrder(po._id, po.productName)}
+                          className="p-2 bg-red-500/10 hover:bg-red-500/30 text-red-400 rounded-sm transition-all"
+                          title="Delete pre-order tracking"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>

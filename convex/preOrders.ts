@@ -634,3 +634,65 @@ export const updateBalancePaymentStatus = mutation({
     }
   },
 });
+
+export const remove = mutation({
+  args: {
+    workosUserId: v.optional(v.string()),
+    preOrderId: v.id("preOrders"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const po = await ctx.db.get(args.preOrderId);
+    if (!po) throw new Error("Pre-order not found");
+
+    const normalizedStatus = mapStatus(po.status);
+    const product = await ctx.db.get(po.productId);
+
+    if (po.balancePaymentProofStorageId) {
+      try {
+        await ctx.storage.delete(po.balancePaymentProofStorageId);
+      } catch {
+        // Ignore storage delete failures
+      }
+    }
+
+    if (product) {
+      const depositAmount = po.depositPaid ?? po.depositAmount ?? 0;
+      const totalPrice = po.totalPrice ?? po.price ?? 0;
+      const balanceAmount =
+        po.balanceAmount ?? Math.max(0, totalPrice - depositAmount);
+
+      const shouldReduceDeposit =
+        normalizedStatus !== "waiting_for_stock" &&
+        normalizedStatus !== "deposit_submitted" &&
+        normalizedStatus !== "cancelled";
+      const shouldReduceLocked =
+        normalizedStatus === "deposit_verified" ||
+        normalizedStatus === "stock_arrived" ||
+        normalizedStatus === "balance_submitted";
+      const shouldDecrementUnits = normalizedStatus !== "cancelled";
+
+      const patch: any = {};
+      if (shouldReduceDeposit) {
+        patch.totalDepositsCollected = Math.max(
+          0,
+          (product.totalDepositsCollected ?? 0) - depositAmount
+        );
+      }
+      if (shouldReduceLocked) {
+        patch.totalLockedBalances = Math.max(
+          0,
+          (product.totalLockedBalances ?? 0) - balanceAmount
+        );
+      }
+      if (shouldDecrementUnits) {
+        patch.unitsSold = Math.max(0, (product.unitsSold ?? 0) - 1);
+      }
+      if (Object.keys(patch).length > 0) {
+        await ctx.db.patch(po.productId, patch);
+      }
+    }
+
+    await ctx.db.delete(args.preOrderId);
+  },
+});
