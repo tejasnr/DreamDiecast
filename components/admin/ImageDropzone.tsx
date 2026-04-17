@@ -24,17 +24,48 @@ export default function ImageDropzone({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  const compressImage = (file: File, maxWidth = 1600, quality = 0.82): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas not supported'));
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error('Compression failed'));
+            resolve(blob);
+          },
+          'image/webp',
+          quality
+        );
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const uploadFile = async (file: File): Promise<string | null> => {
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File too large (max 5MB): ' + file.name);
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File too large (max 10MB): ' + file.name);
       return null;
     }
     try {
+      const compressed = await compressImage(file);
       const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL!;
       const siteUrl = convexUrl.replace('.cloud', '.site');
       const res = await fetch(`${siteUrl}/upload`, {
         method: 'POST',
-        body: file,
+        body: compressed,
       });
       const data = await res.json();
       return data.url;
@@ -140,7 +171,7 @@ export default function ImageDropzone({
               Drag & Drop images here
             </span>
             <span className="text-[10px] text-white/20 font-mono">
-              Max {maxImages} images, 5MB each
+              Max {maxImages} images · Auto-compressed to WebP
             </span>
             <div className="flex items-center gap-3 mt-2">
               <button

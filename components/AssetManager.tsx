@@ -46,12 +46,42 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const fileToDataUrl = (file: File): Promise<string> => {
+  const compressImage = (file: File, maxWidth = 1600, quality = 0.82): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas not supported'));
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error('Compression failed'));
+            resolve(blob);
+          },
+          'image/webp',
+          quality
+        );
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const blobToDataUrl = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = reject;
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(blob);
     });
   };
 
@@ -64,17 +94,18 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
 
     for (let i = 0; i < imageFiles.length; i++) {
       const file = imageFiles[i];
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`Skipping "${file.name}" — exceeds 5MB limit.`);
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`Skipping "${file.name}" — exceeds 10MB limit.`);
         setUploadProgress({ done: i + 1, total: imageFiles.length });
         continue;
       }
 
       try {
-        const dataUrl = await fileToDataUrl(file);
+        const compressed = await compressImage(file);
+        const dataUrl = await blobToDataUrl(compressed);
         await createAsset({
           workosUserId: user?.workosUserId,
-          name: file.name,
+          name: file.name.replace(/\.\w+$/, '.webp'),
           type: 'image',
           dataUrl,
         });
@@ -256,7 +287,7 @@ export default function AssetManager({ isOpen, onClose, onSelect }: AssetManager
                   Drag & Drop multiple images here
                 </span>
                 <span className="text-[10px] text-white/20 font-mono">
-                  5MB max per file &middot; JPG, PNG, WebP
+                  Auto-compressed to WebP &middot; JPG, PNG, WebP
                 </span>
                 <div className="flex items-center gap-3 mt-2">
                   <button
