@@ -16,6 +16,13 @@ import AuthModal from '@/components/AuthModal';
 import { Loader2 } from 'lucide-react';
 import { productSlug } from '@/lib/slugify';
 
+type ProductReview = {
+  user: string;
+  rating: number;
+  comment: string;
+  date?: string;
+};
+
 export default function ProductDetailClient({ slug, initialProduct }: { slug: string; initialProduct?: any }) {
   const liveProduct = useQuery(api.products.getBySlug, { slug });
   const product = liveProduct ?? initialProduct;
@@ -397,7 +404,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                 <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">Customer Reviews</h2>
                 {product.reviews && product.reviews.length > 0 ? (
                   <div className="space-y-6">
-                    {product.reviews.map((review, i) => (
+                    {product.reviews.map((review: ProductReview, i: number) => (
                       <div key={i} className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-white uppercase tracking-wider">{review.user}</span>

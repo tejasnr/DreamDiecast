@@ -98,7 +98,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="absolute top-4 left-4 z-[6] flex flex-col gap-2">
           <span className={`text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-1 ${
             isPO ? 'bg-accent text-white' :
-            product.category === 'New Arrival' ? 'bg-white text-black' : 'bg-white/10 text-white'
+            product.category === 'New Arrival'
+              ? 'bg-white text-black'
+              : 'bg-black/70 text-white border border-white/10 backdrop-blur-sm'
           }`}>
             {isPO ? 'Pre-Order' : product.category}
           </span>
