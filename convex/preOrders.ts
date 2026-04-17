@@ -5,13 +5,35 @@ import { requireAdmin, requireUser } from "./_utils";
 import { decodeBase64DataUrl } from "./_storage";
 
 export const byUser = query({
-  args: { userId: v.id("users") },
+  args: {
+    userId: v.optional(v.id("users")),
+    email: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("preOrders")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .order("desc")
-      .collect();
+    const results: any[] = [];
+
+    if (args.userId) {
+      const byUser = await ctx.db
+        .query("preOrders")
+        .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+        .order("desc")
+        .collect();
+      results.push(...byUser);
+    }
+
+    if (args.email) {
+      const byEmail = await ctx.db
+        .query("preOrders")
+        .withIndex("by_customerEmail", (q) => q.eq("customerEmail", args.email))
+        .order("desc")
+        .collect();
+      results.push(...byEmail);
+    }
+
+    const deduped = new Map(results.map((po) => [po._id, po]));
+    return Array.from(deduped.values()).sort(
+      (a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)
+    );
   },
 });
 

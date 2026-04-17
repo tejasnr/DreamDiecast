@@ -33,9 +33,42 @@ export default function OtherBrandsPage() {
   const brandNames = useQuery(api.products.getOtherBrandNames);
 
   // Build full brand list: main brands + other brands
+  const products = useMemo((): Product[] => {
+    return (data ?? [])
+      .filter((p: any) => p.status !== 'unlisted')
+      .map((p: any) => ({
+        id: p.id ?? p._id,
+        name: p.name,
+        price: p.price,
+        image: p.image ?? '',
+        images: p.images,
+        category: p.category as Product['category'],
+        brand: p.brand,
+        scale: p.scale,
+        description: p.description,
+        stock: p.stock,
+        rating: p.rating,
+        details: p.details ? {
+          type: p.details.type ?? '',
+          features: p.details.features ?? [],
+        } : undefined,
+        createdAt: p._creationTime,
+        sku: p.sku,
+        condition: p.condition,
+        specialFeatures: p.specialFeatures,
+        listingType: p.listingType,
+        status: p.status,
+        isPreorder: p.isPreorder,
+        bookingAdvance: p.bookingAdvance,
+        totalFinalPrice: p.totalFinalPrice,
+        eta: p.eta,
+      }));
+  }, [data]);
+
   const allBrandOptions = useMemo(() => {
     const mainNames = BRANDS.map((b) => b.name);
-    const otherNames = brandNames ?? [];
+    const visibleBrandSet = new Set(products.map((p) => p.brand));
+    const otherNames = (brandNames ?? []).filter((name) => visibleBrandSet.has(name));
     // Deduplicate: main brands first, then others not already in main
     const combined = [...mainNames];
     for (const name of otherNames) {
@@ -44,37 +77,7 @@ export default function OtherBrandsPage() {
       }
     }
     return combined;
-  }, [brandNames]);
-
-  const products = useMemo((): Product[] => {
-    return (data ?? []).map((p: any) => ({
-      id: p.id ?? p._id,
-      name: p.name,
-      price: p.price,
-      image: p.image ?? '',
-      images: p.images,
-      category: p.category as Product['category'],
-      brand: p.brand,
-      scale: p.scale,
-      description: p.description,
-      stock: p.stock,
-      rating: p.rating,
-      details: p.details ? {
-        type: p.details.type ?? '',
-        features: p.details.features ?? [],
-      } : undefined,
-      createdAt: p._creationTime,
-      sku: p.sku,
-      condition: p.condition,
-      specialFeatures: p.specialFeatures,
-      listingType: p.listingType,
-      status: p.status,
-      isPreorder: p.isPreorder,
-      bookingAdvance: p.bookingAdvance,
-      totalFinalPrice: p.totalFinalPrice,
-      eta: p.eta,
-    }));
-  }, [data]);
+  }, [brandNames, products]);
 
   const MAIN_BRAND_NAMES = BRANDS.map((b) => b.name);
 

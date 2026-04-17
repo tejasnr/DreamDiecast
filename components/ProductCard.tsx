@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -20,11 +20,17 @@ export default function ProductCard({ product }: ProductCardProps) {
   const isOutOfStock = product.stock !== undefined && product.stock <= 0 && !isPO;
   const isLowStock = product.stock !== undefined && product.stock > 0 && product.stock <= 5 && !isPO;
 
-  const galleryImages = product.images?.length ? product.images : product.image ? [product.image] : [];
+  const galleryImages = (product.images?.length ? product.images : product.image ? [product.image] : [])
+    .filter((img): img is string => typeof img === 'string' && img.trim().length > 0);
   const hasMultiple = galleryImages.length > 1;
   const currentImage = galleryImages[activeImageIndex] || product.image;
 
-  const slug = productSlug(product.name, product.id);
+  useEffect(() => {
+    // Reset carousel position when product or gallery length changes.
+    setActiveImageIndex(0);
+  }, [product.id, galleryImages.length]);
+
+  const slug = productSlug(product);
   const href = `/products/${slug}`;
 
   return (
@@ -89,7 +95,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Category Badge */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
+        <div className="absolute top-4 left-4 z-[6] flex flex-col gap-2">
           <span className={`text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-1 ${
             isPO ? 'bg-accent text-white' :
             product.category === 'New Arrival' ? 'bg-white text-black' : 'bg-white/10 text-white'

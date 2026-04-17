@@ -309,12 +309,21 @@ export default function AdminOrdersPage() {
                         )}
 
                         {(order.orderStatus === 'verified' || order.orderStatus === 'processing') && (
-                          <button
-                            onClick={() => handleAction('ship', orderId)}
-                            className="w-full bg-accent text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
-                          >
-                            <Truck size={14} /> Mark as Shipped
-                          </button>
+                          (order.orderType === 'pre-order' || order.items?.some((i: any) => i.category === 'Pre-Order')) ? (
+                            <Link
+                              href="/admin/campaigns"
+                              className="w-full bg-accent text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
+                            >
+                              <ExternalLink size={14} /> View in Campaign Pre-Orders
+                            </Link>
+                          ) : (
+                            <button
+                              onClick={() => handleAction('ship', orderId)}
+                              className="w-full bg-accent text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
+                            >
+                              <Truck size={14} /> Mark as Shipped
+                            </button>
+                          )
                         )}
 
                         {order.orderStatus === 'shipped' && (

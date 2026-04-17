@@ -44,6 +44,7 @@ export default defineSchema({
     totalFinalPrice: v.optional(v.number()),
     eta: v.optional(v.string()),
     isHype: v.optional(v.boolean()),
+    slug: v.optional(v.string()),
 
     // Campaign fields (relevant when listingType === "pre-order")
     allocatedStock: v.optional(v.number()),
@@ -62,7 +63,8 @@ export default defineSchema({
   })
     .index("by_category", ["category"])
     .index("by_brand", ["brand"])
-    .index("by_listingType", ["listingType"]),
+    .index("by_listingType", ["listingType"])
+    .index("by_slug", ["slug"]),
 
   users: defineTable({
     email: v.string(),
@@ -210,6 +212,7 @@ export default defineSchema({
     ),
   })
     .index("by_userId", ["userId"])
+    .index("by_customerEmail", ["customerEmail"])
     .index("by_status", ["status"])
     .index("by_productId", ["productId"]),
 

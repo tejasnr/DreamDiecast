@@ -7,12 +7,14 @@ import { Product } from '@/lib/data';
 export function useProducts() {
   const data = useQuery(api.products.list);
 
-  const products: Product[] = (data ?? []).map((p: any) => ({
-    id: p.id ?? p._id,
-    name: p.name,
-    price: p.price,
-    image: p.image,
-    images: p.images,
+  const products: Product[] = (data ?? [])
+    .filter((p: any) => p.status !== 'unlisted')
+    .map((p: any) => ({
+      id: p.id ?? p._id,
+      name: p.name,
+      price: p.price,
+      image: p.image,
+      images: p.images,
     category: p.category,
     brand: p.brand,
     scale: p.scale,

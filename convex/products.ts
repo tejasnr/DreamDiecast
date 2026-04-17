@@ -1,6 +1,32 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./_utils";
+import type { DatabaseReader } from "./_generated/server";
+
+function generateSlugBase(name: string, brand: string, scale: string): string {
+  return `${brand}-${name}-${scale}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function uniqueSlug(
+  db: DatabaseReader,
+  base: string,
+  excludeId?: string
+): Promise<string> {
+  let candidate = base;
+  let suffix = 2;
+  while (true) {
+    const existing = await db
+      .query("products")
+      .withIndex("by_slug", (q) => q.eq("slug", candidate))
+      .first();
+    if (!existing || existing._id === excludeId) return candidate;
+    candidate = `${base}-${suffix}`;
+    suffix++;
+  }
+}
 
 export const list = query({
   args: {},
@@ -16,6 +42,34 @@ export const getById = query({
     const product = await ctx.db.get(args.id);
     if (!product) return null;
     return { ...product, id: product._id };
+  },
+});
+
+export const getBySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    // Primary: indexed lookup by stored slug
+    const product = await ctx.db
+      .query("products")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+    if (product) {
+      if (product.status === "unlisted") return null;
+      return { ...product, id: product._id };
+    }
+
+    // Fallback: match products that haven't been backfilled yet
+    // by regenerating slug from their name/brand/scale
+    const all = await ctx.db.query("products").collect();
+    const match = all.find((p) => {
+      const generated = `${p.brand}-${p.name}-${p.scale}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return generated === args.slug;
+    });
+    if (!match || match.status === "unlisted") return null;
+    return { ...match, id: match._id };
   },
 });
 
@@ -58,7 +112,10 @@ export const create = mutation({
     if (payload.images?.length && !payload.image) {
       payload.image = payload.images[0];
     }
-    return await ctx.db.insert("products", payload);
+    // Auto-generate SEO-friendly slug
+    const slugBase = generateSlugBase(payload.name, payload.brand, payload.scale);
+    const slug = await uniqueSlug(ctx.db, slugBase);
+    return await ctx.db.insert("products", { ...payload, slug });
   },
 });
 
@@ -102,6 +159,17 @@ export const update = mutation({
     if (patch.images?.length) {
       patch.image = patch.images[0];
     }
+    // Regenerate slug if name, brand, or scale changed
+    if (patch.name || patch.brand || patch.scale) {
+      const existing = await ctx.db.get(id);
+      if (existing) {
+        const name = patch.name ?? existing.name;
+        const brand = patch.brand ?? existing.brand;
+        const scale = patch.scale ?? existing.scale;
+        const slugBase = generateSlugBase(name, brand, scale);
+        (patch as any).slug = await uniqueSlug(ctx.db, slugBase, id);
+      }
+    }
     await ctx.db.patch(id, patch);
     return id;
   },
@@ -122,7 +190,9 @@ export const getByBrand = query({
       .query("products")
       .withIndex("by_brand", (q) => q.eq("brand", args.brand))
       .collect();
-    return products.map((p) => ({ ...p, id: p._id }));
+    return products
+      .filter((p) => p.status !== "unlisted")
+      .map((p) => ({ ...p, id: p._id }));
   },
 });
 
@@ -132,6 +202,7 @@ export const getCountByBrand = query({
     const products = await ctx.db.query("products").collect();
     const counts: Record<string, number> = {};
     for (const p of products) {
+      if (p.status === "unlisted") continue;
       counts[p.brand] = (counts[p.brand] || 0) + 1;
     }
     return counts;
@@ -292,13 +363,32 @@ export const getOtherBrandsProducts = query({
   },
 });
 
+// One-time migration: backfill slugs for existing products that don't have one
+export const backfillSlugs = mutation({
+  args: { workosUserId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.workosUserId);
+    const products = await ctx.db.query("products").collect();
+    let updated = 0;
+    for (const p of products) {
+      if (!p.slug) {
+        const slugBase = generateSlugBase(p.name, p.brand, p.scale);
+        const slug = await uniqueSlug(ctx.db, slugBase, p._id);
+        await ctx.db.patch(p._id, { slug });
+        updated++;
+      }
+    }
+    return { updated };
+  },
+});
+
 export const getOtherBrandNames = query({
   args: {},
   handler: async (ctx) => {
     const products = await ctx.db.query("products").collect();
     const brandSet = new Set<string>();
     for (const p of products) {
-      if (!MAIN_BRANDS.includes(p.brand)) {
+      if (p.status !== "unlisted" && !MAIN_BRANDS.includes(p.brand)) {
         brandSet.add(p.brand);
       }
     }

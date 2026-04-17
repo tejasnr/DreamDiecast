@@ -88,6 +88,7 @@ export default function CheckoutPage() {
     typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
   );
   const reservedRef = useRef(false);
+  const redirectingRef = useRef(false);
 
   const upiId = 'sujithsaravanan2004@okaxis';
   const isAllPreOrder = !balancePaymentItem && cart.length > 0 && cart.every(item => isPreOrderItem(item));
@@ -177,6 +178,7 @@ export default function CheckoutPage() {
   }, [user, releaseStock, router]);
 
   useEffect(() => {
+    if (redirectingRef.current) return;
     if (!authLoading && !user) {
       router.push('/');
     }
@@ -314,6 +316,7 @@ export default function CheckoutPage() {
       const successUrl = isAllPreOrder
         ? `/order-success?orderId=${orderId}&preOrder=true`
         : `/order-success?orderId=${orderId}`;
+      redirectingRef.current = true;
       router.push(successUrl);
     } catch (err: any) {
       console.error('Checkout error:', err);

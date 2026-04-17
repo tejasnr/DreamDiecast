@@ -14,11 +14,11 @@ import { trackEvent } from '@/lib/posthog';
 import { formatEta } from '@/lib/format';
 import AuthModal from '@/components/AuthModal';
 import { Loader2 } from 'lucide-react';
-import { idFromSlug, productSlug } from '@/lib/slugify';
+import { productSlug } from '@/lib/slugify';
 
-export default function ProductDetailClient({ slug }: { slug: string }) {
-  const productId = idFromSlug(slug);
-  const product = useQuery(api.products.getById, { id: productId as Id<'products'> });
+export default function ProductDetailClient({ slug, initialProduct }: { slug: string; initialProduct?: any }) {
+  const liveProduct = useQuery(api.products.getBySlug, { slug });
+  const product = liveProduct ?? initialProduct;
   const { addToCart, cart } = useCart();
   const router = useRouter();
   const { user } = useAuth();
@@ -439,7 +439,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                 {related.map((p) => (
                   <Link
                     key={p.id}
-                    href={`/products/${productSlug(p.name, p.id)}`}
+                    href={`/products/${productSlug(p)}`}
                     className="group/related block"
                   >
                     <div className="relative aspect-square bg-surface rounded-sm overflow-hidden border border-white/5">

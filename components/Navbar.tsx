@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Menu, X, LogOut, Package, Clock, Shield } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, LogOut, Package, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -165,9 +165,6 @@ export default function Navbar() {
                   )}
                   <Link href="/garage" className="text-lg font-display uppercase text-accent flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Package size={18} /> Purchases
-                  </Link>
-                  <Link href="/garage?tab=pre-orders" className="text-lg font-display uppercase text-accent flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Clock size={18} /> My Pre-orders
                   </Link>
                   <button
                     onClick={() => { logout(); setIsMobileMenuOpen(false); }}

@@ -62,18 +62,23 @@ export default function BrandPage({ brand }: BrandPageProps) {
     }));
   }, [data]);
 
+  const visibleProducts = useMemo(
+    () => products.filter((p) => p.status !== 'unlisted'),
+    [products]
+  );
+
   const filteredProducts = useMemo(() => {
-    if (activeFilter === 'All') return products;
+    if (activeFilter === 'All') return visibleProducts;
 
     if (activeFilter === 'In Stock') {
-      return products.filter((p) => {
+      return visibleProducts.filter((p) => {
         const isPO = p.listingType === 'pre-order' || p.category === 'Pre-Order' || p.isPreorder === true;
         return !isPO;
       });
     }
 
     if (activeFilter === 'Pre-Order') {
-      return products.filter((p) =>
+      return visibleProducts.filter((p) =>
         p.listingType === 'pre-order'
         || p.category === 'Pre-Order'
         || p.isPreorder === true
@@ -82,14 +87,14 @@ export default function BrandPage({ brand }: BrandPageProps) {
 
     if (activeFilter === 'New Arrival') {
       const twoWeeksAgo = Date.now() - (14 * 24 * 60 * 60 * 1000);
-      return products.filter((p) => {
+      return visibleProducts.filter((p) => {
         const createdAt = typeof p.createdAt === 'number' ? p.createdAt : 0;
         return createdAt > twoWeeksAgo;
       });
     }
 
-    return products.filter((p) => p.category === activeFilter);
-  }, [products, activeFilter]);
+    return visibleProducts.filter((p) => p.category === activeFilter);
+  }, [visibleProducts, activeFilter]);
 
   const isLoading = data === undefined;
 
@@ -173,7 +178,7 @@ export default function BrandPage({ brand }: BrandPageProps) {
           ))}
         </aside>
 
-        {products.length === 0 ? (
+        {visibleProducts.length === 0 ? (
           <div className="text-center py-24 border border-white/5 carbon-pattern">
             <p className="text-white/40 uppercase tracking-widest font-mono mb-6">No models available yet. Check back soon.</p>
             <Link href="/brands" className="inline-flex items-center gap-2 text-accent text-xs font-bold uppercase tracking-widest hover:gap-4 transition-all">

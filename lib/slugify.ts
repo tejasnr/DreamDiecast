@@ -1,28 +1,26 @@
 /**
- * Generate a URL-friendly slug from a product name.
- * Appends the Convex document ID for reliable lookup.
+ * Return the SEO-friendly slug for a product.
  *
- * Example: "Mazda 787B (Pop Race)" + "k57abc" → "mazda-787b-pop-race-k57abc"
+ * Products now store a `slug` field in the database.
+ * If the slug is already stored, return it directly.
+ * Otherwise fall back to generating one from brand + name + scale
+ * (for products that haven't been backfilled yet).
  */
-export function productSlug(name: string, id: string): string {
-  const base = name
+export function productSlug(product: {
+  name: string;
+  id: string;
+  slug?: string;
+  brand?: string;
+  scale?: string;
+}): string {
+  if (product.slug) return product.slug;
+
+  // Fallback for products without a stored slug (pre-migration)
+  const parts = [product.brand, product.name, product.scale]
+    .filter(Boolean)
+    .join('-');
+  return parts
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `${base}-${id}`;
-}
-
-/**
- * Extract the Convex document ID from a product slug.
- * The ID is always the last segment after the final hyphen-delimited Convex ID.
- * Convex IDs are alphanumeric and typically look like "k57abc123def456".
- */
-export function idFromSlug(slug: string): string {
-  // Convex IDs are the last path segment after the last occurrence of the name part.
-  // Since product names can contain hyphens, we need to try progressively shorter suffixes.
-  // Convex document IDs for "products" table are like "k57..." (variable length).
-  // We split on '-' and try the last N segments as potential ID.
-  const parts = slug.split('-');
-  // The ID is the last part (we appended it in productSlug)
-  return parts[parts.length - 1];
 }

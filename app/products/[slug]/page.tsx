@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
-import { idFromSlug } from '@/lib/slugify';
 import ProductDetailClient from './ProductDetailClient';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -12,9 +10,8 @@ type Props = {
 };
 
 async function getProduct(slug: string) {
-  const id = idFromSlug(slug);
   try {
-    return await convex.query(api.products.getById, { id: id as Id<'products'> });
+    return await convex.query(api.products.getBySlug, { slug });
   } catch {
     return null;
   }
@@ -145,7 +142,7 @@ export default async function ProductPage({ params }: Props) {
           <BreadcrumbJsonLd product={product} slug={slug} />
         </>
       )}
-      <ProductDetailClient slug={slug} />
+      <ProductDetailClient slug={slug} initialProduct={product ?? undefined} />
     </>
   );
 }

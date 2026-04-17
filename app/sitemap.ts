@@ -41,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     productPages = products
       .filter((p) => p.status !== 'unlisted')
       .map((p) => ({
-        url: `${BASE_URL}/products/${productSlug(p.name, p.id)}`,
+        url: `${BASE_URL}/products/${productSlug(p)}`,
         changeFrequency: 'weekly' as const,
         priority: 0.6,
       }));

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState } from 'react';
 import { useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -19,17 +19,17 @@ import {
 } from 'lucide-react';
 import NextImage from 'next/image';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import PreOrderTimeline from '@/components/PreOrderTimeline';
 
-export default function BalancePaymentPage({
-  params,
-}: {
-  params: Promise<{ preOrderId: string }>;
-}) {
-  const { preOrderId } = use(params);
-  const preOrder = useQuery(api.preOrders.getForPayment, {
-    preOrderId: preOrderId as Id<'preOrders'>,
-  });
+export default function BalancePaymentPage() {
+  const params = useParams();
+  const rawPreOrderId = params?.preOrderId;
+  const preOrderId = Array.isArray(rawPreOrderId) ? rawPreOrderId[0] : rawPreOrderId;
+  const preOrder = useQuery(
+    api.preOrders.getForPayment,
+    preOrderId ? { preOrderId: preOrderId as Id<'preOrders'> } : 'skip'
+  );
   const submitBalancePayment = useAction(api.preOrders.submitBalancePayment);
 
   const [transactionId, setTransactionId] = useState('');
@@ -105,7 +105,7 @@ export default function BalancePaymentPage({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!transactionId || !screenshot) return;
+    if (!transactionId || !screenshot || !preOrderId) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -138,6 +138,25 @@ export default function BalancePaymentPage({
       setIsSubmitting(false);
     }
   };
+
+  // Invalid / missing ID
+  if (!preOrderId) {
+    return (
+      <main className="min-h-screen bg-[#050505] pt-32 pb-20 px-6">
+        <div className="max-w-2xl mx-auto text-center space-y-6">
+          <h1 className="text-4xl font-display font-bold uppercase tracking-tighter">
+            Pre-Order Not Found
+          </h1>
+          <p className="text-white/40 text-sm uppercase tracking-widest">
+            This payment link is invalid or incomplete.
+          </p>
+          <Link href="/" className="inline-block bg-accent text-white px-8 py-4 font-display font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all">
+            Browse Products
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   // Loading state
   if (preOrder === undefined) {

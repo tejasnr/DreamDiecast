@@ -10,12 +10,24 @@ import { Loader2, Clock, Calendar, ArrowRight, CreditCard } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import PreOrderTimeline from '@/components/PreOrderTimeline';
-import { PO_STATUS_DISPLAY } from '@/lib/constants';
+import { FLAT_SHIPPING_RATE, PO_STATUS_DISPLAY } from '@/lib/constants';
 
-function mapGarageStatusToPOStatus(garageStatus: string, poStatus?: string): string {
-  if (poStatus) return poStatus;
-  if (garageStatus === 'arrived') return 'stock_arrived';
-  return 'deposit_verified';
+function normalizePreOrderStatus(status?: string): string | undefined {
+  if (!status) return undefined;
+  if (status === 'pending' || status === 'confirmed') return 'waiting_for_stock';
+  if (status === 'arrived') return 'stock_arrived';
+  return status;
+}
+
+function mapGarageStatusToPOStatus(garageStatus?: string, poStatus?: string): string {
+  const normalized = normalizePreOrderStatus(poStatus);
+  if (garageStatus === 'arrived') {
+    if (!normalized || ['deposit_submitted', 'deposit_verified', 'waiting_for_stock'].includes(normalized)) {
+      return 'stock_arrived';
+    }
+  }
+  if (normalized) return normalized;
+  return garageStatus === 'arrived' ? 'stock_arrived' : 'deposit_verified';
 }
 
 export default function MyPreOrdersPage() {
@@ -25,7 +37,12 @@ export default function MyPreOrdersPage() {
   // Also fetch actual pre-orders from convex for richer data
   const preOrders = useQuery(
     api.preOrders.byUser,
-    user?.convexUserId ? { userId: user.convexUserId as Id<'users'> } : 'skip'
+    user
+      ? {
+          userId: user.convexUserId as Id<'users'>,
+          email: user.email,
+        }
+      : 'skip'
   );
 
   const preOrderItems = items.filter(item => item.status === 'pre-ordered' || item.status === 'arrived');
@@ -38,12 +55,37 @@ export default function MyPreOrdersPage() {
     );
   }
 
+  const garageStatusByProduct = new Map<string, string>();
+  for (const item of preOrderItems) {
+    garageStatusByProduct.set(item.productId, item.status);
+  }
+
+  const computedPreOrders = (preOrders ?? []).map((po: any) => {
+    const effectiveStatus = mapGarageStatusToPOStatus(
+      garageStatusByProduct.get(po.productId as string),
+      po.status
+    );
+    const totalPrice = po.totalPrice ?? po.price ?? 0;
+    const depositPaid = po.depositPaid ?? po.depositAmount ?? 0;
+    const balanceDue = Math.max(totalPrice - depositPaid, 0);
+    const shippingCharges = po.shippingCharges ?? FLAT_SHIPPING_RATE;
+    const totalToPay = balanceDue + shippingCharges;
+
+    return {
+      ...po,
+      effectiveStatus,
+      totalPrice,
+      depositPaid,
+      balanceDue,
+      shippingCharges,
+      totalToPay,
+    };
+  });
+
   // Build a map of productId -> preOrder for enriched data
   const poByProduct = new Map<string, any>();
-  if (preOrders) {
-    for (const po of preOrders) {
-      poByProduct.set(po.productId as string, po);
-    }
+  for (const po of computedPreOrders) {
+    poByProduct.set(po.productId as string, po);
   }
 
   return (
@@ -82,11 +124,12 @@ export default function MyPreOrdersPage() {
           <div className="space-y-4">
             {preOrderItems.map((item, index) => {
               const po = poByProduct.get(item.productId);
-              const poStatus = mapGarageStatusToPOStatus(item.status, po?.status);
+              const poStatus = po?.effectiveStatus ?? mapGarageStatusToPOStatus(item.status, po?.status);
               const statusDisplay = PO_STATUS_DISPLAY[poStatus];
               const totalPrice = po?.totalPrice ?? item.originalPrice ?? item.price;
               const depositPaid = po?.depositPaid ?? item.price;
-              const balanceDue = totalPrice - depositPaid;
+              const balanceDue = Math.max(totalPrice - depositPaid, 0);
+              const shippingCharges = po?.shippingCharges ?? FLAT_SHIPPING_RATE;
               const isStockArrived = poStatus === 'stock_arrived';
 
               return (
@@ -141,11 +184,11 @@ export default function MyPreOrdersPage() {
                         </p>
                         {balanceDue > 0 ? (
                           <p className="text-xs text-white/40 uppercase tracking-widest">
-                            Balance: ₹{balanceDue.toLocaleString()} + ₹100 shipping
+                            Balance: ₹{balanceDue.toLocaleString()} + ₹{shippingCharges} shipping
                           </p>
                         ) : (
                           <p className="text-xs text-green-400 uppercase tracking-widest">
-                            Fully deposited &bull; Shipping: ₹100
+                            Fully deposited &bull; Shipping: ₹{shippingCharges}
                           </p>
                         )}
                       </div>
