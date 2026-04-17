@@ -4,6 +4,8 @@ import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import { productSlug } from '@/lib/slugify';
 
+export const revalidate = 0;
+
 const BASE_URL = 'https://dreamdiecast.in';
 const THEME_SLUGS = ['jdm-legends', 'exotics-hypercars', 'motorsport-track-day'];
 
