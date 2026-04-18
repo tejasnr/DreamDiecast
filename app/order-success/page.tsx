@@ -94,7 +94,9 @@ function OrderSuccessContent() {
       <div className="glass p-8 border border-white/10 space-y-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-accent/20" />
         <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Order Reference</p>
-        <p className="text-2xl font-mono font-bold text-white tracking-widest">#{orderId || 'PENDING'}</p>
+        <p className="text-xl sm:text-2xl font-mono font-bold text-white tracking-wider sm:tracking-widest break-all">
+          #{orderId || 'PENDING'}
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
