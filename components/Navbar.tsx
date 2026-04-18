@@ -31,8 +31,19 @@ export default function Navbar() {
     <>
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'glass py-3' : 'bg-transparent py-6'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-display font-bold tracking-tighter uppercase italic">
-            Dream<span className="text-accent">Diecast</span>
+          <Link href="/" className="flex items-center gap-0.5">
+            <Image
+              src="/logo.png"
+              alt="Dream Diecast logo"
+              width={36}
+              height={36}
+              className="w-8 h-8 md:w-9 md:h-9 object-contain"
+              unoptimized
+              priority
+            />
+            <span className="text-lg md:text-2xl font-display font-bold tracking-tighter uppercase italic">
+              Dream<span className="text-accent">Diecast</span>
+            </span>
           </Link>
 
           {/* Desktop Nav */}
