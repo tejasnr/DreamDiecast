@@ -22,9 +22,10 @@ export default function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/assets/gt3rs.jpg"
+          src="/assets/gt3rs.webp"
           alt="Porsche 911 GT3 RS"
           fill
+          sizes="100vw"
           className="object-contain opacity-90 object-right-bottom scale-[0.85] translate-x-[5%] -translate-y-[3%]"
           priority
           referrerPolicy="no-referrer"

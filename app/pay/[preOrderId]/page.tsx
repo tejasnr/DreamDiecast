@@ -447,9 +447,10 @@ export default function BalancePaymentPage() {
                 <div className="flex flex-col items-center text-center space-y-6">
                   <div className="relative w-48 h-48 bg-white p-2 rounded-lg shadow-2xl">
                     <NextImage
-                      src="/assets/QR.png"
+                      src="/assets/QR.webp"
                       alt="UPI QR Code"
                       fill
+                      sizes="192px"
                       className="object-contain p-2"
                     />
                   </div>

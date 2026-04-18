@@ -33,12 +33,12 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-0.5">
             <Image
-              src="/logo.png"
+              src="/logo.webp"
               alt="Dream Diecast logo"
               width={36}
               height={36}
+              sizes="36px"
               className="w-8 h-8 md:w-9 md:h-9 object-contain"
-              unoptimized
               priority
             />
             <span className="text-lg md:text-2xl font-display font-bold tracking-tighter uppercase italic">

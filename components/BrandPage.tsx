@@ -131,6 +131,7 @@ export default function BrandPage({ brand }: BrandPageProps) {
               alt={`${brand.name} diecast model cars — official brand logo`}
               width={160}
               height={80}
+              sizes="160px"
               className="object-contain"
               priority
             />

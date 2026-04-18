@@ -5,9 +5,9 @@ import Image, { StaticImageData } from 'next/image';
 import Link from 'next/link';
 import { CSSProperties } from 'react';
 
-import blueGtr from '@/app/assets/blue-gtr.jpg';
-import pagani from '@/app/assets/pagani.png';
-import fordGt40 from '@/app/assets/ford.jpg';
+import blueGtr from '@/app/assets/blue-gtr.webp';
+import pagani from '@/app/assets/pagani.webp';
+import fordGt40 from '@/app/assets/ford.webp';
 
 interface Theme {
   name: string;

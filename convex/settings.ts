@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { requireAdmin } from "./_utils";
 
 const DEFAULT_SETTINGS = {
-  heroBackground: "/assets/gt3rs.png",
+  heroBackground: "/assets/gt3rs.webp",
   vaultImage: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?q=80&w=1920&auto=format&fit=crop",
   footerBackground: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1920&auto=format&fit=crop",
   categoryJdm: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=800&auto=format&fit=crop",

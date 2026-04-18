@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'motion/react';
-/* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
+import Image from 'next/image';
 import { Brand } from '@/lib/brands';
 import { CSSProperties } from 'react';
 
@@ -46,11 +46,12 @@ export default function BrandCard({
 
         {/* Brand Logo */}
         <div className={`absolute inset-0 flex items-center justify-center ${isCompact ? 'pb-14' : 'pb-20'}`}>
-          <img
+          <Image
             src={brand.logo}
             alt={`${brand.name} diecast cars — shop ${brand.name} scale models at DreamDiecast`}
             width={isCompact ? 100 : 140}
             height={isCompact ? 60 : 80}
+            sizes={isCompact ? '100px' : '140px'}
             className={`object-contain opacity-70 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110 ${brand.invertLogo ? 'invert brightness-200' : ''}`}
           />
         </div>
