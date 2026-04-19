@@ -3,7 +3,7 @@ export const BRANDS = [
   "Matchbox", "Bburago", "CM Model", "Inno64", "Kaido House"
 ] as const;
 
-export const SCALES = ["1/64", "1/43", "1/18"] as const;
+export const SCALES = ["1/64", "1/43", "1/24", "1/18"] as const;
 
 export const CATEGORIES = [
   "JDM Legends", "Exotics & Hypercars", "Motorsport", "Normal"

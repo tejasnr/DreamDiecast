@@ -23,6 +23,8 @@ import {
   Eye,
   CheckSquare,
   Square,
+  Search,
+  X,
 } from 'lucide-react';
 
 import Image from 'next/image';
@@ -66,6 +68,8 @@ export default function AdminPage() {
   const [editProduct, setEditProduct] = useState<any>(null);
   const [isAssetManagerOpen, setIsAssetManagerOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<Id<'products'>>>(new Set());
+  const [productSearch, setProductSearch] = useState('');
+  const [preOrderSearch, setPreOrderSearch] = useState('');
   const [confirmModal, setConfirmModal] = useState<{
     title: string;
     message: string;
@@ -188,6 +192,30 @@ export default function AdminPage() {
 
   const inStockProducts = productList.filter((p) => !isPreOrderProduct(p));
   const preOrderProducts = productList.filter((p) => isPreOrderProduct(p));
+
+  const filteredInStockProducts = productSearch.trim()
+    ? inStockProducts.filter((p: any) => {
+        const q = productSearch.toLowerCase();
+        return (
+          p.name?.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q) ||
+          p.sku?.toLowerCase().includes(q)
+        );
+      })
+    : inStockProducts;
+
+  const filteredPreOrderProducts = preOrderSearch.trim()
+    ? preOrderProducts.filter((p: any) => {
+        const q = preOrderSearch.toLowerCase();
+        return (
+          p.name?.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q) ||
+          p.sku?.toLowerCase().includes(q)
+        );
+      })
+    : preOrderProducts;
 
   return (
     <div className="min-h-screen bg-[#050505] pt-32 pb-24 px-6">
@@ -317,33 +345,53 @@ export default function AdminPage() {
         {/* Product List / Pre-Orders */}
         {activeTab === 'dashboard' ? null : activeTab === 'coupons' ? null : activeTab === 'products' ? (
           <div className="grid grid-cols-1 gap-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+              <input
+                type="text"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                placeholder="Search by name, brand, category, or SKU..."
+                className="w-full bg-white/5 border border-white/10 text-white placeholder:text-white/20 pl-11 pr-10 py-3 text-sm font-mono tracking-wide focus:outline-none focus:border-accent/50 transition-colors"
+              />
+              {productSearch && (
+                <button
+                  onClick={() => setProductSearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
             {/* Select All header */}
-            {inStockProducts.length > 0 && (
+            {filteredInStockProducts.length > 0 && (
               <div className="flex items-center gap-3 px-6 py-2">
                 <button
-                  onClick={() => toggleSelectAll(inStockProducts)}
+                  onClick={() => toggleSelectAll(filteredInStockProducts)}
                   className="text-white/30 hover:text-white transition-colors"
                 >
-                  {inStockProducts.length > 0 &&
-                  inStockProducts.every((p: any) => selectedIds.has(p.id as Id<'products'>)) ? (
+                  {filteredInStockProducts.length > 0 &&
+                  filteredInStockProducts.every((p: any) => selectedIds.has(p.id as Id<'products'>)) ? (
                     <CheckSquare size={18} className="text-accent" />
                   ) : (
                     <Square size={18} />
                   )}
                 </button>
                 <span className="text-[10px] text-white/30 uppercase tracking-widest font-bold">
-                  Select All ({inStockProducts.length})
+                  Select All ({filteredInStockProducts.length})
                 </span>
               </div>
             )}
-            {inStockProducts.length === 0 ? (
+            {filteredInStockProducts.length === 0 ? (
               <div className="text-center py-24 border border-white/5 carbon-pattern">
                 <p className="text-white/40 uppercase tracking-widest font-mono">
-                  No active inventory products.
+                  {productSearch.trim() ? 'No products match your search.' : 'No active inventory products.'}
                 </p>
               </div>
             ) : (
-              inStockProducts.map((product: any) => (
+              filteredInStockProducts.map((product: any) => (
                 <div
                   key={product.id}
                   className={`glass p-6 flex flex-col md:flex-row items-center gap-8 group ${product.status === 'unlisted' ? 'opacity-50' : ''} ${selectedIds.has(product.id as Id<'products'>) ? 'ring-1 ring-accent/40' : ''}`}
@@ -450,19 +498,39 @@ export default function AdminPage() {
                   Models
                 </h2>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/20">
-                  {preOrderProducts.length} Models
+                  {filteredPreOrderProducts.length} Models
                 </span>
               </div>
 
+              {/* Search Bar */}
+              <div className="relative">
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  type="text"
+                  value={preOrderSearch}
+                  onChange={(e) => setPreOrderSearch(e.target.value)}
+                  placeholder="Search by name, brand, category, or SKU..."
+                  className="w-full bg-white/5 border border-white/10 text-white placeholder:text-white/20 pl-11 pr-10 py-3 text-sm font-mono tracking-wide focus:outline-none focus:border-accent/50 transition-colors"
+                />
+                {preOrderSearch && (
+                  <button
+                    onClick={() => setPreOrderSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 gap-4">
-                {preOrderProducts.length === 0 ? (
+                {filteredPreOrderProducts.length === 0 ? (
                   <div className="text-center py-12 border border-white/5 carbon-pattern">
                     <p className="text-white/40 uppercase tracking-widest text-[10px]">
-                      No pre-order models defined.
+                      {preOrderSearch.trim() ? 'No pre-order models match your search.' : 'No pre-order models defined.'}
                     </p>
                   </div>
                 ) : (
-                  preOrderProducts.map((product: any) => (
+                  filteredPreOrderProducts.map((product: any) => (
                     <div
                       key={product.id}
                       className={`glass p-6 flex flex-col md:flex-row items-center gap-8 group ${product.status === 'unlisted' ? 'opacity-50' : ''}`}
