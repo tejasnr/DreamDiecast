@@ -19,7 +19,7 @@ import {
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { trackEvent } from '@/lib/posthog';
-import { FLAT_SHIPPING_RATE, PO_SHIPPING_NOTE } from '@/lib/constants';
+import { FLAT_SHIPPING_RATE, PREMIUM_BRAND_SHIPPING_RATE, PREMIUM_SHIPPING_BRANDS, PO_SHIPPING_NOTE } from '@/lib/constants';
 import { isPreOrderItem } from '@/lib/data';
 import CouponInput from '@/components/checkout/CouponInput';
 
@@ -81,12 +81,14 @@ export default function CheckoutDetailsPage() {
       setShippingCharges(0);
       return;
     }
+    const hasPremiumBrand = cart.some(item => PREMIUM_SHIPPING_BRANDS.includes(item.brand as any));
+    const rate = hasPremiumBrand ? PREMIUM_BRAND_SHIPPING_RATE : FLAT_SHIPPING_RATE;
     setShippingInfo({
-      cost: FLAT_SHIPPING_RATE,
+      cost: rate,
       courier: 'Standard Shipping',
       etd: '5-7',
     });
-    setShippingCharges(FLAT_SHIPPING_RATE);
+    setShippingCharges(rate);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

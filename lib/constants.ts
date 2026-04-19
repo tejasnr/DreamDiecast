@@ -34,6 +34,8 @@ export type ListingType = (typeof LISTING_TYPES)[number];
 export type PreOrderStatus = (typeof PRE_ORDER_STATUSES)[number];
 
 export const FLAT_SHIPPING_RATE = 100;
+export const PREMIUM_BRAND_SHIPPING_RATE = 120;
+export const PREMIUM_SHIPPING_BRANDS = ["Hot Wheels", "Matchbox"] as const;
 
 export const PO_SHIPPING_NOTE =
   "Shipping (₹100) will be collected with your final payment when the product arrives.";
