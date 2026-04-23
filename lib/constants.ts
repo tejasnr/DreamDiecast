@@ -6,7 +6,7 @@ export const BRANDS = [
 export const SCALES = ["1/64", "1/43", "1/24", "1/18"] as const;
 
 export const CATEGORIES = [
-  "JDM Legends", "Exotics & Hypercars", "Motorsport", "Normal"
+  "JDM Legends", "Exotics & Hypercars", "Motorsport", "Normal", "Bundle"
 ] as const;
 
 export const CONDITIONS = [
