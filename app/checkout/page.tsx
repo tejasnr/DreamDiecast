@@ -90,7 +90,7 @@ export default function CheckoutPage() {
   const reservedRef = useRef(false);
   const redirectingRef = useRef(false);
 
-  const upiId = 'sujithsaravanan2004@okaxis';
+  const upiId = 'nightmareplayz15@okicici';
   const isAllPreOrder = !balancePaymentItem && cart.length > 0 && cart.every(item => isPreOrderItem(item));
   const hasInStockItems = !balancePaymentItem && cart.some(item => !isPreOrderItem(item));
   const effectiveShippingCharges = isAllPreOrder ? 0 : (appliedCoupon?.shippingWaived ? 0 : shippingCharges);

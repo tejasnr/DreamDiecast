@@ -49,7 +49,7 @@ export default function BalancePaymentPage() {
     pincode: '',
   });
 
-  const upiId = 'sujithsaravanan2004@okaxis';
+  const upiId = 'nightmareplayz15@okicici';
 
   const handleCopyUpi = () => {
     navigator.clipboard.writeText(upiId);
