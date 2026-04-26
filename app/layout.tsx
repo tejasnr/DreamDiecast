@@ -65,6 +65,9 @@ export const metadata: Metadata = {
   },
 };
 
+// Set to true to show maintenance page, false to go back to normal
+const MAINTENANCE_MODE = true;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
@@ -75,15 +78,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://cdn.convex.cloud" />
       </head>
       <body className="bg-[#050505] text-white antialiased" suppressHydrationWarning>
-        <OrganizationJsonLd />
-        <WebSiteJsonLd />
-        <Providers>
-          <Navbar />
-          {children}
-          <Footer />
-          <Analytics />
-          <SpeedInsights />
-        </Providers>
+        {MAINTENANCE_MODE ? (
+          <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
+            <h1 className="text-4xl md:text-6xl font-bold font-[family-name:var(--font-display)] mb-4">
+              Under Maintenance
+            </h1>
+            <p className="text-lg md:text-xl text-gray-400 max-w-md">
+              We&apos;re working on something awesome. We&apos;ll be back shortly!
+            </p>
+            <div className="mt-8 w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+          </div>
+        ) : (
+          <>
+            <OrganizationJsonLd />
+            <WebSiteJsonLd />
+            <Providers>
+              <Navbar />
+              {children}
+              <Footer />
+              <Analytics />
+              <SpeedInsights />
+            </Providers>
+          </>
+        )}
       </body>
     </html>
   );
