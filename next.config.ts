@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
         destination: '/brands',
         permanent: true,
       },
+      {
+        source: '/:path(\\$|%24|%23|%25|%26|%3F)',
+        destination: '/',
+        permanent: true,
+      },
     ];
   },
   eslint: {

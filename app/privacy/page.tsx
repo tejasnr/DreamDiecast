@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
     'DreamDiecast privacy policy — how we collect, use, and protect your personal information when you shop for diecast collectibles.',
-  robots: { index: false, follow: false },
+  robots: { index: true, follow: true },
   alternates: { canonical: '/privacy' },
 };
 
