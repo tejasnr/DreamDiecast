@@ -27,7 +27,8 @@ export default function ProductGrid() {
 
         if (activeFilter === 'In Stock') {
           const isPO = product.listingType === 'pre-order' || product.category === 'Pre-Order' || product.isPreorder === true;
-          return !isPO;
+          const inStock = product.stock === undefined || product.stock > 0;
+          return !isPO && inStock;
         }
 
         if (activeFilter === 'Pre-Order') {

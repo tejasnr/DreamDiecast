@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Product, isPreOrderItem } from '@/lib/data';
 import Toast from '@/components/Toast';
 import { trackEvent } from '@/lib/posthog';
@@ -59,6 +59,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [shippingCharges, setShippingCharges] = useState<number>(0);
   const [balancePaymentItem, setBalancePaymentItem] = useState<{ id: string; name: string; fullPrice: number; image: string; garageItemId: string } | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const cartRef = useRef<CartItem[]>([]);
   const [toast, setToast] = useState<{ isVisible: boolean; message: string; image?: string; type?: 'success' | 'warning' }>({
     isVisible: false,
     message: '',
@@ -91,6 +92,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Keep ref in sync with state for real-time stock validation
+  useEffect(() => {
+    cartRef.current = cart;
+  }, [cart]);
+
   // Save cart to localStorage on change
   useEffect(() => {
     localStorage.setItem('dream_diecast_cart', JSON.stringify(cart));
@@ -107,6 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = useCallback(async (product: Product, qty: number = 1) => {
     const isPO = isPreOrderItem(product);
+    const currentCart = cartRef.current;
 
     // Hype product: limit to 1 per person
     if (product.isHype) {
@@ -114,7 +121,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         showToast('Hyped models are limited to 1 per person', product.image, 'warning');
         return;
       }
-      const alreadyInCart = cart.find(item => item.id === product.id);
+      const alreadyInCart = currentCart.find(item => item.id === product.id);
       if (alreadyInCart) {
         showToast('Hyped models are limited to 1 per person', product.image, 'warning');
         return;
@@ -131,7 +138,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           showToast(`${product.name} is out of stock`, product.image, 'warning');
           return;
         }
-        const existingInCart = cart.find(item => item.id === product.id);
+        const existingInCart = cartRef.current.find(item => item.id === product.id);
         const currentQty = existingInCart ? existingInCart.quantity : 0;
         if (currentQty + qty > stockInfo.stock) {
           showToast(`Only ${stockInfo.stock - currentQty} left in stock`, product.image, 'warning');
@@ -143,7 +150,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           showToast(`${product.name} is out of stock`, product.image, 'warning');
           return;
         }
-        const existingInCart = cart.find(item => item.id === product.id);
+        const existingInCart = cartRef.current.find(item => item.id === product.id);
         const currentQty = existingInCart ? existingInCart.quantity : 0;
         if (product.stock !== undefined && currentQty + qty > product.stock) {
           showToast(`Only ${product.stock} available`, product.image, 'warning');
@@ -157,17 +164,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (existingItem) {
         if (existingItem.isHype) return prevCart;
         const newQty = existingItem.quantity + qty;
-        return prevCart.map(item =>
+        // Final stock guard inside updater to prevent race conditions
+        if (!isPO && existingItem.stock !== undefined && newQty > existingItem.stock) {
+          return prevCart;
+        }
+        const updated = prevCart.map(item =>
           item.id === product.id ? { ...item, quantity: newQty } : item
         );
+        cartRef.current = updated;
+        return updated;
       }
-      return [...prevCart, { ...product, quantity: qty }];
+      const updated = [...prevCart, { ...product, quantity: qty }];
+      cartRef.current = updated;
+      return updated;
     });
 
     trackEvent('add_to_cart', { productId: product.id, name: product.name, price: product.price, category: product.category });
 
     showToast(product.name, product.image);
-  }, [cart, showToast]);
+  }, [showToast]);
 
   const removeFromCart = (productId: string) => {
     trackEvent('remove_from_cart', { productId });

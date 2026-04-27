@@ -445,6 +445,11 @@ export default function AdminPage() {
                           {product.listingType}
                         </span>
                       )}
+                      {product.stock !== undefined && (
+                        <span className={`flex items-center gap-1 ${product.stock <= 0 ? 'text-red-400 bg-red-500/10' : 'text-green-400 bg-green-500/10'} px-2 py-0.5 rounded-sm`}>
+                          {product.stock <= 0 ? 'Out of Stock' : `Stock: ${product.stock}`}
+                        </span>
+                      )}
                       {product.status === 'unlisted' && (
                         <span className="flex items-center gap-1 text-red-400 bg-red-500/10 px-2 py-0.5 rounded-sm">
                           <EyeOff size={10} /> Unlisted

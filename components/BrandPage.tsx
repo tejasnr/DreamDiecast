@@ -73,7 +73,8 @@ export default function BrandPage({ brand }: BrandPageProps) {
     if (activeFilter === 'In Stock') {
       return visibleProducts.filter((p) => {
         const isPO = p.listingType === 'pre-order' || p.category === 'Pre-Order' || p.isPreorder === true;
-        return !isPO;
+        const inStock = p.stock === undefined || p.stock > 0;
+        return !isPO && inStock;
       });
     }
 

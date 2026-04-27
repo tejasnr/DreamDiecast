@@ -47,7 +47,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-8 text-sm font-medium uppercase tracking-widest">
+          <div className="hidden lg:flex items-center space-x-8 text-sm font-medium uppercase tracking-widest">
             <Link href="/brands" className="hover:text-accent transition-colors">Brands</Link>
             <Link href="/new-arrivals" className="hover:text-accent transition-colors">New Arrivals</Link>
             <Link href="/pre-orders" className="hover:text-accent transition-colors">Pre-Orders</Link>
@@ -116,7 +116,7 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="hidden md:flex items-center">
+              <div className="hidden lg:flex items-center">
                 <button
                   onClick={() => setIsAuthModalOpen(true)}
                   className="bg-white text-black px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all rounded-sm shadow-lg shadow-white/5"
@@ -145,7 +145,7 @@ export default function Navbar() {
                 )}
               </AnimatePresence>
             </button>
-            <button className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            <button className="lg:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
@@ -158,7 +158,7 @@ export default function Navbar() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-full left-0 right-0 bg-[#050505]/95 backdrop-blur-xl border-b border-white/10 p-8 flex flex-col space-y-6 md:hidden shadow-2xl"
+              className="absolute top-full left-0 right-0 bg-[#050505]/95 backdrop-blur-xl border-b border-white/10 p-8 flex flex-col space-y-6 lg:hidden shadow-2xl"
             >
               <div className="flex flex-col space-y-4">
                 <Link href="/brands" className="text-2xl font-display uppercase tracking-tighter" onClick={() => setIsMobileMenuOpen(false)}>Brands</Link>
